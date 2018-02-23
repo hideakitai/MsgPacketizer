@@ -1,21 +1,23 @@
 //
 // MessagePack for C++ static resolution routine
 //
-// Copyright (C) 2008-2015 FURUHASHI Sadayuki
+// Copyright (C) 2017 KONDO Takatoshi
 //
 //    Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //    http://www.boost.org/LICENSE_1_0.txt)
 //
-#ifndef MSGPACK_V1_TYPE_STRING_HPP
-#define MSGPACK_V1_TYPE_STRING_HPP
+#ifndef MSGPACK_V1_TYPE_BOOST_STRING_VIEW_HPP
+#define MSGPACK_V1_TYPE_BOOST_STRING_VIEW_HPP
+
+#include <boost/version.hpp>
+#if (BOOST_VERSION / 100000) >= 1 && ((BOOST_VERSION / 100) % 1000) >= 61
 
 #include "msgpack/versioning.hpp"
 #include "msgpack/adaptor/adaptor_base.hpp"
 #include "msgpack/adaptor/check_container_size.hpp"
 
-#include <string>
-#include <cstring>
+#include <boost/utility/string_view.hpp>
 
 namespace msgpack {
 
@@ -26,14 +28,14 @@ MSGPACK_API_VERSION_NAMESPACE(v1) {
 namespace adaptor {
 
 template <>
-struct convert<std::string> {
-    msgpack::object const& operator()(msgpack::object const& o, std::string& v) const {
+struct convert<boost::string_view> {
+    msgpack::object const& operator()(msgpack::object const& o, boost::string_view& v) const {
         switch (o.type) {
         case msgpack::type::BIN:
-            v.assign(o.via.bin.ptr, o.via.bin.size);
+            v = boost::string_view(o.via.bin.ptr, o.via.bin.size);
             break;
         case msgpack::type::STR:
-            v.assign(o.via.str.ptr, o.via.str.size);
+            v = boost::string_view(o.via.str.ptr, o.via.str.size);
             break;
         default:
             throw msgpack::type_error();
@@ -44,9 +46,9 @@ struct convert<std::string> {
 };
 
 template <>
-struct pack<std::string> {
+struct pack<boost::string_view> {
     template <typename Stream>
-    msgpack::packer<Stream>& operator()(msgpack::packer<Stream>& o, const std::string& v) const {
+    msgpack::packer<Stream>& operator()(msgpack::packer<Stream>& o, const boost::string_view& v) const {
         uint32_t size = checked_get_container_size(v.size());
         o.pack_str(size);
         o.pack_str_body(v.data(), size);
@@ -55,8 +57,8 @@ struct pack<std::string> {
 };
 
 template <>
-struct object<std::string> {
-    void operator()(msgpack::object& o, const std::string& v) const {
+struct object<boost::string_view> {
+    void operator()(msgpack::object& o, const boost::string_view& v) const {
         uint32_t size = checked_get_container_size(v.size());
         o.type = msgpack::type::STR;
         o.via.str.ptr = v.data();
@@ -65,23 +67,21 @@ struct object<std::string> {
 };
 
 template <>
-struct object_with_zone<std::string> {
-    void operator()(msgpack::object::with_zone& o, const std::string& v) const {
-        uint32_t size = checked_get_container_size(v.size());
-        o.type = msgpack::type::STR;
-        char* ptr = static_cast<char*>(o.zone.allocate_align(size, MSGPACK_ZONE_ALIGNOF(char)));
-        o.via.str.ptr = ptr;
-        o.via.str.size = size;
-        std::memcpy(ptr, v.data(), v.size());
+struct object_with_zone<boost::string_view> {
+    void operator()(msgpack::object::with_zone& o, const boost::string_view& v) const {
+        static_cast<msgpack::object&>(o) << v;
     }
 };
+
 
 } // namespace adaptor
 
 /// @cond
-}  // MSGPACK_API_VERSION_NAMESPACE(v1)
+} // MSGPACK_API_VERSION_NAMESPACE(v1)
 /// @endcond
 
-}  // namespace msgpack
+} // namespace msgpack
 
-#endif // MSGPACK_V1_TYPE_STRING_HPP
+#endif // (BOOST_VERSION / 100000) >= 1 && ((BOOST_VERSION / 100) % 1000) >= 53
+
+#endif // MSGPACK_V1_TYPE_BOOST_STRING_VIEW_HPP

@@ -149,7 +149,7 @@ CTestTestfile.cmake
 
 [Bb]uild/
 [Oo]bj/
-[Dd]ebug*/
+#[Dd]ebug*/
 [Rr]elease*/
 *.mode*
 *.app/

@@ -109,7 +109,7 @@ struct object_with_zone<type::assoc_vector<K, V, Compare, Alloc> > {
         }
         else {
             uint32_t size = checked_get_container_size(v.size());
-            msgpack::object_kv* p = static_cast<msgpack::object_kv*>(o.zone.allocate_align(sizeof(msgpack::object_kv)*size));
+            msgpack::object_kv* p = static_cast<msgpack::object_kv*>(o.zone.allocate_align(sizeof(msgpack::object_kv)*size, MSGPACK_ZONE_ALIGNOF(msgpack::object_kv)));
             msgpack::object_kv* const pend = p + size;
             o.via.map.ptr  = p;
             o.via.map.size = size;
@@ -195,21 +195,21 @@ struct object_with_zone<std::map<K, V, Compare, Alloc> > {
         else {
             uint32_t size = checked_get_container_size(v.size());
 
-            msgpack::object_kv* p = static_cast<msgpack::object_kv*>(o.zone.allocate_align(sizeof(msgpack::object_kv)*size));
+            msgpack::object_kv* p = static_cast<msgpack::object_kv*>(o.zone.allocate_align(sizeof(msgpack::object_kv)*size, MSGPACK_ZONE_ALIGNOF(msgpack::object_kv)));
             msgpack::object_kv* const pend = p + size;
             o.via.map.ptr  = p;
             o.via.map.size = size;
             typename std::map<K, V, Compare, Alloc>::const_iterator it(v.begin());
             do {
-#if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
+#if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif // (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
+#endif // (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)) && !defined(__clang__)
                 p->key = msgpack::object(it->first, o.zone);
                 p->val = msgpack::object(it->second, o.zone);
-#if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
+#if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)) && !defined(__clang__)
 #pragma GCC diagnostic pop
-#endif // (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
+#endif // (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)) && !defined(__clang__)
                 ++p;
                 ++it;
             } while(p < pend);
@@ -288,7 +288,7 @@ struct object_with_zone<std::multimap<K, V, Compare, Alloc> > {
         }
         else {
             uint32_t size = checked_get_container_size(v.size());
-            msgpack::object_kv* p = static_cast<msgpack::object_kv*>(o.zone.allocate_align(sizeof(msgpack::object_kv)*size));
+            msgpack::object_kv* p = static_cast<msgpack::object_kv*>(o.zone.allocate_align(sizeof(msgpack::object_kv)*size, MSGPACK_ZONE_ALIGNOF(msgpack::object_kv)));
             msgpack::object_kv* const pend = p + size;
             o.via.map.ptr  = p;
             o.via.map.size = size;
