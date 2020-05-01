@@ -17,11 +17,6 @@ namespace msgpacketizer {
     using StreamType = ofSerial;
 #endif
 
-    using namespace arx;
-
-    template <typename... Args>
-    using CallbackVariadic = std::function<void(Args...)>;
-
     template <typename... Args>
     inline void subscribe(StreamType& stream, const uint8_t index, Args&... args)
     {
@@ -42,7 +37,7 @@ namespace msgpacketizer {
             {
                 MsgUnpacker unpacker;
                 unpacker.feed(data, size);
-                std::tuple<Args...> t;
+                std::tuple<arx::remove_const_reference<Args>...> t;
                 unpacker.decodeTo(t);
                 arx::apply(callback, t);
             });
@@ -51,9 +46,19 @@ namespace msgpacketizer {
 
     template <typename F>
     inline auto subscribe(StreamType& stream, const uint8_t index, const F& callback)
-    -> typename std::enable_if<is_callable<F>::value>::type
+    -> typename std::enable_if<arx::is_callable<F>::value>::type
     {
         detail::subscribe(stream, index, arx::function_traits<F>::cast(callback));
+    }
+
+    inline auto subscribe(StreamType& stream, std::function<void(const uint8_t, MsgUnpacker&)> callback)
+    {
+        Packetizer::subscribe(stream, [&, callback](const uint8_t index, const uint8_t* data, const uint8_t size)
+        {
+            MsgUnpacker unpacker;
+            unpacker.feed(data, size);
+            callback(index, unpacker);
+        });
     }
 
     template <typename... Args>
