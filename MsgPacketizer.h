@@ -13,7 +13,7 @@ namespace msgpacketizer {
 
 #ifdef ARDUINO
     using StreamType = Stream;
-#elif defined(OF_VERSION_MAJOR)
+#elif defined (OF_VERSION_MAJOR)
     using StreamType = ofSerial;
 #endif
 
@@ -36,14 +36,13 @@ namespace msgpacketizer {
     namespace detail
     {
         template <typename R, typename... Args>
-        inline auto subscribe(StreamType& stream, const uint8_t index, std::function<R(Args...)>&& callback)
+        inline void subscribe(StreamType& stream, const uint8_t index, const std::function<R(Args...)>& callback)
         {
-                std::tuple<arx::remove_const_reference<Args>...> t;
-            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size)
+            Packetizer::subscribe(stream, index, [&, callback](const uint8_t* data, const uint8_t size)
             {
                 MsgUnpacker unpacker;
                 unpacker.feed(data, size);
-                // std::tuple<arx::remove_const_reference<Args>...> t;
+                std::tuple<Args...> t;
                 unpacker.decodeTo(t);
                 arx::apply(callback, t);
             });
