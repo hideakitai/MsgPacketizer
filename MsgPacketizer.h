@@ -3,9 +3,11 @@
 #ifndef HT_SERIAL_MSGPACKETIZER_H
 #define HT_SERIAL_MSGPACKETIZER_H
 
-#include <ArduinoMsgPack.h>
+
+#include <util/ArxTypeTraits/ArxTypeTraits.h>
 #include <Packetizer.h>
-#include "util/ArxTypeTraits.h"
+#include <MsgPack.h>
+
 
 namespace ht {
 namespace serial {
@@ -22,7 +24,7 @@ namespace msgpacketizer {
     {
         Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size)
         {
-            MsgUnpacker unpacker;
+            MsgPack::Unpacker unpacker;
             unpacker.feed(data, size);
             unpacker.decode(args...);
         });
@@ -35,27 +37,27 @@ namespace msgpacketizer {
         {
             Packetizer::subscribe(stream, index, [&, callback](const uint8_t* data, const uint8_t size)
             {
-                MsgUnpacker unpacker;
+                MsgPack::Unpacker unpacker;
                 unpacker.feed(data, size);
-                std::tuple<arx::remove_const_reference<Args>...> t;
+                std::tuple<std::remove_cvref_t<Args>...> t;
                 unpacker.decodeTo(t);
-                arx::apply(callback, t);
+                std::apply(callback, t);
             });
         }
     }
 
     template <typename F>
     inline auto subscribe(StreamType& stream, const uint8_t index, const F& callback)
-    -> typename std::enable_if<arx::is_callable<F>::value>::type
+    -> std::enable_if_t<arx::is_callable<F>::value>
     {
         detail::subscribe(stream, index, arx::function_traits<F>::cast(callback));
     }
 
-    inline auto subscribe(StreamType& stream, std::function<void(const uint8_t, MsgUnpacker&)> callback)
+    inline void subscribe(StreamType& stream, std::function<void(const uint8_t, MsgPack::Unpacker&)>& callback)
     {
-        Packetizer::subscribe(stream, [&, callback](const uint8_t index, const uint8_t* data, const uint8_t size)
+        Packetizer::subscribe(stream, [callback](const uint8_t index, const uint8_t* data, const uint8_t size)
         {
-            MsgUnpacker unpacker;
+            MsgPack::Unpacker unpacker;
             unpacker.feed(data, size);
             callback(index, unpacker);
         });
@@ -64,21 +66,21 @@ namespace msgpacketizer {
     template <typename... Args>
     inline void send(StreamType& stream, const uint8_t index, Args&&... args)
     {
-        MsgPacker packer;
+        MsgPack::Packer packer;
         packer.encode(std::forward<Args>(args)...);
         Packetizer::send(stream, index, packer.data(), packer.size());
     }
 
     inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size)
     {
-        MsgPacker packer;
+        MsgPack::Packer packer;
         packer.encode(data, size);
         Packetizer::send(stream, index, packer.data(), packer.size());
     }
 
     inline void parse(bool b_exec_cb = true)
     {
-        Packetizer::parse();
+        Packetizer::parse(b_exec_cb);
     }
 
 } // namespace msgpacketizer
