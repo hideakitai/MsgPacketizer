@@ -1,13 +1,21 @@
 #include <MsgPacketizer.h>
-#include <vector>
-#include <map>
+
+// for STL enabled boards:
+// MsgPack::arr_t -> std::vector
+// MsgPack::map_t -> std::map
+// MsgPack::bin_t -> std::vector<uint8_t> or <char>
+
+// for NO-STL boards:
+// MsgPack::arr_t -> arx::vector
+// MsgPack::map_t -> arx::map
+// MsgPack::bin_t -> arx::vector<uint8_t> or <char>
 
 // input to msgpack
 int i;
 float f;
 String s;
-std::vector<int> v;
-std::map<String, float> m;
+MsgPack::arr_t<int> v;
+MsgPack::map_t<String, float> m;
 
 uint8_t recv_direct_index = 0x12;
 uint8_t send_direct_index = 0x34;
@@ -18,13 +26,14 @@ void setup()
 {
     Serial.begin(115200);
     pinMode(LED_BUILTIN, OUTPUT);
+    delay(2000);
 
     // update received data directly
     MsgPacketizer::subscribe(Serial, recv_direct_index, i, f, s, v, m);
 
     // handle received data with lambda which has incoming argument types/data
     MsgPacketizer::subscribe(Serial, lambda_index,
-    [&](const int& ii, const float& ff, const String& ss, const std::vector<int>& vv, const std::map<String, float>& mm)
+    [&](const int& ii, const float& ff, const String& ss, const MsgPack::arr_t<int>& vv, const MsgPack::map_t<String, float>& mm)
     {
         // send data which is directly updated
         MsgPacketizer::send(Serial, send_direct_index, i, f, s, v, m);
@@ -33,11 +42,15 @@ void setup()
     });
 
     // callback which is always called when packet has come
-    MsgPacketizer::subscribe(Serial, [&](const uint8_t index, MsgUnpacker& unpacker)
+    MsgPacketizer::subscribe(Serial, [&](const uint8_t index, MsgPack::Unpacker& unpacker)
     {
         static bool b = false;
         digitalWrite(LED_BUILTIN, b);
         b = !b;
+
+        // just avoid warning
+        (void)index;
+        (void)unpacker;
     });
 }
 

@@ -4,9 +4,9 @@
 #define HT_SERIAL_MSGPACKETIZER_H
 
 
-#include <util/ArxTypeTraits/ArxTypeTraits.h>
-#include <Packetizer.h>
-#include <MsgPack.h>
+// #include <util/ArxTypeTraits/ArxTypeTraits.h>
+#include <util/Packetizer/Packetizer.h>
+#include <util/MsgPack/MsgPack.h>
 
 
 namespace ht {
@@ -44,6 +44,17 @@ namespace msgpacketizer {
                 std::apply(callback, t);
             });
         }
+
+        template <typename R, typename... Args>
+        inline void subscribe(StreamType& stream, const std::function<R(Args...)>& callback)
+        {
+            Packetizer::subscribe(stream, [callback](const uint8_t index, const uint8_t* data, const uint8_t size)
+            {
+                MsgPack::Unpacker unpacker;
+                unpacker.feed(data, size);
+                callback(index, unpacker);
+            });
+        }
     }
 
     template <typename F>
@@ -53,15 +64,13 @@ namespace msgpacketizer {
         detail::subscribe(stream, index, arx::function_traits<F>::cast(callback));
     }
 
-    inline void subscribe(StreamType& stream, std::function<void(const uint8_t, MsgPack::Unpacker&)>& callback)
+    template <typename F>
+    inline auto subscribe(StreamType& stream, const F& callback)
+    -> std::enable_if_t<arx::is_callable<F>::value>
     {
-        Packetizer::subscribe(stream, [callback](const uint8_t index, const uint8_t* data, const uint8_t size)
-        {
-            MsgPack::Unpacker unpacker;
-            unpacker.feed(data, size);
-            callback(index, unpacker);
-        });
+        detail::subscribe(stream, arx::function_traits<F>::cast(callback));
     }
+
 
     template <typename... Args>
     inline void send(StreamType& stream, const uint8_t index, Args&&... args)
