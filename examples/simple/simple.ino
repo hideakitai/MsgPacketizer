@@ -1,7 +1,7 @@
 #include <MsgPacketizer.h>
 
 // MsgPack::arr_t<T> = std::vector<T>
-// MsgPack::map_t<T> = std::map<T>
+// MsgPack::map_t<T, U> = std::map<T, U>
 // MsgPack::bin_t<T> = std::vector<T = uint8_t || char>
 
 // input to msgpack
