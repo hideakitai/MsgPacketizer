@@ -101,25 +101,25 @@ namespace MsgPacketizer
 {
     // bind variables directly to specified index packet
     template <typename... Args>
-    inline void subscribe(StreamType& stream, const uint8_t index, Args&... args)
+    inline void subscribe(StreamType& stream, const uint8_t index, Args&... args);
 
     // bind callback to specified index packet
     template <typename F>
-    inline void subscribe(StreamType& stream, const uint8_t index, const F& callback)
+    inline void subscribe(StreamType& stream, const uint8_t index, const F& callback);
 
     // bind callback which is always called regardless of index
     template <typename F>
-    inline void subscribe(StreamType& stream, const F& callback)
+    inline void subscribe(StreamType& stream, const F& callback);
 
     // send arguments dilectly with variable types
     template <typename... Args>
-    inline void send(StreamType& stream, const uint8_t index, Args&&... args)
+    inline void send(StreamType& stream, const uint8_t index, Args&&... args);
 
     // send binary data
-    inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size)
+    inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size);
 
     // must be called to receive packets
-    inline void parse(bool b_exec_cb = true)
+    inline void parse(bool b_exec_cb = true);
 }
 ```
 
@@ -144,17 +144,17 @@ namespace MsgPacketizer
 {
     // bind variables directly to specified index packet
     template <typename... Args>
-    inline void subscribe(StreamType& stream, const uint8_t index, Args&... args)
+    inline void subscribe(StreamType& stream, const uint8_t index, Args&... args);
 
     // send arguments dilectly with variable types
     template <typename... Args>
-    inline void send(StreamType& stream, const uint8_t index, Args&&... args)
+    inline void send(StreamType& stream, const uint8_t index, Args&&... args);
 
     // send binary data
-    inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size)
+    inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size);
 
     // must be called to receive packets
-    inline void parse(bool b_exec_cb = true)
+    inline void parse(bool b_exec_cb = true);
 }
 ```
 
