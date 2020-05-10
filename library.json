@@ -1,7 +1,7 @@
 {
     "name": "MsgPacketizer",
-    "keywords": "serialize,msgpack",
-    "description": "MessagePack based serializer / deserializer",
+    "keywords": "serialize,msgpack,serial",
+    "description": "msgpack based serializer and deserializer with packetize for Arduino and more",
     "repository":
     {
         "type": "git",
