@@ -1,9 +1,8 @@
 #include <MsgPacketizer.h>
 
-// for STL enabled boards:
-// MsgPack::arr_t -> std::vector
-// MsgPack::map_t -> std::map
-// MsgPack::bin_t -> std::vector<uint8_t> or <char>
+// MsgPack::arr_t<T> = std::vector<T>
+// MsgPack::map_t<T> = std::map<T>
+// MsgPack::bin_t<T> = std::vector<T = uint8_t || char>
 
 // input to msgpack
 int i;
@@ -12,10 +11,10 @@ String s;
 MsgPack::arr_t<int> v;
 MsgPack::map_t<String, float> m;
 
-uint8_t recv_direct_index = 0x12;
-uint8_t send_direct_index = 0x34;
-uint8_t lambda_index = 0x56;
-uint8_t send_back_index = 0x78;
+const uint8_t recv_direct_index = 0x12;
+const uint8_t send_direct_index = 0x34;
+const uint8_t recv_lambda_index = 0x56;
+const uint8_t send_back_index = 0x78;
 
 void setup()
 {
@@ -27,7 +26,7 @@ void setup()
     MsgPacketizer::subscribe(Serial, recv_direct_index, i, f, s, v, m);
 
     // handle received data with lambda which has incoming argument types/data
-    MsgPacketizer::subscribe(Serial, lambda_index,
+    MsgPacketizer::subscribe(Serial, recv_lambda_index,
     [&](const int& ii, const float& ff, const String& ss, const MsgPack::arr_t<int>& vv, const MsgPack::map_t<String, float>& mm)
     {
         // send data which is directly updated
