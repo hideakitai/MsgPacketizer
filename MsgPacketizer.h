@@ -3,11 +3,15 @@
 #ifndef HT_SERIAL_MSGPACKETIZER_H
 #define HT_SERIAL_MSGPACKETIZER_H
 
+#if defined(ARDUINO_ARCH_AVR)\
+ || defined(ARDUINO_ARCH_MEGAAVR)\
+ || defined(ARDUINO_ARCH_SAMD)\
+ || defined(ARDUINO_spresense_ast)
+#define HT_SERIAL_MSGPACKETIZER_DISABLE_STL
+#endif
 
-// #include <util/ArxTypeTraits/ArxTypeTraits.h>
 #include <util/Packetizer/Packetizer.h>
 #include <util/MsgPack/MsgPack.h>
-
 
 namespace ht {
 namespace serial {
@@ -30,12 +34,14 @@ namespace msgpacketizer {
         });
     }
 
+#ifndef HT_SERIAL_MSGPACKETIZER_DISABLE_STL
+
     namespace detail
     {
         template <typename R, typename... Args>
         inline void subscribe(StreamType& stream, const uint8_t index, const std::function<R(Args...)>& callback)
         {
-            Packetizer::subscribe(stream, index, [&, callback](const uint8_t* data, const uint8_t size)
+            Packetizer::subscribe(stream, index, [callback](const uint8_t* data, const uint8_t size)
             {
                 MsgPack::Unpacker unpacker;
                 unpacker.feed(data, size);
@@ -71,6 +77,7 @@ namespace msgpacketizer {
         detail::subscribe(stream, arx::function_traits<F>::cast(callback));
     }
 
+#endif // HT_SERIAL_MSGPACKETIZER_DISABLE_STL
 
     template <typename... Args>
     inline void send(StreamType& stream, const uint8_t index, Args&&... args)
