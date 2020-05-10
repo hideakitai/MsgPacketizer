@@ -54,7 +54,7 @@ void loop()
 {
     // must be called to receive
     MsgPacketizer::parse();
-    
+
     // send received data back
     MsgPacketizer::send(Serial, send_index, i, f, s, v, m);
 }
@@ -76,13 +76,13 @@ void setup()
 
     // handle received data with lambda
     // which has incoming argument types/data
-    
+
     MsgPacketizer::subscribe(Serial, recv_index,
-	    [](int i, float f, String s, std::vector<int> v, std::map<String, float> m)
-	    {
-	        // send received data back
-	        MsgPacketizer::send(Serial, send_index, i, f, s, v, m);
-	    }
+        [](int i, float f, String s, std::vector<int> v, std::map<String, float> m)
+        {
+            // send received data back
+            MsgPacketizer::send(Serial, send_index, i, f, s, v, m);
+        }
     );
 }
 
@@ -97,7 +97,7 @@ void loop()
 ## APIs
 
 ``` C++
-namespace MsgPacketizer 
+namespace MsgPacketizer
 {
     // bind variables directly to specified index packet
     template <typename... Args>
@@ -117,7 +117,7 @@ namespace MsgPacketizer
 
     // send binary data
     inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size)
-    
+
     // must be called to receive packets
     inline void parse(bool b_exec_cb = true)
 }
@@ -140,7 +140,7 @@ There is limitation to `subscribe` packet for such boards.
 Only direct variable binding can be used.
 
 ``` C++
-namespace MsgPacketizer 
+namespace MsgPacketizer
 {
     // bind variables directly to specified index packet
     template <typename... Args>
@@ -152,7 +152,7 @@ namespace MsgPacketizer
 
     // send binary data
     inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size)
-    
+
     // must be called to receive packets
     inline void parse(bool b_exec_cb = true)
 }
