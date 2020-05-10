@@ -5,11 +5,6 @@
 // MsgPack::map_t -> std::map
 // MsgPack::bin_t -> std::vector<uint8_t> or <char>
 
-// for NO-STL boards:
-// MsgPack::arr_t -> arx::vector
-// MsgPack::map_t -> arx::map
-// MsgPack::bin_t -> arx::vector<uint8_t> or <char>
-
 // input to msgpack
 int i;
 float f;
@@ -47,10 +42,6 @@ void setup()
         static bool b = false;
         digitalWrite(LED_BUILTIN, b);
         b = !b;
-
-        // just avoid warning
-        (void)index;
-        (void)unpacker;
     });
 }
 
