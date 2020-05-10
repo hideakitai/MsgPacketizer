@@ -1,128 +1,212 @@
 # MsgPacketizer
-[MessagePack](https://github.com/msgpack/msgpack-c) based serializer / deserializer mainly for the communication between openFrameworks and Arduino
 
-
+[msgpack](https://github.com/msgpack/msgpack-c) based serializer / deserializer + packetize for Arduino and more
 
 
 ## Feature
 
-- simple serialize / deserialize interface using [msgpack-c/c++](https://github.com/msgpack/msgpack-c)
-- simple packet check option using header / escape sequence / checksum / crc8 support
-- for the detail of serialize / deserialize,  see [msgpack-c/c++ Wiki](https://github.com/msgpack/msgpack-c/wiki/v2_0_cpp_configure)
-- you can use this library both in oF and Arduino (see Dependencies)
-
+- one-line serialize / deserialize + packetize + send / receive
+- serializer / deserializer based on [MsgPack v0.1.3](https://github.com/hideakitai/MsgPack)
+- packetize based on [Packetizer v0.3.3](https://github.com/hideakitai/Packetizer)
 
 
 ## Packet Protocol
 
-- 1 byte header 
-- 1 byte index
-- 1 byte size ( = N)
-- N byte data (msgpack protocol)
-- 1 byte footer (crc8, simple some, or none)
 
-1 byte index can be used to identify the type of data, or as you like. 
-
-You can also choose the type of footer from None / Simple Sum / CRC8.
+| header | index  | msgpack | crc8   | footer |
+|--------|--------|---------|--------|--------|
+| 1 byte | 1 byte | N bytes | 1 byte | 1 byte |
 
 
-
-
-## Dependencies
-- [msgpack-arduino](https://github.com/hideakitai/msgpack-arduino) (for Arduino)
-- [PlatformIO](http://platformio.org/) (for Arduino)
-
-
-
-
-## Notation
-
-If you want to use projectGenerator of openFrameworks, rename directory to ```ofxMsgPacketizer```
-
+- 1 byte header
+- 1 byte index (packet index can be used to identify packet)
+- __N byte serialized msgpack data__
+- 1 byte crc8 (for received data check)
+- 1 byte footer
 
 
 ## Usage
 
-### serialize & write
+### Direct Data Receive + One-Line Send
 
 ``` C++
-MsgPacketizer::Packer packer; // default packet checker is crc8
-struct Message
-{
-    int id;
-    float time;
-    MSGPACK_DEFINE(id, time); // custom type declaration
-};
+#include <MsgPacketizer.h>
 
-Message msg {1, 2.3};
-packer << msg;
-serial.writeBytes(packer.data(), packer.size());
+// input to msgpack
+int i;
+float f;
+String s;
+std::vector<int> v;
+std::map<String, float> m;
+
+uint8_t recv_index = 0x12;
+uint8_t send_index = 0x34;
+
+void setup()
+{
+    Serial.begin(115200);
+
+    // update received data directly
+    MsgPacketizer::subscribe(Serial, recv_index, i, f, s, v, m);
+}
+
+void loop()
+{
+    // must be called to receive
+    MsgPacketizer::parse();
+    
+    // send received data back
+    MsgPacketizer::send(Serial, send_index, i, f, s, v, m);
+}
+
 ```
 
-## read & deserialize
 
-``` c++
-MsgPacketizer::Unacker unpacker; // default packet checker is crc8
+### Callback with Received Objects + One-Line Send
 
-serial.readBytes(serial_buffer, size);
-unpacker.feed(serial_buffer, size);
+``` C++
+#include <MsgPacketizer.h>
 
-while (unpacker.available())
+uint8_t recv_index = 0x12;
+uint8_t send_index = 0x34;
+
+void setup()
 {
-    Message msg;
-    unpacker >> msg;
-  
-    // do something with message
-  
-    unpacker.pop();
+    Serial.begin(115200);
+
+    // handle received data with lambda
+    // which has incoming argument types/data
+    
+    MsgPacketizer::subscribe(Serial, recv_index,
+	    [](int i, float f, String s, std::vector<int> v, std::map<String, float> m)
+	    {
+	        // send received data back
+	        MsgPacketizer::send(Serial, send_index, i, f, s, v, m);
+	    }
+    );
+}
+
+void loop()
+{
+    // must be called to trigger callback
+    MsgPacketizer::parse();
+}
+
+```
+
+## APIs
+
+``` C++
+namespace MsgPacketizer 
+{
+    // bind variables directly to specified index packet
+    template <typename... Args>
+    inline void subscribe(StreamType& stream, const uint8_t index, Args&... args)
+
+    // bind callback to specified index packet
+    template <typename F>
+    inline void subscribe(StreamType& stream, const uint8_t index, const F& callback)
+
+    // bind callback which is always called regardless of index
+    template <typename F>
+    inline void subscribe(StreamType& stream, const F& callback)
+
+    // send arguments dilectly with variable types
+    template <typename... Args>
+    inline void send(StreamType& stream, const uint8_t index, Args&&... args)
+
+    // send binary data
+    inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size)
+    
+    // must be called to receive packets
+    inline void parse(bool b_exec_cb = true)
 }
 ```
 
-### Footer
 
-set at constructor
+## For NO-STL Boards
 
+For following archtectures, several storage size for packets are limited.
+
+- AVR
+- megaAVR
+- SAMD
+- SPRESENSE
+
+
+### API Limitation
+
+There is limitation to `subscribe` packet for such boards.
+Only direct variable binding can be used.
+
+``` C++
+namespace MsgPacketizer 
+{
+    // bind variables directly to specified index packet
+    template <typename... Args>
+    inline void subscribe(StreamType& stream, const uint8_t index, Args&... args)
+
+    // send arguments dilectly with variable types
+    template <typename... Args>
+    inline void send(StreamType& stream, const uint8_t index, Args&&... args)
+
+    // send binary data
+    inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size)
+    
+    // must be called to receive packets
+    inline void parse(bool b_exec_cb = true)
+}
 ```
-MsgPacketizer::Reader reader; // default = CRC8
-MsgPacketizer::Reader reader(MsgPacketizer::Checker::None);
-MsgPacketizer::Reader reader(MsgPacketizer::Checker::Sum);
-MsgPacketizer::Reader reader(MsgPacketizer::Checker::CRC8);
 
-MsgPacketizer::Sender sender; // default = CRC8
-MsgPacketizer::Sender sender(MsgPacketizer::Checker::None);
-MsgPacketizer::Sender sender(MsgPacketizer::Checker::Sum);
-MsgPacketizer::Sender sender(MsgPacketizer::Checker::CRC8);
-```
+If you want to add callback as with STL enabled boards, please follow this way.
 
-or set after constructor
+``` C++
+// handle received data depeneding on index
+Packetizer::subscribe(Serial, recv_index, [&](const uint8_t* data, const uint8_t size)
+{
+    // unpack msgpack objects
+    MsgPack::Unpacker unpacker;
+    unpacker.feed(data, size);
+    unpacker.decode(i, f, s, v, m);
 
-```c++
-MsgPacketizer::Reader::setCheckMode(MsgPacketizer::Checker::None);
-MsgPacketizer::Reader::setCheckMode(MsgPacketizer::Checker::Sum);
-MsgPacketizer::Reader::setCheckMode(MsgPacketizer::Checker::CRC8); // default
-
-MsgPacketizer::Sender::setCheckMode(MsgPacketizer::Checker::None);
-MsgPacketizer::Sender::setCheckMode(MsgPacketizer::Checker::Sum);
-MsgPacketizer::Sender::setCheckMode(MsgPacketizer::Checker::CRC8); // default
+    // send received data back
+    MsgPacketizer::send(Serial, send_back_index, i, f, s, v, m);
+});
 ```
 
 
+### Memory Management (only for NO-STL Boards)
 
-## Memory Management
+As mentioned above, for such boards like Arduino Uno, the storage sizes are limited.
+And of course you can manage them by defining following macros.
+But these default values are optimized for such boards, please be careful not to excess your boards storage/memory.
+These macros have no effect for STL enabled boards.
 
-Required memory can arbitrarily be managed by defining following macros. See detail at [msgpack-c/c++ Wiki](https://github.com/msgpack/msgpack-c/wiki/v2_0_cpp_configure).
 
-```c++
-#define MSGPACK_EMBED_STACK_SIZE 32
-#define MSGPACK_PACKER_MAX_BUFFER_SIZE 9
-#define MSGPACK_UNPACKER_INIT_BUFFER_SIZE (64*1024)
-#define MSGPACK_UNPACKER_RESERVE_SIZE (32*1024)
-#define MSGPACK_ZONE_CHUNK_SIZE 8192
-#define MSGPACK_SBUFFER_INIT_SIZE 8192
-#define MSGPACK_VREFBUFFER_REF_SIZE 32
-#define MSGPACK_VREFBUFFER_CHUNK_SIZE 8192
-#define MSGPACK_ZBUFFER_INIT_SIZE 8192
-#define MSGPACK_ZBUFFER_RESERVE_SIZE 512
+#### MsgPack
+
+``` C++
+// msgpack serialized binary size
+#define MSGPACK_MAX_PACKET_BYTE_SIZE  128
+// max size of MsgPack::arr_t
+#define MSGPACK_MAX_ARRAY_SIZE          8
+// max size of MsgPack::map_t
+#define MSGPACK_MAX_MAP_SIZE            8
+// msgpack objects size in one packet
+#define MSGPACK_MAX_OBJECT_SIZE        32
+```
+
+#### Packetizer
+
+``` C++
+// max number of decoded packet queues
+#define PACKETIZER_MAX_PACKET_QUEUE_SIZE     2
+// max data bytes in packet
+#define PACKETIZER_MAX_PACKET_BINARY_SIZE  128
+// max number of callback for one stream
+#define PACKETIZER_MAX_CALLBACK_QUEUE_SIZE   8
+// max number of streams
+#define PACKETIZER_MAX_STREAM_MAP_SIZE       2
 ```
 
 
@@ -134,4 +218,4 @@ Required memory can arbitrarily be managed by defining following macros. See det
 
 ## License
 
-MIT. Boost Software License, Version 1.0 for MessagePack itself. See the [LICENSE\_1\_0.txt](LICENSE_1_0.txt) file for details.
+MIT
