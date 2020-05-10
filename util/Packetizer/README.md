@@ -416,17 +416,18 @@ The storage size of such boards for packets, queue of packets, max packet binary
 ### Memory Management (for NO-STL Boards)
 
 As mentioned above, for such boards like Arduino Uno, the storage sizes are limited.
-And of course you can manage them.
+And of course you can manage them by defining following macros.
+But these default values are optimized for such boards, please be careful not to excess your boards storage/memory.
 
 ``` C++
 // max number of decoded packet queues
-#define PACKETIZER_MAX_PACKET_QUEUE_SIZE 1    // default: 2
+#define PACKETIZER_MAX_PACKET_QUEUE_SIZE     2
 // max data bytes in packet
-#define PACKETIZER_MAX_PACKET_BINARY_SIZE 64  // default: 128
+#define PACKETIZER_MAX_PACKET_BINARY_SIZE  128
 // max number of callback for one stream
-#define PACKETIZER_MAX_CALLBACK_QUEUE_SIZE 16 // default: 8
+#define PACKETIZER_MAX_CALLBACK_QUEUE_SIZE   8
 // max number of streams
-#define PACKETIZER_MAX_STREAM_MAP_SIZE 2      // default: 6
+#define PACKETIZER_MAX_STREAM_MAP_SIZE       2
 ```
 
 For other STL enabled boards, only max packet queue size can be changed.

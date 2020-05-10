@@ -72,7 +72,7 @@ class Decoder;
     #endif // PACKETIZER_MAX_CALLBACK_QUEUE_SIZE
 
     #ifndef PACKETIZER_MAX_STREAM_MAP_SIZE
-    #define PACKETIZER_MAX_STREAM_MAP_SIZE 6
+    #define PACKETIZER_MAX_STREAM_MAP_SIZE 2
     #endif // PACKETIZER_MAX_STREAM_MAP_SIZE
 
     using BinaryBuffer = arx::vector<uint8_t, PACKETIZER_MAX_PACKET_BINARY_SIZE>;
