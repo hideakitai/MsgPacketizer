@@ -1,9 +1,9 @@
 #include <MsgPacketizer.h>
 
 // for NO-STL boards:
-// MsgPack::arr_t -> arx::vector
-// MsgPack::map_t -> arx::map
-// MsgPack::bin_t -> arx::vector<uint8_t> or <char>
+// MsgPack::arr_t<T> = arx::vector<T>
+// MsgPack::map_t<T, U> = arx::map<T, U>
+// MsgPack::bin_t<T> = arx::vector<T = uint8_t || char>
 
 // input to msgpack
 int i;
@@ -12,10 +12,10 @@ String s;
 MsgPack::arr_t<int> v;
 MsgPack::map_t<String, float> m;
 
-uint8_t recv_direct_index = 0x12;
-uint8_t send_direct_index = 0x34;
-uint8_t lambda_index = 0x56;
-uint8_t send_back_index = 0x78;
+const uint8_t recv_direct_index = 0x12;
+const uint8_t send_direct_index = 0x34;
+const uint8_t recv_lambda_index = 0x56;
+const uint8_t send_back_index = 0x78;
 
 void setup()
 {
@@ -23,16 +23,19 @@ void setup()
     pinMode(LED_BUILTIN, OUTPUT);
     delay(2000);
 
+    // update received data directly (up to 4 variables)
+    MsgPacketizer::subscribe(Serial, recv_direct_index, i, f, s);
+
     // handle received data depeneding on index
-    Packetizer::subscribe(Serial, lambda_index, [&](const uint8_t* data, const uint8_t size)
+    Packetizer::subscribe(Serial, recv_lambda_index, [&](const uint8_t* data, const uint8_t size)
     {
         // unpack msgpack objects
         MsgPack::Unpacker unpacker;
         unpacker.feed(data, size);
-        unpacker.decode(i, f, s, v, m);
+        unpacker.decode(v, m);
 
         // send received data back
-        MsgPacketizer::send(Serial, send_back_index, i, f, s, v, m);
+        MsgPacketizer::send(Serial, send_back_index, v, m);
     });
 
     // callback which is always called when packet has come
@@ -49,4 +52,12 @@ void setup()
 void loop()
 {
     MsgPacketizer::parse(); // must be called to trigger callback
+
+    static uint32_t prev_ms = millis();
+    if (millis() > prev_ms + 16)
+    {
+        // send received data back
+        MsgPacketizer::send(Serial, send_direct_index, i, f, s, v, m);
+        prev_ms = millis();
+    }
 }
