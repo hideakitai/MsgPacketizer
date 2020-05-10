@@ -78,7 +78,7 @@ namespace msgpack {
         size_t size() const { return indices.size(); }
         void index(const size_t i) { curr_index = i; }
         size_t index() const { return curr_index; }
-        void clear() { indices.clear(); index(0); raw_data = nullptr; }
+        void clear() { indices.clear(); index(0); b_decoded = false; raw_data = nullptr; }
 
 
         /////////////////////////////////////////////////

@@ -324,6 +324,10 @@ namespace std {
     struct is_function<Ret(Args......) const volatile &&> : true_type {};
 
 
+    template<typename T>
+    struct is_empty : public integral_constant<bool, __is_empty(T)> { };
+
+
     template <class T>
     class decay
     {
@@ -358,6 +362,15 @@ namespace std {
     }
     template<class Sig>
     using result_of = details::result_of<Sig>;
+
+
+    template <class T>
+    void swap(T& a, T& b)
+    {
+        T t = move(a);
+        a = move(b);
+        b = move(t);
+    }
 
 
 #ifndef ARX_TYPE_TRAITS_INITIALIZER_LIST_DEFINED
@@ -405,6 +418,8 @@ namespace std {
     using remove_volatile_t = typename std::remove_volatile<T>::type;
     template<class T>
     using remove_reference_t = typename std::remove_reference<T>::type;
+    template<class T>
+    using remove_pointer_t = typename std::remove_pointer<T>::type;
 
     template<typename T, T ...Ts>
     struct integer_sequence

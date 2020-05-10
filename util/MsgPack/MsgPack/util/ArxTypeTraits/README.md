@@ -43,14 +43,16 @@ Others are automatically enabled/disabled depending on compiler.
 - `std::is_array`
 - `std::is_convertible`
 - `std::is_function`
+- `std::is_empty`
 - `std::decay`
 - `std::result_of`
-- `std::initializer_list`
 
 
 #### for utility
 
 - `std::numeric_limits` (only `max()` and `min()` now)
+- `std::swap`
+- `std::initializer_list`
 - `std::tuple`
 - `std::get`
 - `std::tuple_size`
@@ -65,6 +67,7 @@ Others are automatically enabled/disabled depending on compiler.
 - `std::remove_const_t`
 - `std::remove_volatile_t`
 - `std::remove_reference_t`
+- `std::remove_pointer_t`
 - `std::integer_sequence`
 - `std::index_sequence`
 - `std::make_index_sequence`

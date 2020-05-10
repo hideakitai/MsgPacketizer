@@ -22,7 +22,7 @@
             #define MSGPACK_MAX_MAP_SIZE 8
         #endif // MSGPACK_MAX_MAP_SIZE
         #ifndef MSGPACK_MAX_OBJECT_SIZE
-            #define MSGPACK_MAX_OBJECT_SIZE 16
+            #define MSGPACK_MAX_OBJECT_SIZE 32
         #endif // MSGPACK_MAX_OBJECT_SIZE
     #endif // HT_SERIAL_MSGPACK_DISABLE_STL
 #else
