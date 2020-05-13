@@ -95,7 +95,7 @@ namespace msgpack {
 
         template <typename T>
         auto unpack(T& value)
-        -> typename std::enable_if<std::is_same<T, object::nil>::value>::type
+        -> typename std::enable_if<std::is_same<T, object::nil_t>::value>::type
         {
             value = unpackNil();
         }
@@ -923,7 +923,7 @@ namespace msgpack {
 
         template <typename T>
         auto unpackable(const T& value) const
-        -> typename std::enable_if<std::is_same<T, object::nil>::value, bool>::type
+        -> typename std::enable_if<std::is_same<T, object::nil_t>::value, bool>::type
         {
             (void)value;
             return isNil();

@@ -72,7 +72,7 @@ namespace msgpack {
         template <typename T>
         auto pack(const T& n)
         -> typename std::enable_if<
-            std::is_same<T, object::nil>::value ||
+            std::is_same<T, object::nil_t>::value ||
             std::is_same<T, std::nullptr_t>::value
         >::type
         {
@@ -421,7 +421,7 @@ namespace msgpack {
             packRawByte(Type::NIL);
         }
 
-        void packNil(const object::nil& n)
+        void packNil(const object::nil_t& n)
         {
             (void)n;
             packRawByte(Type::NIL);
@@ -853,7 +853,7 @@ namespace msgpack {
         {
             if ((time.tv_sec >> 34) == 0)
             {
-                uint64_t data64 = (time.tv_nsec << 34) | time.tv_sec;
+                uint64_t data64 = ((uint64_t)time.tv_nsec << 34) | time.tv_sec;
                 if ((data64 & 0xffffffff00000000L) == 0)
                     packTimestamp32((uint32_t)data64);
                 else

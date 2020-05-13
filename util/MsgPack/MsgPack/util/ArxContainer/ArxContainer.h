@@ -225,6 +225,42 @@ namespace arx {
             // dummy
         }
 
+        void reserve(size_t n)
+        {
+            (void)n;
+            // dummy
+        }
+
+        void insert(const_iterator pos, const_iterator first, const_iterator last)
+        {
+            if (pos != end())
+            {
+                size_t sz = 0;
+                {
+                    iterator it = (iterator)first;
+                    for (; it != last; ++it) ++sz;
+                }
+                iterator it = end() + sz - 1;
+                for (int i = sz; i > 0; --i, --it)
+                {
+                    *it = *(it - sz);
+                }
+                it = (iterator)pos;
+                for (size_t i = 0; i < sz; ++i)
+                {
+                    *it = *(first + i);
+                }
+            }
+            else
+            {
+                iterator it = (iterator)first;
+                for (; it != last; ++it)
+                {
+                    push_back(*it);
+                }
+            }
+        }
+
     private:
 
         T& get(const int i)
