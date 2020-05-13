@@ -5,9 +5,11 @@
 
 ## Feature
 
-- one-line serialize / deserialize + packetize + send / receive
-- serializer / deserializer based on [MsgPack v0.1.3](https://github.com/hideakitai/MsgPack)
-- packetize based on [Packetizer v0.3.3](https://github.com/hideakitai/Packetizer)
+- one-line serialize / deserialize + packetize + robust send / receive
+- serializer / deserializer supports almost all standard type of C++ same as [msgpack-c](https://github.com/msgpack/msgpack-c)
+- supports custom class serialization / deserialization
+- serializer / deserializer based on [MsgPack](https://github.com/hideakitai/MsgPack)
+- packetize based on [Packetizer](https://github.com/hideakitai/Packetizer)
 
 
 ## Packet Protocol
@@ -35,9 +37,9 @@
 // input to msgpack
 int i;
 float f;
-String s;
-std::vector<int> v;
-std::map<String, float> m;
+MsgPack::str_t s; // std::string or String
+MsgPack::arr_t<int> v; // std::vector or arx::vector
+MsgPack::map_t<String, float> m; // std::map or arx::map
 
 uint8_t recv_index = 0x12;
 uint8_t send_index = 0x34;
@@ -78,7 +80,7 @@ void setup()
     // which has incoming argument types/data
 
     MsgPacketizer::subscribe(Serial, recv_index,
-        [](int i, float f, String s, std::vector<int> v, std::map<String, float> m)
+        [](int i, float f, MsgPack::str_t s, MsgPack::arr_t<int> v, MsgPack::map_t<String, float> m)
         {
             // send received data back
             MsgPacketizer::send(Serial, send_index, i, f, s, v, m);
