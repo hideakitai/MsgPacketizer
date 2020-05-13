@@ -94,6 +94,31 @@ void loop()
 
 ```
 
+### Custom Class Adaptation
+
+To serialize / deserialize custom type you defined, please use `MSGPACK_DEFINE()` macro inside of your class.
+
+``` C++
+struct CustomClass
+{
+    int i;
+    float f;
+    MsgPack::str_t s;
+
+    MSGPACK_DEFINE(i, f, s);
+};
+```
+
+After that, you can serialize / deserialize your class completely same as other types.
+
+``` C++
+int i;
+float f;
+CustomClass c;
+MsgPacketizer::send(Serial, send_index, i, f, c); // -> send(i, f, c.i, c.f, c.s)
+MsgPacketizer::subscribe(Serial, recv_index, i, f, c); // this is also ok
+```
+
 ## APIs
 
 ``` C++
