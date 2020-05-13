@@ -22,7 +22,7 @@
             #define MSGPACK_MAX_MAP_SIZE 8
         #endif // MSGPACK_MAX_MAP_SIZE
         #ifndef MSGPACK_MAX_OBJECT_SIZE
-            #define MSGPACK_MAX_OBJECT_SIZE 24
+            #define MSGPACK_MAX_OBJECT_SIZE 32
         #endif // MSGPACK_MAX_OBJECT_SIZE
     #endif // HT_SERIAL_MSGPACK_DISABLE_STL
 #else
@@ -72,14 +72,62 @@ namespace msgpack {
 
     namespace object
     {
-        class NIL
+        struct nil
         {
             bool is_nil {false};
-            NIL& operator=(const NIL& rhs) { this->is_nil = rhs.is_nil; return *this; }
-            NIL& operator=(const bool b) { this->is_nil = b; return *this; }
+            nil& operator=(const nil& rhs) { this->is_nil = rhs.is_nil; return *this; }
+            nil& operator=(const bool b) { this->is_nil = b; return *this; }
             bool operator()() const { return this->is_nil; }
+            bool operator==(const nil& x) { return (*this)() == x(); }
         };
-    }
+
+        class ext
+        {
+            bin_t<uint8_t> m_data;
+
+        public:
+
+            ext() : m_data(1, 0) {}
+            ext(int8_t t, const uint8_t* p, uint32_t s)
+            {
+                m_data.reserve(static_cast<size_t>(s) + 1);
+                m_data.push_back(static_cast<uint8_t>(t));
+                m_data.insert(m_data.end(), p, p + s);
+            }
+            ext(int8_t t, uint32_t s)
+            {
+                m_data.resize(static_cast<size_t>(s) + 1);
+                m_data[0] = static_cast<char>(t);
+            }
+            int8_t type() const { return static_cast<int8_t>(m_data[0]); }
+            const uint8_t* data() const { return &(m_data[0]) + 1; }
+            uint8_t* data() { return &(m_data[0]) + 1; }
+            uint32_t size() const { return static_cast<uint32_t>(m_data.size()) - 1; }
+            bool operator== (const ext& x) const { return m_data == x.m_data; }
+            bool operator!= (const ext& x) const { return !(*this == x); }
+            bool operator< (const ext& x) const { return m_data < x.m_data; }
+            bool operator> (const ext& x) const { return m_data > x.m_data; }
+        };
+
+        struct timespec
+        {
+            long tv_sec;  // seconds
+            long tv_nsec; // nanoseconds
+
+            bool operator== (const timespec& x) const { return (tv_sec == x.tv_sec) && (tv_nsec == x.tv_nsec); }
+            bool operator!= (const timespec& x) const { return !(*this == x); }
+            bool operator< (const timespec& x) const
+            {
+                if      (tv_sec < x.tv_sec) return true;
+                else if (tv_sec > x.tv_sec) return false;
+                else                        return tv_nsec < x.tv_nsec;
+            }
+            bool operator> (const timespec& x) const { return (*this != x) && (*this < x); }
+        };
+
+    } // namespace object
+
+
     enum class Type : uint8_t
     {
         NA = 0xC1, // never used
@@ -144,8 +192,33 @@ namespace msgpack {
         MAP4 = 0x0F, // same as FIXMAP
     };
 
+
+    template <typename ClassType, typename ArgType>
+    using has_to_msgpack_impl = typename std::enable_if<std::is_same<decltype(&ClassType::to_msgpack), void(ClassType::*)(ArgType)const>::value>::type;
+    template <typename ClassType, typename ArgType>
+    using has_to_msgpack = arx::is_detected<has_to_msgpack_impl, ClassType, ArgType>;
+
+    template <typename ClassType, typename ArgType>
+    using has_from_msgpack_impl = typename std::enable_if<std::is_same<decltype(&ClassType::from_msgpack), void(ClassType::*)(ArgType)>::value>::type;
+    template <typename ClassType, typename ArgType>
+    using has_from_msgpack = arx::is_detected<has_from_msgpack_impl, ClassType, ArgType>;
+
 } // msgpack
 } // serial
 } // ht
+
+
+#define MSGPACK_DEFINE(...) \
+    void to_msgpack(MsgPack::Packer& p) const \
+    { \
+        p.encode(__VA_ARGS__); \
+    } \
+    void from_msgpack(MsgPack::Unpacker& p) \
+    { \
+        p.decode(__VA_ARGS__); \
+    }
+
+#define MSGPACK_BASE(base) (*const_cast<base *>(static_cast<base const*>(this)))
+
 
 #endif // HT_SERIAL_MSGPACK_TYPES_H

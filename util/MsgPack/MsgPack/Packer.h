@@ -55,7 +55,7 @@ namespace msgpack {
         const bin_t<uint8_t>& packet() const { return buffer; }
         const uint8_t* data() const { return buffer.data(); }
         size_t size() const { return buffer.size(); }
-        void clear() { buffer.clear(); } //buffer.shrink_to_fit(); }
+        void clear() { buffer.clear(); }
 
 
         /////////////////////////////////////////////////
@@ -72,7 +72,7 @@ namespace msgpack {
         template <typename T>
         auto pack(const T& n)
         -> typename std::enable_if<
-            std::is_same<T, object::NIL>::value ||
+            std::is_same<T, object::nil>::value ||
             std::is_same<T, std::nullptr_t>::value
         >::type
         {
@@ -382,8 +382,29 @@ namespace msgpack {
 #endif // HT_SERIAL_MSGPACK_DISABLE_STL
 
         // ---------- EXT format family ----------
-        // - N/A
 
+        void pack(const object::ext& e)
+        {
+            packExt(e);
+        }
+
+
+        // ---------- TIMESTAMP format family ----------
+
+        void pack(const object::timespec& t)
+        {
+            packTimestamp(t);
+        }
+
+
+        // ---------- CUSTOM format ----------
+
+        template <typename C>
+        auto pack(const C& c)
+        -> typename std::enable_if<has_to_msgpack<C, Packer&>::value>::type
+        {
+            c.to_msgpack(*this);
+        }
 
 
         /////////////////////////////////////////
@@ -400,12 +421,20 @@ namespace msgpack {
             packRawByte(Type::NIL);
         }
 
+        void packNil(const object::nil& n)
+        {
+            (void)n;
+            packRawByte(Type::NIL);
+        }
+
+
         // ---------- BOOL format family ----------
 
         void packBool(const bool b)
         {
             packRawByte((uint8_t)Type::BOOL | ((uint8_t)b & (uint8_t)BitMask::BOOL));
         }
+
 
         // ---------- INT format family ----------
 
@@ -466,6 +495,7 @@ namespace msgpack {
             packRawByte(Type::INT64);
             packRawReversed(value);
         }
+
 
         // ---------- FLOAT format family ----------
 
@@ -631,39 +661,118 @@ namespace msgpack {
         {
             packRawByte(Type::FIXEXT2);
             packRawByte((uint8_t)type);
-            packRawReversed(value);
+            packRawBytes((const uint8_t*)&value, sizeof(value));
+        }
+
+        void packFixExt2(const int8_t type, const uint8_t* ptr)
+        {
+            packRawByte(Type::FIXEXT2);
+            packRawByte((uint8_t)type);
+            packRawBytes((const uint8_t*)ptr, 2);
+        }
+
+        void packFixExt2(const int8_t type, const uint16_t* ptr)
+        {
+            packFixExt2(type, (const uint8_t*)ptr);
         }
 
         void packFixExt4(const int8_t type, const uint32_t value)
         {
             packRawByte(Type::FIXEXT4);
             packRawByte((uint8_t)type);
-            packRawReversed(value);
+            packRawBytes((const uint8_t*)&value, sizeof(value));
+        }
+
+        void packFixExt4(const int8_t type, const uint8_t* ptr)
+        {
+            packRawByte(Type::FIXEXT4);
+            packRawByte((uint8_t)type);
+            packRawBytes((const uint8_t*)ptr, 4);
+        }
+
+        void packFixExt4(const int8_t type, const uint32_t* ptr)
+        {
+            packFixExt4(type, (const uint8_t*)ptr);
         }
 
         void packFixExt8(const int8_t type, const uint64_t value)
         {
             packRawByte(Type::FIXEXT8);
             packRawByte((uint8_t)type);
-            packRawReversed(value);
+            packRawBytes((const uint8_t*)&value, sizeof(value));
+        }
+
+        void packFixExt8(const int8_t type, const uint8_t* ptr)
+        {
+            packRawByte(Type::FIXEXT8);
+            packRawByte((uint8_t)type);
+            packRawBytes((const uint8_t*)ptr, 8);
+        }
+
+        void packFixExt8(const int8_t type, const uint64_t* ptr)
+        {
+            packFixExt8(type, (const uint8_t*)ptr);
         }
 
         void packFixExt16(const int8_t type, const uint64_t value_h, const uint64_t value_l)
         {
             packRawByte(Type::FIXEXT16);
             packRawByte((uint8_t)type);
-            packRawReversed(value_h);
-            packRawReversed(value_l);
+            packRawBytes((const uint8_t*)&value_h, sizeof(value_h));
+            packRawBytes((const uint8_t*)&value_l, sizeof(value_l));
         }
 
-        void packExtSize(const int8_t type, const size_t size)
+        void packFixExt16(const int8_t type, const uint8_t* ptr)
         {
-            if (size < std::numeric_limits<uint8_t>::max())
-                packExtSize8(type, size);
-            else if (size <= std::numeric_limits<uint16_t>::max())
-                packExtSize16(type, size);
-            else if (size <= std::numeric_limits<uint32_t>::max())
-                packExtSize32(type, size);
+            packRawByte(Type::FIXEXT16);
+            packRawByte((uint8_t)type);
+            packRawBytes((const uint8_t*)ptr, 16);
+        }
+
+        void packFixExt16(const int8_t type, const uint64_t* ptr)
+        {
+            packFixExt16(type, (const uint8_t*)ptr);
+        }
+
+        template <typename T>
+        auto packFixExt(const int8_t type, const T value)
+        -> typename std::enable_if<std::is_integral<T>::value>::type
+        {
+            size_t size = sizeof(T);
+            if      (size == sizeof(uint8_t))  packFixExt1(type, value);
+            else if (size == sizeof(uint16_t)) packFixExt2(type, value);
+            else if (size == sizeof(uint32_t)) packFixExt4(type, value);
+            else if (size == sizeof(uint64_t)) packFixExt8(type, value);
+        }
+
+        void packFixExt(const int8_t type, const uint64_t value_h, const uint64_t value_l)
+        {
+            packFixExt16(type, value_h, value_l);
+        }
+
+        void packFixExt(const int8_t type, const uint8_t* ptr, const uint8_t size)
+        {
+            if      (size == 0) return;
+            if      (size == sizeof(uint8_t))      packFixExt1(type, (uint8_t)*(ptr));
+            else if (size == sizeof(uint16_t))     packFixExt2(type, ptr);
+            else if (size <= sizeof(uint32_t))     packFixExt4(type, ptr);
+            else if (size <= sizeof(uint64_t))     packFixExt8(type, ptr);
+            else if (size <= sizeof(uint64_t) * 2) packFixExt16(type, ptr);
+        }
+
+        void packFixExt(const int8_t type, const uint16_t* ptr, const uint8_t size)
+        {
+            packFixExt(type, (const uint8_t*)ptr, size);
+        }
+
+        void packFixExt(const int8_t type, const uint32_t* ptr, const uint8_t size)
+        {
+            packFixExt(type, (const uint8_t*)ptr, size);
+        }
+
+        void packFixExt(const int8_t type, const uint64_t* ptr, const uint8_t size)
+        {
+            packFixExt(type, (const uint8_t*)ptr, size);
         }
 
         void packExtSize8(const int8_t type, const uint8_t size)
@@ -687,17 +796,50 @@ namespace msgpack {
             packRawByte((uint8_t)type);
         }
 
+        template <typename T, typename U>
+        auto packExt(const int8_t type, const T* ptr, const U size)
+        -> typename std::enable_if<std::is_integral<T>::value && std::is_integral<U>::value>::type
+        {
+            if (size <= sizeof(uint64_t) * 2)
+                packFixExt(type, ptr, size);
+            else
+            {
+                if (size <= std::numeric_limits<uint8_t>::max())
+                    packExtSize8(type, size);
+                else if (size <= std::numeric_limits<uint16_t>::max())
+                    packExtSize16(type, size);
+                else if (size <= std::numeric_limits<uint32_t>::max())
+                    packExtSize32(type, size);
+                packRawBytes((const uint8_t*)ptr, size);
+            }
+        }
+
+        void packExt(const object::ext& e)
+        {
+            packExt(e.type(), e.data(), e.size());
+        }
+
+
         // ---------- TIMESTAMP format family ----------
 
         void packTimestamp32(const uint32_t unix_time_sec)
         {
-            packFixExt4(-1, unix_time_sec);
+            packRawByte(Type::FIXEXT4);
+            packRawByte((uint8_t)-1);
+            packRawReversed(unix_time_sec);
+        }
+
+        void packTimestamp64(const uint64_t unix_time)
+        {
+            packRawByte(Type::FIXEXT8);
+            packRawByte((uint8_t)-1);
+            packRawReversed(unix_time);
         }
 
         void packTimestamp64(const uint64_t unix_time_sec, const uint32_t unix_time_nsec)
         {
-            uint64_t utime = ((unix_time_sec & 0x00000003FFFFFFFF) << 30) | (uint64_t)(unix_time_nsec & 0x3FFFFFFF);
-            packFixExt8(-1, utime);
+            uint64_t utime = ((unix_time_nsec & 0x00000003FFFFFFFF) << 34) | (uint64_t)(unix_time_sec & 0x3FFFFFFFF);
+            packTimestamp64(utime);
         }
 
         void packTimestamp96(const int64_t unix_time_sec, const uint32_t unix_time_nsec)
@@ -707,7 +849,21 @@ namespace msgpack {
             packRawReversed(unix_time_sec);
         }
 
-
+        void packTimestamp(const object::timespec& time)
+        {
+            if ((time.tv_sec >> 34) == 0)
+            {
+                uint64_t data64 = (time.tv_nsec << 34) | time.tv_sec;
+                if ((data64 & 0xffffffff00000000L) == 0)
+                    packTimestamp32((uint32_t)data64);
+                else
+                    packTimestamp64(data64);
+            }
+            else
+            {
+                packTimestamp96(time.tv_sec, time.tv_nsec);
+            }
+        }
 
 
     private:

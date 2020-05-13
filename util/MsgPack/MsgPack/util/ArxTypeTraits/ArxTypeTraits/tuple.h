@@ -26,6 +26,7 @@ namespace std {
         : tuple<tRest...>(iRest...)
         , mMember(iFirst)
         { }
+        constexpr tuple() {}
     };
 
     template<size_t N, typename... tTypes>
