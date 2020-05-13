@@ -119,6 +119,8 @@ MsgPacketizer::send(Serial, send_index, i, f, c); // -> send(i, f, c.i, c.f, c.s
 MsgPacketizer::subscribe(Serial, recv_index, i, f, c); // this is also ok
 ```
 
+Please see [MsgPack](https://github.com/hideakitai/MsgPack) for more detail.
+
 ## APIs
 
 ``` C++
