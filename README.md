@@ -193,18 +193,18 @@ These macros have no effect for STL enabled boards.
 // max size of MsgPack::map_t
 #define MSGPACK_MAX_MAP_SIZE            8
 // msgpack objects size in one packet
-#define MSGPACK_MAX_OBJECT_SIZE        32
+#define MSGPACK_MAX_OBJECT_SIZE        24
 ```
 
 #### Packetizer
 
 ``` C++
 // max number of decoded packet queues
-#define PACKETIZER_MAX_PACKET_QUEUE_SIZE     2
+#define PACKETIZER_MAX_PACKET_QUEUE_SIZE     1
 // max data bytes in packet
 #define PACKETIZER_MAX_PACKET_BINARY_SIZE  128
 // max number of callback for one stream
-#define PACKETIZER_MAX_CALLBACK_QUEUE_SIZE   8
+#define PACKETIZER_MAX_CALLBACK_QUEUE_SIZE   4
 // max number of streams
 #define PACKETIZER_MAX_STREAM_MAP_SIZE       2
 ```
@@ -212,8 +212,8 @@ These macros have no effect for STL enabled boards.
 
 ## Embedded Libraries
 
-- [MsgPack v0.1.4](https://github.com/hideakitai/MsgPack)
-- [Packetizer v0.3.3](https://github.com/hideakitai/Packetizer)
+- [MsgPack v0.1.5](https://github.com/hideakitai/MsgPack)
+- [Packetizer v0.3.5](https://github.com/hideakitai/Packetizer)
 
 
 ## License
