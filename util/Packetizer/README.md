@@ -136,7 +136,7 @@ None
 
 ## Embedded Libraries
 
-- [ArxTypeTraits v0.1.4](https://github.com/hideakitai/ArxTypeTraits)
+- [ArxTypeTraits v0.1.5](https://github.com/hideakitai/ArxTypeTraits)
 - [ArxContainer v0.3.3](https://github.com/hideakitai/ArxContainer)
 - [ArxSmartPtr v0.1.1](https://github.com/hideakitai/ArxSmartPtr)
 - [CRCx v0.2.1](https://github.com/hideakitai/CRCx)
@@ -421,11 +421,11 @@ But these default values are optimized for such boards, please be careful not to
 
 ``` C++
 // max number of decoded packet queues
-#define PACKETIZER_MAX_PACKET_QUEUE_SIZE     2
+#define PACKETIZER_MAX_PACKET_QUEUE_SIZE     1
 // max data bytes in packet
 #define PACKETIZER_MAX_PACKET_BINARY_SIZE  128
 // max number of callback for one stream
-#define PACKETIZER_MAX_CALLBACK_QUEUE_SIZE   8
+#define PACKETIZER_MAX_CALLBACK_QUEUE_SIZE   4
 // max number of streams
 #define PACKETIZER_MAX_STREAM_MAP_SIZE       2
 ```
