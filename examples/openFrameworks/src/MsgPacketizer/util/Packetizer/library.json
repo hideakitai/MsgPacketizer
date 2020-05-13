@@ -1,0 +1,20 @@
+{
+    "name": "Packetizer",
+    "keywords": "serial,binary",
+    "description": "binary data packetization encoder / decoder",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/hideakitai/Packetizer.git"
+    },
+    "authors":
+    {
+        "name": "Hideaki Tai",
+        "url": "https://github.com/hideakitai",
+        "maintainer": true
+    },
+    "version": "0.3.6",
+    "license": "MIT",
+    "frameworks": "*",
+    "platforms": "*"
+}
