@@ -134,47 +134,6 @@ For following archtectures, several storage size for packets are limited.
 - SPRESENSE
 
 
-### API Limitation
-
-There is limitation to `subscribe` packet for such boards.
-Only direct variable binding can be used.
-
-``` C++
-namespace MsgPacketizer
-{
-    // bind variables directly to specified index packet
-    template <typename... Args>
-    inline void subscribe(StreamType& stream, const uint8_t index, Args&... args);
-
-    // send arguments dilectly with variable types
-    template <typename... Args>
-    inline void send(StreamType& stream, const uint8_t index, Args&&... args);
-
-    // send binary data
-    inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size);
-
-    // must be called to receive packets
-    inline void parse(bool b_exec_cb = true);
-}
-```
-
-If you want to add callback as with STL enabled boards, please follow this way.
-
-``` C++
-// handle received data depeneding on index
-Packetizer::subscribe(Serial, recv_index, [&](const uint8_t* data, const uint8_t size)
-{
-    // unpack msgpack objects
-    MsgPack::Unpacker unpacker;
-    unpacker.feed(data, size);
-    unpacker.decode(i, f, s, v, m);
-
-    // send received data back
-    MsgPacketizer::send(Serial, send_back_index, i, f, s, v, m);
-});
-```
-
-
 ### Memory Management (only for NO-STL Boards)
 
 As mentioned above, for such boards like Arduino Uno, the storage sizes are limited.
