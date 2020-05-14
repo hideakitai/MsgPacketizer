@@ -32,14 +32,7 @@ namespace debug {
     using string_t = std::string;
 #endif
 
-    inline void print()
-    {
-#ifdef ARDUINO
-        stream->print(" ");
-#else
-        std::cout << " ";
-#endif
-    }
+    inline void print() { }
 
     template<typename Head, typename... Tail>
     inline void print(Head&& head, Tail&&... tail)
@@ -81,7 +74,7 @@ namespace debug {
     {
         while (!b)
         {
-            println("[ASSERT] ", file, ":", line, ":", func, "() : ", expr);
+            println("[ ASSERT ]", file, ":", line, ":", func, "() :", expr);
             delay(1000);
         }
     }
@@ -100,7 +93,7 @@ namespace debug {
             if      (level == LogLevel::ERROR)   lvl_str = "ERROR";
             else if (level == LogLevel::WARNING) lvl_str = "WARNING";
             else if (level == LogLevel::VERBOSE) lvl_str = "VERBOSE";
-            print("[", lvl_str, "] ", file, ":", line, ":", func, "() : ");
+            print("[", lvl_str, "]", file, ":", line, ":", func, "() :");
 #ifdef ARDUINO
             println(detail::forward<Args>(args)...);
 #else
