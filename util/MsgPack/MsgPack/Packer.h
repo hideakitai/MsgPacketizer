@@ -511,7 +511,7 @@ namespace msgpack {
             packRawByte(Type::FLOAT64);
             packRawReversed(value);
 #else
-            packFloat32(value); // Uno, etc. does not support double
+            packFloat32((const float)value); // Uno, etc. does not support double
 #endif // HT_SERIAL_MSGPACK_DISABLE_STL
         }
 
