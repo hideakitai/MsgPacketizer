@@ -31,31 +31,33 @@ namespace msgpack {
     class Packer
     {
         bin_t<uint8_t> buffer;
+        size_t n_indices {0};
 
     public:
 
         template <typename First, typename ...Rest>
-        auto encode(const First& first, Rest&&... rest)
+        auto serialize(const First& first, Rest&&... rest)
         -> typename std::enable_if<!std::is_pointer<First>::value>::type
         {
             pack(first);
-            encode(std::forward<Rest>(rest)...);
+            serialize(std::forward<Rest>(rest)...);
         }
 
         template <typename T>
-        void encode(const T* data, const size_t size)
+        void serialize(const T* data, const size_t size)
         {
             pack(data, size);
         }
 
-        void encode()
+        void serialize()
         {
         }
 
         const bin_t<uint8_t>& packet() const { return buffer; }
         const uint8_t* data() const { return buffer.data(); }
         size_t size() const { return buffer.size(); }
-        void clear() { buffer.clear(); }
+        size_t indices() const { return n_indices; }
+        void clear() { buffer.clear(); n_indices = 0; }
 
 
         /////////////////////////////////////////////////
@@ -108,11 +110,11 @@ namespace msgpack {
         {
             size_t size = sizeof(T);
             if (size == sizeof(uint8_t))
-                if (value <= (T)BitMask::UINT7) packIntU7(value);
-                else                            packIntU8(value);
-            else if (size == sizeof(uint16_t))  packIntU16(value);
-            else if (size == sizeof(uint32_t))  packIntU32(value);
-            else if (size == sizeof(uint64_t))  packIntU64(value);
+                if (value <= (T)BitMask::UINT7) packUInt7(value);
+                else                            packUInt8(value);
+            else if (size == sizeof(uint16_t))  packUInt16(value);
+            else if (size == sizeof(uint32_t))  packUInt32(value);
+            else if (size == sizeof(uint64_t))  packUInt64(value);
         }
 
         template <typename T>
@@ -130,7 +132,7 @@ namespace msgpack {
                 if ((value <  0) && value >= ((T)Type::INT5 | ((T)BitMask::INT5 & value)))
                     packInt5(value);
                 else if ((value >= 0) && (value <= (T)BitMask::UINT7))
-                    packIntU7(value);
+                    packUInt7(value);
                 else
                     packInt8(value);
             else if (size == sizeof(int16_t))  packInt16(value);
@@ -419,12 +421,14 @@ namespace msgpack {
         void packNil()
         {
             packRawByte(Type::NIL);
+            ++n_indices;
         }
 
         void packNil(const object::nil_t& n)
         {
             (void)n;
             packRawByte(Type::NIL);
+            ++n_indices;
         }
 
 
@@ -433,67 +437,78 @@ namespace msgpack {
         void packBool(const bool b)
         {
             packRawByte((uint8_t)Type::BOOL | ((uint8_t)b & (uint8_t)BitMask::BOOL));
+            ++n_indices;
         }
 
 
         // ---------- INT format family ----------
 
-        void packIntU7(const uint8_t value)
+        void packUInt7(const uint8_t value)
         {
             packRawByte((uint8_t)Type::UINT7 | (value & (uint8_t)BitMask::UINT7));
+            ++n_indices;
         }
 
-        void packIntU8(const uint8_t value)
+        void packUInt8(const uint8_t value)
         {
             packRawByte(Type::UINT8);
             packRawByte(value);
+            ++n_indices;
         }
 
-        void packIntU16(const uint16_t value)
+        void packUInt16(const uint16_t value)
         {
             packRawByte(Type::UINT16);
             packRawReversed(value);
+            ++n_indices;
         }
 
-        void packIntU32(const uint32_t value)
+        void packUInt32(const uint32_t value)
         {
             packRawByte(Type::UINT32);
             packRawReversed(value);
+            ++n_indices;
         }
 
-        void packIntU64(const uint64_t value)
+        void packUInt64(const uint64_t value)
         {
             packRawByte(Type::UINT64);
             packRawReversed(value);
+            ++n_indices;
         }
 
         void packInt5(const int8_t value)
         {
             packRawByte((uint8_t)Type::INT5 | ((uint8_t)value & (uint8_t)BitMask::INT5));
+            ++n_indices;
         }
 
         void packInt8(const int8_t value)
         {
             packRawByte(Type::INT8);
             packRawByte(value);
+            ++n_indices;
         }
 
         void packInt16(const int16_t value)
         {
             packRawByte(Type::INT16);
             packRawReversed(value);
+            ++n_indices;
         }
 
         void packInt32(const int32_t value)
         {
             packRawByte(Type::INT32);
             packRawReversed(value);
+            ++n_indices;
         }
 
         void packInt64(const int64_t value)
         {
             packRawByte(Type::INT64);
             packRawReversed(value);
+            ++n_indices;
         }
 
 
@@ -503,6 +518,7 @@ namespace msgpack {
         {
             packRawByte(Type::FLOAT32);
             packRawReversed(value);
+            ++n_indices;
         }
 
         void packFloat64(const double value)
@@ -510,8 +526,9 @@ namespace msgpack {
 #ifndef HT_SERIAL_MSGPACK_DISABLE_STL
             packRawByte(Type::FLOAT64);
             packRawReversed(value);
+            ++n_indices;
 #else
-            packFloat32(value); // Uno, etc. does not support double
+            packFloat32((const float)value); // Uno, etc. does not support double
 #endif // HT_SERIAL_MSGPACK_DISABLE_STL
         }
 
@@ -522,6 +539,7 @@ namespace msgpack {
         {
             packRawByte((uint8_t)Type::STR5 | (str.length() & (uint8_t)BitMask::STR5));
             packRawBytes(str.c_str(), str.length());
+            ++n_indices;
         }
         void packString5(const char* value)
         {
@@ -534,6 +552,7 @@ namespace msgpack {
             packRawByte(Type::STR8);
             packRawByte((uint8_t)str.length());
             packRawBytes(str.c_str(), str.length());
+            ++n_indices;
         }
         void packString8(const char* value)
         {
@@ -546,6 +565,7 @@ namespace msgpack {
             packRawByte(Type::STR16);
             packRawReversed((uint16_t)str.length());
             packRawBytes(str.c_str(), str.length());
+            ++n_indices;
         }
         void packString16(const char* value)
         {
@@ -558,6 +578,7 @@ namespace msgpack {
             packRawByte(Type::STR32);
             packRawReversed((uint32_t)str.length());
             packRawBytes(str.c_str(), str.length());
+            ++n_indices;
         }
         void packString32(const char* value)
         {
@@ -572,6 +593,7 @@ namespace msgpack {
             packRawByte(Type::BIN8);
             packRawByte(size);
             packRawBytes(value, size);
+            ++n_indices;
         }
 
         void packBinary16(const uint8_t* value, const uint16_t size)
@@ -579,6 +601,7 @@ namespace msgpack {
             packRawByte(Type::BIN16);
             packRawReversed(size);
             packRawBytes(value, size);
+            ++n_indices;
         }
 
         void packBinary32(const uint8_t* value, const uint32_t size)
@@ -586,6 +609,7 @@ namespace msgpack {
             packRawByte(Type::BIN32);
             packRawReversed(size);
             packRawBytes(value, size);
+            ++n_indices;
         }
 
         // ---------- ARRAY format family ----------
@@ -603,18 +627,21 @@ namespace msgpack {
         void packArraySize4(const uint8_t value)
         {
             packRawByte((uint8_t)Type::ARRAY4 | (value & (uint8_t)BitMask::ARRAY4));
+            ++n_indices;
         }
 
         void packArraySize16(const uint16_t value)
         {
             packRawByte(Type::ARRAY16);
             packRawReversed(value);
+            ++n_indices;
         }
 
         void packArraySize32(const uint32_t value)
         {
             packRawByte(Type::ARRAY32);
             packRawReversed(value);
+            ++n_indices;
         }
 
 
@@ -633,18 +660,21 @@ namespace msgpack {
         void packMapSize4(const uint8_t value)
         {
             packRawByte((uint8_t)Type::MAP4 | (value & (uint8_t)BitMask::MAP4));
+            ++n_indices;
         }
 
         void packMapSize16(const uint16_t value)
         {
             packRawByte(Type::MAP16);
             packRawReversed(value);
+            ++n_indices;
         }
 
         void packMapSize32(const uint32_t value)
         {
             packRawByte(Type::MAP32);
             packRawReversed(value);
+            ++n_indices;
         }
 
 
@@ -655,6 +685,7 @@ namespace msgpack {
             packRawByte(Type::FIXEXT1);
             packRawByte((uint8_t)type);
             packRawByte(value);
+            ++n_indices;
         }
 
         void packFixExt2(const int8_t type, const uint16_t value)
@@ -662,6 +693,7 @@ namespace msgpack {
             packRawByte(Type::FIXEXT2);
             packRawByte((uint8_t)type);
             packRawBytes((const uint8_t*)&value, sizeof(value));
+            ++n_indices;
         }
 
         void packFixExt2(const int8_t type, const uint8_t* ptr)
@@ -669,6 +701,7 @@ namespace msgpack {
             packRawByte(Type::FIXEXT2);
             packRawByte((uint8_t)type);
             packRawBytes((const uint8_t*)ptr, 2);
+            ++n_indices;
         }
 
         void packFixExt2(const int8_t type, const uint16_t* ptr)
@@ -681,6 +714,7 @@ namespace msgpack {
             packRawByte(Type::FIXEXT4);
             packRawByte((uint8_t)type);
             packRawBytes((const uint8_t*)&value, sizeof(value));
+            ++n_indices;
         }
 
         void packFixExt4(const int8_t type, const uint8_t* ptr)
@@ -688,6 +722,7 @@ namespace msgpack {
             packRawByte(Type::FIXEXT4);
             packRawByte((uint8_t)type);
             packRawBytes((const uint8_t*)ptr, 4);
+            ++n_indices;
         }
 
         void packFixExt4(const int8_t type, const uint32_t* ptr)
@@ -700,6 +735,7 @@ namespace msgpack {
             packRawByte(Type::FIXEXT8);
             packRawByte((uint8_t)type);
             packRawBytes((const uint8_t*)&value, sizeof(value));
+            ++n_indices;
         }
 
         void packFixExt8(const int8_t type, const uint8_t* ptr)
@@ -707,6 +743,7 @@ namespace msgpack {
             packRawByte(Type::FIXEXT8);
             packRawByte((uint8_t)type);
             packRawBytes((const uint8_t*)ptr, 8);
+            ++n_indices;
         }
 
         void packFixExt8(const int8_t type, const uint64_t* ptr)
@@ -720,6 +757,7 @@ namespace msgpack {
             packRawByte((uint8_t)type);
             packRawBytes((const uint8_t*)&value_h, sizeof(value_h));
             packRawBytes((const uint8_t*)&value_l, sizeof(value_l));
+            ++n_indices;
         }
 
         void packFixExt16(const int8_t type, const uint8_t* ptr)
@@ -727,6 +765,7 @@ namespace msgpack {
             packRawByte(Type::FIXEXT16);
             packRawByte((uint8_t)type);
             packRawBytes((const uint8_t*)ptr, 16);
+            ++n_indices;
         }
 
         void packFixExt16(const int8_t type, const uint64_t* ptr)
@@ -780,6 +819,7 @@ namespace msgpack {
             packRawByte(Type::EXT8);
             packRawByte(size);
             packRawByte((uint8_t)type);
+            ++n_indices;
         }
 
         void packExtSize16(const int8_t type, const uint16_t size)
@@ -787,6 +827,7 @@ namespace msgpack {
             packRawByte(Type::EXT16);
             packRawReversed(size);
             packRawByte((uint8_t)type);
+            ++n_indices;
         }
 
         void packExtSize32(const int8_t type, const uint32_t size)
@@ -794,6 +835,7 @@ namespace msgpack {
             packRawByte(Type::EXT32);
             packRawReversed(size);
             packRawByte((uint8_t)type);
+            ++n_indices;
         }
 
         template <typename T, typename U>
@@ -827,6 +869,7 @@ namespace msgpack {
             packRawByte(Type::FIXEXT4);
             packRawByte((uint8_t)-1);
             packRawReversed(unix_time_sec);
+            ++n_indices;
         }
 
         void packTimestamp64(const uint64_t unix_time)
@@ -834,6 +877,7 @@ namespace msgpack {
             packRawByte(Type::FIXEXT8);
             packRawByte((uint8_t)-1);
             packRawReversed(unix_time);
+            ++n_indices;
         }
 
         void packTimestamp64(const uint64_t unix_time_sec, const uint32_t unix_time_nsec)
@@ -847,6 +891,7 @@ namespace msgpack {
             packExtSize8(-1, 12);
             packRawReversed(unix_time_nsec);
             packRawReversed(unix_time_sec);
+            ++n_indices;
         }
 
         void packTimestamp(const object::timespec& time)

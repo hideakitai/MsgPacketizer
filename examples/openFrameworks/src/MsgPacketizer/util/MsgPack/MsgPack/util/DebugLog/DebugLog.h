@@ -32,25 +32,7 @@ namespace debug {
     using string_t = std::string;
 #endif
 
-    inline void print()
-    {
-#ifdef ARDUINO
-        stream->print(" ");
-#else
-        std::cout << " ";
-#endif
-    }
-
-    template<typename Head>
-    inline void print(Head&& head)
-    {
-#ifdef ARDUINO
-        stream->print(head);
-#else
-        std::cout << head;
-#endif
-        print();
-    }
+    inline void print() { }
 
     template<typename Head, typename... Tail>
     inline void print(Head&& head, Tail&&... tail)
@@ -74,17 +56,6 @@ namespace debug {
 #endif
     }
 
-    template<typename Head>
-    inline void println(Head&& head)
-    {
-#ifdef ARDUINO
-        stream->print(head);
-#else
-        std::cout << head;
-#endif
-        println();
-    }
-
     template<typename Head, typename... Tail>
     inline void println(Head&& head, Tail&&... tail)
     {
@@ -103,7 +74,7 @@ namespace debug {
     {
         while (!b)
         {
-            println("[ASSERT] ", file, ":", line, ":", func, "() : ", expr);
+            println("[ ASSERT ]", file, ":", line, ":", func, "() :", expr);
             delay(1000);
         }
     }
@@ -112,7 +83,8 @@ namespace debug {
     enum class LogLevel {NONE, ERROR, WARNING, VERBOSE};
     LogLevel log_level = LogLevel::VERBOSE;
 
-    void log(LogLevel level, const char* file, int line, const char* func, const char* expr)
+    template <typename... Args>
+    void log(LogLevel level, const char* file, int line, const char* func, Args&&... args)
     {
         if ((log_level == LogLevel::NONE) || (level == LogLevel::NONE)) return;
         if ((int)level <= (int)log_level)
@@ -121,7 +93,12 @@ namespace debug {
             if      (level == LogLevel::ERROR)   lvl_str = "ERROR";
             else if (level == LogLevel::WARNING) lvl_str = "WARNING";
             else if (level == LogLevel::VERBOSE) lvl_str = "VERBOSE";
-            println("[", lvl_str, "] ", file, ":", line, ":", func, "() : ", expr);
+            print("[", lvl_str, "]", file, ":", line, ":", func, "() :");
+#ifdef ARDUINO
+            println(detail::forward<Args>(args)...);
+#else
+            println(std::forward<Args>(args)...);
+#endif
         }
     }
 
@@ -132,9 +109,9 @@ namespace debug {
 
 #define PRINT(...) ((void)0)
 #define PRINTLN(...) ((void)0)
-#define LOG_ERROR(s,...) ((void)0)
-#define LOG_WARNING(s,...) ((void)0)
-#define LOG_VERBOSE(s,...) ((void)0)
+#define LOG_ERROR(...) ((void)0)
+#define LOG_WARNING(...) ((void)0)
+#define LOG_VERBOSE(...) ((void)0)
 #define ASSERT(b) ((void)0)
 #ifdef ARDUINO
     #define DEBUG_LOG_ATTACH_STREAM(s) ((void)0)
@@ -145,9 +122,9 @@ namespace debug {
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 #define PRINT(...) arx::debug::print(__VA_ARGS__)
 #define PRINTLN(...) arx::debug::println(__VA_ARGS__)
-#define LOG_ERROR(s,...) arx::debug::log(arx::debug::LogLevel::ERROR, __FILENAME__, __LINE__, __func__, s)
-#define LOG_WARNING(s,...) arx::debug::log(arx::debug::LogLevel::WARNING, __FILENAME__, __LINE__, __func__, s)
-#define LOG_VERBOSE(s,...) arx::debug::log(arx::debug::LogLevel::VERBOSE, __FILENAME__, __LINE__, __func__, s)
+#define LOG_ERROR(...) arx::debug::log(arx::debug::LogLevel::ERROR, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
+#define LOG_WARNING(...) arx::debug::log(arx::debug::LogLevel::WARNING, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
+#define LOG_VERBOSE(...) arx::debug::log(arx::debug::LogLevel::VERBOSE, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
 #ifdef ARDUINO
     #define DEBUG_LOG_ATTACH_STREAM(s) arx::debug::attach(s)
     #define ASSERT(b) arx::debug::assert((b), __FILENAME__, __LINE__, __func__, #b)

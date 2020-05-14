@@ -79,6 +79,7 @@ namespace msgpack {
             nil_t& operator=(const bool b) { this->is_nil = b; return *this; }
             bool operator()() const { return this->is_nil; }
             bool operator==(const nil_t& x) { return (*this)() == x(); }
+            bool operator!=(const nil_t& x) { return !(*this == x); }
         };
 
         class ext
@@ -209,11 +210,11 @@ namespace msgpack {
 #define MSGPACK_DEFINE(...) \
     void to_msgpack(MsgPack::Packer& p) const \
     { \
-        p.encode(__VA_ARGS__); \
+        p.serialize(__VA_ARGS__); \
     } \
     void from_msgpack(MsgPack::Unpacker& p) \
     { \
-        p.decode(__VA_ARGS__); \
+        p.deserialize(__VA_ARGS__); \
     }
 
 #define MSGPACK_BASE(base) (*const_cast<base *>(static_cast<base const*>(this)))

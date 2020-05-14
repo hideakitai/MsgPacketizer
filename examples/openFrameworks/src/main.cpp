@@ -74,7 +74,6 @@ public:
 
         ofDrawBitmapString(always_info.str(), 20, 60);
         ofDrawBitmapString(echo_back_info.str(), 20, 120);
-
     }
 };
 

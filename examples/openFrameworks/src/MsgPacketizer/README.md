@@ -5,9 +5,11 @@
 
 ## Feature
 
-- one-line serialize / deserialize + packetize + send / receive
-- serializer / deserializer based on [MsgPack v0.1.3](https://github.com/hideakitai/MsgPack)
-- packetize based on [Packetizer v0.3.3](https://github.com/hideakitai/Packetizer)
+- one-line serialize / deserialize + packetize + robust send / receive
+- serializer / deserializer supports almost all standard type of C++ same as [msgpack-c](https://github.com/msgpack/msgpack-c)
+- supports custom class serialization / deserialization
+- serializer / deserializer based on [MsgPack](https://github.com/hideakitai/MsgPack)
+- packetize based on [Packetizer](https://github.com/hideakitai/Packetizer)
 
 
 ## Packet Protocol
@@ -35,9 +37,9 @@
 // input to msgpack
 int i;
 float f;
-String s;
-std::vector<int> v;
-std::map<String, float> m;
+MsgPack::str_t s; // std::string or String
+MsgPack::arr_t<int> v; // std::vector or arx::vector
+MsgPack::map_t<String, float> m; // std::map or arx::map
 
 uint8_t recv_index = 0x12;
 uint8_t send_index = 0x34;
@@ -78,7 +80,7 @@ void setup()
     // which has incoming argument types/data
 
     MsgPacketizer::subscribe(Serial, recv_index,
-        [](int i, float f, String s, std::vector<int> v, std::map<String, float> m)
+        [](int i, float f, MsgPack::str_t s, MsgPack::arr_t<int> v, MsgPack::map_t<String, float> m)
         {
             // send received data back
             MsgPacketizer::send(Serial, send_index, i, f, s, v, m);
@@ -93,6 +95,33 @@ void loop()
 }
 
 ```
+
+### Custom Class Adaptation
+
+To serialize / deserialize custom type you defined, please use `MSGPACK_DEFINE()` macro inside of your class.
+
+``` C++
+struct CustomClass
+{
+    int i;
+    float f;
+    MsgPack::str_t s;
+
+    MSGPACK_DEFINE(i, f, s);
+};
+```
+
+After that, you can serialize / deserialize your class completely same as other types.
+
+``` C++
+int i;
+float f;
+CustomClass c;
+MsgPacketizer::send(Serial, send_index, i, f, c); // -> send(i, f, c.i, c.f, c.s)
+MsgPacketizer::subscribe(Serial, recv_index, i, f, c); // this is also ok
+```
+
+Please see [MsgPack](https://github.com/hideakitai/MsgPack) for more detail.
 
 ## APIs
 
@@ -134,47 +163,6 @@ For following archtectures, several storage size for packets are limited.
 - SPRESENSE
 
 
-### API Limitation
-
-There is limitation to `subscribe` packet for such boards.
-Only direct variable binding can be used.
-
-``` C++
-namespace MsgPacketizer
-{
-    // bind variables directly to specified index packet
-    template <typename... Args>
-    inline void subscribe(StreamType& stream, const uint8_t index, Args&... args);
-
-    // send arguments dilectly with variable types
-    template <typename... Args>
-    inline void send(StreamType& stream, const uint8_t index, Args&&... args);
-
-    // send binary data
-    inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size);
-
-    // must be called to receive packets
-    inline void parse(bool b_exec_cb = true);
-}
-```
-
-If you want to add callback as with STL enabled boards, please follow this way.
-
-``` C++
-// handle received data depeneding on index
-Packetizer::subscribe(Serial, recv_index, [&](const uint8_t* data, const uint8_t size)
-{
-    // unpack msgpack objects
-    MsgPack::Unpacker unpacker;
-    unpacker.feed(data, size);
-    unpacker.decode(i, f, s, v, m);
-
-    // send received data back
-    MsgPacketizer::send(Serial, send_back_index, i, f, s, v, m);
-});
-```
-
-
 ### Memory Management (only for NO-STL Boards)
 
 As mentioned above, for such boards like Arduino Uno, the storage sizes are limited.
@@ -212,8 +200,8 @@ These macros have no effect for STL enabled boards.
 
 ## Embedded Libraries
 
-- [MsgPack v0.1.5](https://github.com/hideakitai/MsgPack)
-- [Packetizer v0.3.5](https://github.com/hideakitai/Packetizer)
+- [MsgPack v0.1.7](https://github.com/hideakitai/MsgPack)
+- [Packetizer v0.3.6](https://github.com/hideakitai/Packetizer)
 
 
 ## License
