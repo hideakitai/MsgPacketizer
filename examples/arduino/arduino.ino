@@ -13,7 +13,7 @@
 // input to msgpack
 int i;
 float f;
-String s;
+MsgPack::str_t s;
 MsgPack::arr_t<int> v;
 MsgPack::map_t<String, float> m;
 
@@ -32,7 +32,7 @@ void setup()
 
     // handle received data with lambda which has incoming argument types/data
     MsgPacketizer::subscribe(Serial, recv_lambda_index,
-        [&](const float& ff, const MsgPack::map_t<String, float>& mm)
+        [&](const float& ff, const MsgPack::map_t<MsgPack::str_t, float>& mm)
         {
             f = ff + 100.f;
             m = mm;
