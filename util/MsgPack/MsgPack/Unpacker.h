@@ -133,7 +133,7 @@ namespace msgpack {
             else if (isUInt64()) value = unpackUInt64();
             else
             {
-                LOG_WARNING("unpack type is not matched :", (int)type);
+                LOG_WARNING("unpack type is not matched :", (int)getType());
                 value = 0;
                 ++curr_index;
             }
@@ -156,7 +156,7 @@ namespace msgpack {
             else if (isInt64()) value = unpackInt64();
             else
             {
-                LOG_WARNING("unpack type is not matched :", (int)type);
+                LOG_WARNING("unpack type is not matched :", (int)getType());
                 value = 0;
                 ++curr_index;
             }
@@ -178,7 +178,7 @@ namespace msgpack {
             else if (isFloat64()) value = unpackFloat64();
             else
             {
-                LOG_WARNING("unpack type is not matched :", (int)type);
+                LOG_WARNING("unpack type is not matched :", (int)getType());
                 value = 0.0;
                 ++curr_index;
             }
@@ -198,7 +198,7 @@ namespace msgpack {
             else if (isStr32()) str = unpackString32();
             else
             {
-                LOG_WARNING("unpack type is not matched :", (int)type);
+                LOG_WARNING("unpack type is not matched :", (int)getType());
                 str = "";
                 ++curr_index;
             }
@@ -898,7 +898,7 @@ namespace msgpack {
             }
             else
             {
-                LOG_WARNING("unpack timestamp object-type not matched :", (int)type);
+                LOG_WARNING("unpack timestamp object-type not matched :", (int)getType());
             }
             return std::move(ts);
         }

@@ -7,6 +7,7 @@
  || defined(ARDUINO_ARCH_SAMD)\
  || defined(ARDUINO_spresense_ast)
 #define HT_SERIAL_MSGPACK_DISABLE_STL
+#define NDEBUG // disable conversion warning
 #endif
 
 #include "MsgPack/Types.h"
