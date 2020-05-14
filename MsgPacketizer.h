@@ -24,33 +24,38 @@ namespace msgpacketizer {
 #endif
 
 #ifdef HT_SERIAL_MSGPACKETIZER_DISABLE_STL
-    using DecoderRef = arx::shared_ptr<MsgPack::Unpacker>;
-    using DecoderMap = arx::map<StreamType*, DecoderRef, PACKETIZER_MAX_STREAM_MAP_SIZE>;
+    using UnpackerRef = arx::shared_ptr<MsgPack::Unpacker>;
+    using UnpackerMap = arx::map<StreamType*, UnpackerRef, PACKETIZER_MAX_STREAM_MAP_SIZE>;
     using namespace arx;
 #else
-    using DecoderRef = std::shared_ptr<MsgPack::Unpacker>;
-    using DecoderMap = std::map<StreamType*, DecoderRef>;
+    using UnpackerRef = std::shared_ptr<MsgPack::Unpacker>;
+    using UnpackerMap = std::map<StreamType*, UnpackerRef>;
     using namespace std;
 #endif // HT_SERIAL_MSGPACKETIZER_DISABLE_STL
 
 
-    class EncodeManager
+    class PackerManager
     {
-        EncodeManager() {}
-        EncodeManager(const EncodeManager&) = delete;
-        EncodeManager& operator=(const EncodeManager&) = delete;
+        PackerManager() {}
+        PackerManager(const PackerManager&) = delete;
+        PackerManager& operator=(const PackerManager&) = delete;
 
         MsgPack::Packer encoder;
 
     public:
 
-        static EncodeManager& getInstance()
+        static PackerManager& getInstance()
         {
-            static EncodeManager m;
+            static PackerManager m;
             return m;
         }
 
-        MsgPack::Packer& getEncoder()
+        const MsgPack::Packer& getPacker() const
+        {
+            return encoder;
+        }
+
+        MsgPack::Packer& getPacker()
         {
             return encoder;
         }
@@ -59,38 +64,49 @@ namespace msgpacketizer {
     template <typename... Args>
     inline void send(StreamType& stream, const uint8_t index, Args&&... args)
     {
-        auto& packer = EncodeManager::getInstance().getEncoder();
+        auto& packer = PackerManager::getInstance().getPacker();
         packer.clear();
-        packer.encode(std::forward<Args>(args)...);
+        packer.serialize(std::forward<Args>(args)...);
         Packetizer::send(stream, index, packer.data(), packer.size());
     }
 
     inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size)
     {
-        auto& packer = EncodeManager::getInstance().getEncoder();
+        auto& packer = PackerManager::getInstance().getPacker();
         packer.clear();
-        packer.encode(data, size);
+        packer.serialize(data, size);
         Packetizer::send(stream, index, packer.data(), packer.size());
     }
 
-
-    class DecodeManager
+    inline void send(StreamType& stream, const uint8_t index)
     {
-        DecodeManager() {}
-        DecodeManager(const DecodeManager&) = delete;
-        DecodeManager& operator=(const DecodeManager&) = delete;
+        auto& packer = PackerManager::getInstance().getPacker();
+        Packetizer::send(stream, index, packer.data(), packer.size());
+    }
 
-        DecoderMap decoders;
+    const MsgPack::Packer& getPacker()
+    {
+        return PackerManager::getInstance().getPacker();
+    }
+
+
+    class UnpackerManager
+    {
+        UnpackerManager() {}
+        UnpackerManager(const UnpackerManager&) = delete;
+        UnpackerManager& operator=(const UnpackerManager&) = delete;
+
+        UnpackerMap decoders;
 
     public:
 
-        static DecodeManager& getInstance()
+        static UnpackerManager& getInstance()
         {
-            static DecodeManager m;
+            static UnpackerManager m;
             return m;
         }
 
-        DecoderRef getDecoderRef(const StreamType& stream)
+        UnpackerRef getUnpackerRef(const StreamType& stream)
         {
             StreamType* s = (StreamType*)&stream;
             if (decoders.find(s) == decoders.end())
@@ -98,12 +114,12 @@ namespace msgpacketizer {
             return decoders[s];
         }
 
-        const DecoderMap& getDecoderMap() const
+        const UnpackerMap& getUnpackerMap() const
         {
             return decoders;
         }
 
-        DecoderMap& getDecoderMap()
+        UnpackerMap& getUnpackerMap()
         {
             return decoders;
         }
@@ -115,10 +131,10 @@ namespace msgpacketizer {
     {
         Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size)
         {
-            auto unpacker = DecodeManager::getInstance().getDecoderRef(stream);
+            auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
             unpacker->clear();
             unpacker->feed(data, size);
-            unpacker->decode(args...);
+            unpacker->deserialize(args...);
         });
     }
 
@@ -130,11 +146,11 @@ namespace msgpacketizer {
             Packetizer::subscribe(stream, index,
                 [&, cb {std::move(callback)}](const uint8_t* data, const uint8_t size)
                 {
-                    auto unpacker = DecodeManager::getInstance().getDecoderRef(stream);
+                    auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                     unpacker->clear();
                     unpacker->feed(data, size);
                     std::tuple<std::remove_cvref_t<Args>...> t;
-                    unpacker->decodeTo(t);
+                    unpacker->deserializeToTuple(t);
                     std::apply(cb, t);
                 }
             );
@@ -146,7 +162,7 @@ namespace msgpacketizer {
             Packetizer::subscribe(stream,
                 [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const uint8_t size)
                 {
-                    auto unpacker = DecodeManager::getInstance().getDecoderRef(stream);
+                    auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                     unpacker->clear();
                     unpacker->feed(data, size);
                     cb(index, *unpacker);
@@ -173,6 +189,17 @@ namespace msgpacketizer {
     inline void parse(bool b_exec_cb = true)
     {
         Packetizer::parse(b_exec_cb);
+    }
+
+
+    UnpackerRef getUnpackerRef(const StreamType& stream)
+    {
+        return UnpackerManager::getInstance().getUnpackerRef(stream);
+    }
+
+    UnpackerMap& getUnpackerMap()
+    {
+        return UnpackerManager::getInstance().getUnpackerMap();
     }
 
 } // namespace msgpacketizer
