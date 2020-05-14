@@ -35,20 +35,20 @@ namespace msgpack {
     public:
 
         template <typename First, typename ...Rest>
-        auto encode(const First& first, Rest&&... rest)
+        auto serialize(const First& first, Rest&&... rest)
         -> typename std::enable_if<!std::is_pointer<First>::value>::type
         {
             pack(first);
-            encode(std::forward<Rest>(rest)...);
+            serialize(std::forward<Rest>(rest)...);
         }
 
         template <typename T>
-        void encode(const T* data, const size_t size)
+        void serialize(const T* data, const size_t size)
         {
             pack(data, size);
         }
 
-        void encode()
+        void serialize()
         {
         }
 
@@ -108,11 +108,11 @@ namespace msgpack {
         {
             size_t size = sizeof(T);
             if (size == sizeof(uint8_t))
-                if (value <= (T)BitMask::UINT7) packIntU7(value);
-                else                            packIntU8(value);
-            else if (size == sizeof(uint16_t))  packIntU16(value);
-            else if (size == sizeof(uint32_t))  packIntU32(value);
-            else if (size == sizeof(uint64_t))  packIntU64(value);
+                if (value <= (T)BitMask::UINT7) packUInt7(value);
+                else                            packUInt8(value);
+            else if (size == sizeof(uint16_t))  packUInt16(value);
+            else if (size == sizeof(uint32_t))  packUInt32(value);
+            else if (size == sizeof(uint64_t))  packUInt64(value);
         }
 
         template <typename T>
@@ -130,7 +130,7 @@ namespace msgpack {
                 if ((value <  0) && value >= ((T)Type::INT5 | ((T)BitMask::INT5 & value)))
                     packInt5(value);
                 else if ((value >= 0) && (value <= (T)BitMask::UINT7))
-                    packIntU7(value);
+                    packUInt7(value);
                 else
                     packInt8(value);
             else if (size == sizeof(int16_t))  packInt16(value);
@@ -438,30 +438,30 @@ namespace msgpack {
 
         // ---------- INT format family ----------
 
-        void packIntU7(const uint8_t value)
+        void packUInt7(const uint8_t value)
         {
             packRawByte((uint8_t)Type::UINT7 | (value & (uint8_t)BitMask::UINT7));
         }
 
-        void packIntU8(const uint8_t value)
+        void packUInt8(const uint8_t value)
         {
             packRawByte(Type::UINT8);
             packRawByte(value);
         }
 
-        void packIntU16(const uint16_t value)
+        void packUInt16(const uint16_t value)
         {
             packRawByte(Type::UINT16);
             packRawReversed(value);
         }
 
-        void packIntU32(const uint32_t value)
+        void packUInt32(const uint32_t value)
         {
             packRawByte(Type::UINT32);
             packRawReversed(value);
         }
 
-        void packIntU64(const uint64_t value)
+        void packUInt64(const uint64_t value)
         {
             packRawByte(Type::UINT64);
             packRawReversed(value);

@@ -55,25 +55,25 @@ namespace msgpack {
         }
 
         template <typename First, typename ...Rest>
-        void decode(First& first, Rest&&... rest)
+        void deserialize(First& first, Rest&&... rest)
         {
             unpack(first);
-            decode(std::forward<Rest>(rest)...);
+            deserialize(std::forward<Rest>(rest)...);
         }
-        void decode() {}
+        void deserialize() {}
 
         template <typename... Ts>
-        void decodeTo(std::tuple<Ts...>& t)
+        void deserializeToTuple(std::tuple<Ts...>& t)
         {
-            decodeTo(std::make_index_sequence<sizeof...(Ts)>(), t);
+            deserializeToTuple(std::make_index_sequence<sizeof...(Ts)>(), t);
         }
         template <typename... Ts, size_t... Is>
-        void decodeTo(std::index_sequence<Is...>&&, std::tuple<Ts...>& t)
+        void deserializeToTuple(std::index_sequence<Is...>&&, std::tuple<Ts...>& t)
         {
             size_t i {0};
             idx_t {(unpack(std::get<Is>(t)), i++)...};
         }
-        void decodeTo() {}
+        void deserializeToTuple() {}
 
         bool available() const { return b_decoded; }
         size_t size() const { return indices.size(); }
@@ -126,12 +126,11 @@ namespace msgpack {
             !std::is_signed<T>::value
         >::type
         {
-            Type type = getType();
-            if      (type == Type::UINT7)  value = unpackIntU7();
-            else if (type == Type::UINT8)  value = unpackIntU8();
-            else if (type == Type::UINT16) value = unpackIntU16();
-            else if (type == Type::UINT32) value = unpackIntU32();
-            else if (type == Type::UINT64) value = unpackIntU64();
+            if      (isUInt7())  value = unpackUInt7();
+            else if (isUInt8())  value = unpackUInt8();
+            else if (isUInt16()) value = unpackUInt16();
+            else if (isUInt32()) value = unpackUInt32();
+            else if (isUInt64()) value = unpackUInt64();
             else
             {
                 LOG_WARNING("unpack type is not matched :", (int)type);
@@ -150,12 +149,11 @@ namespace msgpack {
             std::is_signed<T>::value
         >::type
         {
-            Type type = getType();
-            if      (type == Type::INT5)  value = unpackInt5();
-            else if (type == Type::INT8)  value = unpackInt8();
-            else if (type == Type::INT16) value = unpackInt16();
-            else if (type == Type::INT32) value = unpackInt32();
-            else if (type == Type::INT64) value = unpackInt64();
+            if      (isInt5())  value = unpackInt5();
+            else if (isInt8())  value = unpackInt8();
+            else if (isInt16()) value = unpackInt16();
+            else if (isInt32()) value = unpackInt32();
+            else if (isInt64()) value = unpackInt64();
             else
             {
                 LOG_WARNING("unpack type is not matched :", (int)type);
@@ -176,9 +174,8 @@ namespace msgpack {
             std::is_floating_point<T>::value
         >::type
         {
-            Type type = getType();
-            if      (type == Type::FLOAT32) value = unpackFloat32();
-            else if (type == Type::FLOAT64) value = unpackFloat64();
+            if      (isFloat32()) value = unpackFloat32();
+            else if (isFloat64()) value = unpackFloat64();
             else
             {
                 LOG_WARNING("unpack type is not matched :", (int)type);
@@ -195,11 +192,10 @@ namespace msgpack {
 
         void unpack(str_t& str)
         {
-            Type type = getType();
-            if      (type == Type::STR5)  str = unpackString5();
-            else if (type == Type::STR8)  str = unpackString8();
-            else if (type == Type::STR16) str = unpackString16();
-            else if (type == Type::STR32) str = unpackString32();
+            if      (isStr5())  str = unpackString5();
+            else if (isStr8())  str = unpackString8();
+            else if (isStr16()) str = unpackString16();
+            else if (isStr32()) str = unpackString32();
             else
             {
                 LOG_WARNING("unpack type is not matched :", (int)type);
@@ -316,7 +312,7 @@ namespace msgpack {
             const size_t size = unpackArraySize();
             if (sizeof...(Args) == size)
             {
-                decodeTo(t);
+                deserializeToTuple(t);
             }
             else
             {
@@ -452,7 +448,7 @@ namespace msgpack {
 
         bool unpackNil()
         {
-            bool ret = (getType() == Type::NIL);
+            bool ret = isNil();
             ++curr_index;
             return ret;
         }
@@ -461,79 +457,79 @@ namespace msgpack {
 
         bool unpackBool()
         {
-            bool ret = (getType() == Type::BOOL) ? (bool)(getRawBytes<uint8_t>(curr_index, 0) & (uint8_t)BitMask::BOOL) : 0;
+            bool ret = isBool() ? (bool)(getRawBytes<uint8_t>(curr_index, 0) & (uint8_t)BitMask::BOOL) : 0;
             ++curr_index;
             return ret;
         }
 
         // ---------- INT format family ----------
 
-        uint8_t unpackIntU7()
+        uint8_t unpackUInt7()
         {
-            uint8_t ret = (getType() == Type::UINT7) ? (uint8_t)(getRawBytes<uint8_t>(curr_index, 0) & (uint8_t)BitMask::UINT7) : 0;
+            uint8_t ret = isUInt7() ? (uint8_t)(getRawBytes<uint8_t>(curr_index, 0) & (uint8_t)BitMask::UINT7) : 0;
             ++curr_index;
             return ret;
         }
 
-        uint8_t unpackIntU8()
+        uint8_t unpackUInt8()
         {
-            uint8_t ret = (getType() == Type::UINT8) ? getRawBytes<uint8_t>(curr_index, 1) : 0;
+            uint8_t ret = isUInt8() ? getRawBytes<uint8_t>(curr_index, 1) : 0;
             ++curr_index;
             return ret;
         }
 
-        uint16_t unpackIntU16()
+        uint16_t unpackUInt16()
         {
-            uint16_t ret = (getType() == Type::UINT16) ? getRawBytes<uint16_t>(curr_index, 1) : 0;
+            uint16_t ret = isUInt16() ? getRawBytes<uint16_t>(curr_index, 1) : 0;
             ++curr_index;
             return ret;
         }
 
-        uint32_t unpackIntU32()
+        uint32_t unpackUInt32()
         {
-            uint32_t ret = (getType() == Type::UINT32) ? getRawBytes<uint32_t>(curr_index, 1) : 0;
+            uint32_t ret = isUInt32() ? getRawBytes<uint32_t>(curr_index, 1) : 0;
             ++curr_index;
             return ret;
         }
 
-        uint64_t unpackIntU64()
+        uint64_t unpackUInt64()
         {
-            uint64_t ret = (getType() == Type::UINT64) ? getRawBytes<uint64_t>(curr_index, 1) : 0;
+            uint64_t ret = isUInt64() ? getRawBytes<uint64_t>(curr_index, 1) : 0;
             ++curr_index;
             return ret;
         }
 
         int8_t unpackInt5()
         {
-            int8_t ret = (getType() == Type::INT5) ? getRawBytes<uint8_t>(curr_index, 0) : 0;
+            int8_t ret = isInt5() ? getRawBytes<uint8_t>(curr_index, 0) : 0;
             ++curr_index;
             return ret;
         }
 
         int8_t unpackInt8()
         {
-            int8_t ret = (getType() == Type::INT8) ? getRawBytes<uint8_t>(curr_index, 1) : 0;
+            int8_t ret = isInt8() ? getRawBytes<uint8_t>(curr_index, 1) : 0;
             ++curr_index;
             return ret;
         }
 
         int16_t unpackInt16()
         {
-            int16_t ret = (getType() == Type::INT16) ? getRawBytes<int16_t>(curr_index, 1) : 0;
+            int16_t ret = isInt16() ? getRawBytes<int16_t>(curr_index, 1) : 0;
             ++curr_index;
             return ret;
         }
 
         int32_t unpackInt32()
         {
-            int32_t ret = (getType() == Type::INT32) ? getRawBytes<int32_t>(curr_index, 1) : 0;
+            int32_t ret = isInt32() ? getRawBytes<int32_t>(curr_index, 1) : 0;
             ++curr_index;
             return ret;
         }
 
         int64_t unpackInt64()
         {
-            int64_t ret = (getType() == Type::INT64) ? getRawBytes<int64_t>(curr_index, 1) : 0;
+            int64_t ret = isInt64() ? getRawBytes<int64_t>(curr_index, 1) : 0;
             ++curr_index;
             return ret;
         }
@@ -542,7 +538,7 @@ namespace msgpack {
 
         float unpackFloat32()
         {
-            float ret = (getType() == Type::FLOAT32) ? getRawBytes<float>(curr_index, 1) : 0;
+            float ret = isFloat32() ? getRawBytes<float>(curr_index, 1) : 0;
             ++curr_index;
             return ret;
         }
@@ -550,11 +546,11 @@ namespace msgpack {
         double unpackFloat64()
         {
 #ifndef HT_SERIAL_MSGPACK_DISABLE_STL
-            double ret = (getType() == Type::FLOAT64) ? getRawBytes<double>(curr_index, 1) : 0;
+            double ret = isFloat64() ? getRawBytes<double>(curr_index, 1) : 0;
             ++curr_index;
             return ret;
 #else
-            return unpackFloat32(); // Uno, etc. does not support double
+            return (isFloat32() || isFloat64()) ? unpackFloat32() : 0; // Uno, etc. does not support double
 #endif // HT_SERIAL_MSGPACK_DISABLE_STL
         }
 
@@ -563,7 +559,7 @@ namespace msgpack {
         str_t unpackString5()
         {
             str_t str("");
-            if (getType() == Type::STR5)
+            if (isStr5())
             {
                 uint8_t size = getRawBytes<uint8_t>(curr_index, 0) & (uint8_t)BitMask::STR5;
                 for (uint8_t c = 0; c < size; ++c) str += getRawBytes<char>(curr_index, c + 1);
@@ -575,7 +571,7 @@ namespace msgpack {
         str_t unpackString8()
         {
             str_t str("");
-            if (getType() == Type::STR8)
+            if (isStr8())
             {
                 uint8_t size = getRawBytes<uint8_t>(curr_index, 1);
                 for (uint8_t c = 0; c < size; ++c) str += getRawBytes<char>(curr_index, c + 1 + sizeof(uint8_t));
@@ -587,7 +583,7 @@ namespace msgpack {
         str_t unpackString16()
         {
             str_t str("");
-            if (getType() == Type::STR16)
+            if (isStr16())
             {
                 uint16_t size = getRawBytes<uint16_t>(curr_index, 1);
                 for (uint16_t c = 0; c < size; ++c) str += getRawBytes<char>(curr_index, c + 1 + sizeof(uint16_t));
@@ -599,7 +595,7 @@ namespace msgpack {
         str_t unpackString32()
         {
             str_t str("");
-            if (getType() == Type::STR32)
+            if (isStr32())
             {
                 uint32_t size = getRawBytes<uint32_t>(curr_index, 1);
                 for (uint32_t c = 0; c < size; ++c) str += getRawBytes<char>(curr_index, c + 1 + sizeof(uint32_t));
@@ -619,11 +615,10 @@ namespace msgpack {
             bin_t<T>
         >::type
         {
-            Type type = getType();
-            if      (type == Type::BIN8)  return std::move(unpackBinary8<T>());
-            else if (type == Type::BIN16) return std::move(unpackBinary16<T>());
-            else if (type == Type::BIN32) return std::move(unpackBinary32<T>());
-            else                          ++curr_index;
+            if      (isBin8())  return std::move(unpackBinary8<T>());
+            else if (isBin16()) return std::move(unpackBinary16<T>());
+            else if (isBin32()) return std::move(unpackBinary32<T>());
+            else                ++curr_index;
             return std::move(bin_t<T>());
         }
 
@@ -636,7 +631,7 @@ namespace msgpack {
         >::type
         {
             bin_t<T> data;
-            if (getType() == Type::BIN8)
+            if (isBin8())
             {
                 uint8_t size = getRawBytes<uint8_t>(curr_index, 1);
                 for (uint8_t v = 0; v < size; ++v) data.emplace_back(getRawBytes<T>(curr_index, v + 1 + sizeof(uint8_t)));
@@ -654,7 +649,7 @@ namespace msgpack {
         >::type
         {
             bin_t<T> data;
-            if (getType() == Type::BIN16)
+            if (isBin16())
             {
                 uint16_t size = getRawBytes<uint16_t>(curr_index, 1);
                 for (uint16_t v = 0; v < size; ++v) data.emplace_back(getRawBytes<T>(curr_index, v + 1 + sizeof(uint16_t)));
@@ -672,7 +667,7 @@ namespace msgpack {
         >::type
         {
             bin_t<T> data;
-            if (getType() == Type::BIN32)
+            if (isBin32())
             {
                 uint32_t size = getRawBytes<uint32_t>(curr_index, 1);
                 for (uint32_t v = 0; v < size; ++v) data.emplace_back(getRawBytes<T>(curr_index, v + 1 + sizeof(uint32_t)));
@@ -691,11 +686,10 @@ namespace msgpack {
             std::array<T, N>
         >::type
         {
-            Type type = getType();
-            if      (type == Type::BIN8)  return std::move(unpackBinary8<T, N>());
-            else if (type == Type::BIN16) return std::move(unpackBinary16<T, N>());
-            else if (type == Type::BIN32) return std::move(unpackBinary32<T, N>());
-            else                          ++curr_index;
+            if      (isBin8())  return std::move(unpackBinary8<T, N>());
+            else if (isBin16()) return std::move(unpackBinary16<T, N>());
+            else if (isBin32()) return std::move(unpackBinary32<T, N>());
+            else                ++curr_index;
             return std::move(std::array<T, N>());
         }
 
@@ -708,7 +702,7 @@ namespace msgpack {
         >::type
         {
             std::array<T, N> data;
-            if (getType() == Type::BIN8)
+            if (isBin8())
             {
                 uint8_t size = getRawBytes<uint8_t>(curr_index, 1);
                 for (uint8_t v = 0; v < size; ++v) data[v] = getRawBytes<T>(curr_index, v + 1 + sizeof(uint8_t));
@@ -726,7 +720,7 @@ namespace msgpack {
         >::type
         {
             std::array<T, N> data;
-            if (getType() == Type::BIN16)
+            if (isBin16())
             {
                 uint16_t size = getRawBytes<uint16_t>(curr_index, 1);
                 for (uint16_t v = 0; v < size; ++v) data[v] = getRawBytes<T>(curr_index, v + 1 + sizeof(uint16_t));
@@ -744,7 +738,7 @@ namespace msgpack {
         >::type
         {
             std::array<T, N> data;
-            if (getType() == Type::BIN32)
+            if (isBin32())
             {
                 uint32_t size = getRawBytes<uint32_t>(curr_index, 1);
                 for (uint32_t v = 0; v < size; ++v) data[v] = getRawBytes<T>(curr_index, v + 1 + sizeof(uint32_t));
@@ -760,12 +754,11 @@ namespace msgpack {
 
         size_t unpackArraySize()
         {
-            Type type = getType();
-            if (type == Type::ARRAY4)
+            if (isArray4())
                 return (size_t)(getRawBytes<uint8_t>(curr_index++, 0) & (uint8_t)BitMask::ARRAY4);
-            else if (type == Type::ARRAY16)
+            else if (isArray16())
                 return (size_t)getRawBytes<uint16_t>(curr_index++, 1);
-            else if (type == Type::ARRAY32)
+            else if (isArray32())
                 return (size_t)getRawBytes<uint32_t>(curr_index++, 1);
             else
                 ++curr_index;
@@ -777,12 +770,11 @@ namespace msgpack {
 
         size_t unpackMapSize()
         {
-            Type type = getType();
-            if (type == Type::MAP4)
+            if (isMap4())
                 return (size_t)(getRawBytes<uint8_t>(curr_index++, 0) & (uint8_t)BitMask::MAP4);
-            else if (type == Type::MAP16)
+            else if (isMap16())
                 return (size_t)getRawBytes<uint16_t>(curr_index++, 1);
-            else if (type == Type::MAP32)
+            else if (isMap32())
                 return (size_t)getRawBytes<uint32_t>(curr_index++, 1);
             else
                 ++curr_index;
@@ -795,52 +787,51 @@ namespace msgpack {
 
         object::ext unpackExt()
         {
-            Type type = getType();
-            if (type == Type::FIXEXT1)
+            if (isFixExt1())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
                 return std::move(object::ext(ext_type, ptr, 1));
             }
-            else if (type == Type::FIXEXT2)
+            else if (isFixExt2())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
                 return std::move(object::ext(ext_type, ptr, 2));
             }
-            else if (type == Type::FIXEXT4)
+            else if (isFixExt4())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
                 return std::move(object::ext(ext_type, ptr, 4));
             }
-            else if (type == Type::FIXEXT8)
+            else if (isFixExt8())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
                 return std::move(object::ext(ext_type, ptr, 8));
             }
-            else if (type == Type::FIXEXT16)
+            else if (isFixExt16())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
                 return std::move(object::ext(ext_type, ptr, 16));
             }
-            else if (type == Type::EXT8)
+            else if (isExt8())
             {
                 uint8_t size = getRawBytes<uint8_t>(curr_index, 1);
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 2);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 3);
                 return std::move(object::ext(ext_type, ptr, size));
             }
-            else if (type == Type::EXT16)
+            else if (isExt16())
             {
                 uint16_t size = getRawBytes<uint16_t>(curr_index, 1);
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 3);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 4);
                 return std::move(object::ext(ext_type, ptr, size));
             }
-            else if (type == Type::EXT32)
+            else if (isExt32())
             {
                 uint32_t size = getRawBytes<uint32_t>(curr_index, 1);
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 5);
@@ -856,9 +847,8 @@ namespace msgpack {
 
         object::timespec unpackTimestamp()
         {
-            Type type = getType();
             object::timespec ts;
-            if (type == Type::TIMESTAMP32)
+            if (isTimestamp32())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 if (ext_type == -1)
@@ -871,7 +861,7 @@ namespace msgpack {
                     LOG_WARNING("unpack timestamp ext-type not matched :", (int)ext_type, "must be -1");
                 }
             }
-            else if (type == Type::TIMESTAMP64)
+            else if (isTimestamp64())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 if (ext_type == -1)
@@ -885,7 +875,7 @@ namespace msgpack {
                     LOG_WARNING("unpack timestamp ext-type not matched :", (int)ext_type, "must be -1");
                 }
             }
-            else if (type == Type::TIMESTAMP96)
+            else if (isTimestamp96())
             {
                 uint8_t size = getRawBytes<uint8_t>(curr_index, 1);
                 if (size == 12)
@@ -958,12 +948,11 @@ namespace msgpack {
         >::type
         {
             (void)value;
-            Type type = getType();
-            if      (type == Type::UINT7)  return sizeof(T) == sizeof(uint8_t);
-            else if (type == Type::UINT8)  return sizeof(T) == sizeof(uint8_t);
-            else if (type == Type::UINT16) return sizeof(T) == sizeof(uint16_t);
-            else if (type == Type::UINT32) return sizeof(T) == sizeof(uint32_t);
-            else if (type == Type::UINT64) return sizeof(T) == sizeof(uint64_t);
+            if      (isUInt7())  return sizeof(T) == sizeof(uint8_t);
+            else if (isUInt8())  return sizeof(T) == sizeof(uint8_t);
+            else if (isUInt16()) return sizeof(T) == sizeof(uint16_t);
+            else if (isUInt32()) return sizeof(T) == sizeof(uint32_t);
+            else if (isUInt64()) return sizeof(T) == sizeof(uint64_t);
             else
                 return false;
         }
@@ -980,12 +969,11 @@ namespace msgpack {
         >::type
         {
             (void)value;
-            Type type = getType();
-            if      (type == Type::INT5)  return sizeof(T) == sizeof(int8_t);
-            else if (type == Type::INT8)  return sizeof(T) == sizeof(int8_t);
-            else if (type == Type::INT16) return sizeof(T) == sizeof(int16_t);
-            else if (type == Type::INT32) return sizeof(T) == sizeof(int32_t);
-            else if (type == Type::INT64) return sizeof(T) == sizeof(int64_t);
+            if      (isInt5())  return sizeof(T) == sizeof(int8_t);
+            else if (isInt8())  return sizeof(T) == sizeof(int8_t);
+            else if (isInt16()) return sizeof(T) == sizeof(int16_t);
+            else if (isInt32()) return sizeof(T) == sizeof(int32_t);
+            else if (isInt64()) return sizeof(T) == sizeof(int64_t);
             else
                 return false;
         }
@@ -1004,9 +992,8 @@ namespace msgpack {
         >::type
         {
             (void)value;
-            Type type = getType();
-            if      (type == Type::FLOAT32) return sizeof(T) == sizeof(float);
-            else if (type == Type::FLOAT64) return sizeof(T) == sizeof(double);
+            if      (isFloat32()) return sizeof(T) == sizeof(float);
+            else if (isFloat64()) return sizeof(T) == sizeof(double);
             else
                 return false;
         }
@@ -1020,8 +1007,7 @@ namespace msgpack {
         bool unpackable(const str_t& str) const
         {
             (void)str;
-            Type type = getType();
-            return ((type == Type::STR5) || (type == Type::STR8) || (type == Type::STR16) || (type == Type::STR32));
+            return isStr();
         }
 
 
@@ -1042,8 +1028,7 @@ namespace msgpack {
         >::type
         {
             (void)bin;
-            Type type = getType();
-            return ((type == Type::BIN8) || (type == Type::BIN16) || (type == Type::BIN32));
+            return isBin();
         }
 
 #ifndef HT_SERIAL_MSGPACK_DISABLE_STL
@@ -1057,8 +1042,7 @@ namespace msgpack {
         >::type
         {
             (void)bin;
-            Type type = getType();
-            return ((type == Type::BIN8) || (type == Type::BIN16) || (type == Type::BIN32));
+            return isBin();
         }
 
 #endif // HT_SERIAL_MSGPACK_DISABLE_STL
@@ -1087,8 +1071,7 @@ namespace msgpack {
         >::type
         {
             (void)arr;
-            Type type = getType();
-            return ((type == Type::ARRAY4) || (type == Type::ARRAY16) || (type == Type::ARRAY32));
+            return isArray();
         }
 
 #ifndef HT_SERIAL_MSGPACK_DISABLE_STL
@@ -1102,80 +1085,70 @@ namespace msgpack {
         >::type
         {
             (void)arr;
-            Type type = getType();
-            return ((type == Type::ARRAY4) || (type == Type::ARRAY16) || (type == Type::ARRAY32));
+            return isArray();
         }
 
         template <typename T>
         bool unpackable(const std::deque<T>& arr) const
         {
             (void)arr;
-            Type type = getType();
-            return ((type == Type::ARRAY4) || (type == Type::ARRAY16) || (type == Type::ARRAY32));
+            return isArray();
         }
 
         template <typename T, typename U>
         bool unpackable(const std::pair<T, U>& arr) const
         {
             (void)arr;
-            Type type = getType();
-            return ((type == Type::ARRAY4) || (type == Type::ARRAY16) || (type == Type::ARRAY32));
+            return isArray();
         }
 
         template <typename... Args>
         bool unpackable(const std::tuple<Args...>& arr) const
         {
             (void)arr;
-            Type type = getType();
-            return ((type == Type::ARRAY4) || (type == Type::ARRAY16) || (type == Type::ARRAY32));
+            return isArray();
         }
 
         template <typename T>
         bool unpackable(const std::list<T>& arr) const
         {
             (void)arr;
-            Type type = getType();
-            return ((type == Type::ARRAY4) || (type == Type::ARRAY16) || (type == Type::ARRAY32));
+            return isArray();
         }
 
         template <typename T>
         bool unpackable(const std::forward_list<T>& arr) const
         {
             (void)arr;
-            Type type = getType();
-            return ((type == Type::ARRAY4) || (type == Type::ARRAY16) || (type == Type::ARRAY32));
+            return isArray();
         }
 
         template <typename T>
         bool unpackable(const std::set<T>& arr) const
         {
             (void)arr;
-            Type type = getType();
-            return ((type == Type::ARRAY4) || (type == Type::ARRAY16) || (type == Type::ARRAY32));
+            return isArray();
         }
 
         template <typename T>
         bool unpackable(const std::unordered_set<T>& arr) const
         {
             (void)arr;
-            Type type = getType();
-            return ((type == Type::ARRAY4) || (type == Type::ARRAY16) || (type == Type::ARRAY32));
+            return isArray();
         }
 
         template <typename T>
         bool unpackable(const std::multiset<T>& arr) const
         {
             (void)arr;
-            Type type = getType();
-            return ((type == Type::ARRAY4) || (type == Type::ARRAY16) || (type == Type::ARRAY32));
+            return isArray();
         }
 
         template <typename T>
         bool unpackable(std::unordered_multiset<T>& arr) const
         {
             (void)arr;
-            Type type = getType();
-            return ((type == Type::ARRAY4) || (type == Type::ARRAY16) || (type == Type::ARRAY32));
+            return isArray();
         }
 
 #endif // HT_SERIAL_MSGPACK_DISABLE_STL
@@ -1192,8 +1165,7 @@ namespace msgpack {
         bool unpackable(const map_t<T, U>& mp) const
         {
             (void)mp;
-            Type type = getType();
-            return ((type == Type::MAP4) || (type == Type::MAP16) || (type == Type::MAP32));
+            return isMap();
         }
 
 #ifndef HT_SERIAL_MSGPACK_DISABLE_STL
@@ -1202,24 +1174,21 @@ namespace msgpack {
         bool unpackable(const std::multimap<T, U>& mp) const
         {
             (void)mp;
-            Type type = getType();
-            return ((type == Type::MAP4) || (type == Type::MAP16) || (type == Type::MAP32));
+            return isMap();
         }
 
         template <typename T, typename U>
         bool unpackable(const std::unordered_map<T, U>& mp) const
         {
             (void)mp;
-            Type type = getType();
-            return ((type == Type::MAP4) || (type == Type::MAP16) || (type == Type::MAP32));
+            return isMap();
         }
 
         template <typename T, typename U>
         bool unpackable(const std::unordered_multimap<T, U>& mp) const
         {
             (void)mp;
-            Type type = getType();
-            return ((type == Type::MAP4) || (type == Type::MAP16) || (type == Type::MAP32));
+            return isMap();
         }
 
 #endif // HT_SERIAL_MSGPACK_DISABLE_STL
@@ -1230,10 +1199,7 @@ namespace msgpack {
         bool unpackable(const object::ext& e) const
         {
             (void)e;
-            bool b = false;
-            b |= isFixExt1() || isFixExt2() || isFixExt4() || isFixExt8() || isFixExt16();
-            b |= isExt8() || isExt16() || isExt32();
-            return b;
+            return isFixExt() || isExt();
         }
 
 
@@ -1242,10 +1208,13 @@ namespace msgpack {
         bool unpackable(const object::timespec& t) const
         {
             (void)t;
-            return isTimestamp32() || isTimestamp64() || isTimestamp96();
+            return isTimestamp();
         }
 
 
+        /////////////////////////////////////////////////
+        // ---------- msgpack type checkers ---------- //
+        /////////////////////////////////////////////////
 
         bool isNil() const { return getType() == Type::NIL; }
         bool isBool() const { return getType() == Type::BOOL; }
@@ -1254,37 +1223,46 @@ namespace msgpack {
         bool isUInt16() const { return getType() == Type::UINT16; }
         bool isUInt32() const { return getType() == Type::UINT32; }
         bool isUInt64() const { return getType() == Type::UINT64; }
+        bool isUInt() const { return isUInt7() || isUInt8() || isUInt16() || isUInt32() || isUInt64(); }
         bool isInt5() const { return getType() == Type::INT5; }
         bool isInt8() const { return getType() == Type::INT8; }
         bool isInt16() const { return getType() == Type::INT16; }
         bool isInt32() const { return getType() == Type::INT32; }
         bool isInt64() const { return getType() == Type::INT64; }
+        bool isInt() const { return isInt5() || isInt8() || isInt16() || isInt32() || isInt64(); }
         bool isFloat32() const { return getType() == Type::FLOAT32; }
         bool isFloat64() const { return getType() == Type::FLOAT64; }
         bool isStr5() const { return getType() == Type::STR5; }
         bool isStr8() const { return getType() == Type::STR8; }
         bool isStr16() const { return getType() == Type::STR16; }
         bool isStr32() const { return getType() == Type::STR32; }
+        bool isStr() const { return isStr5() || isStr8() || isStr16() || isStr32(); }
         bool isBin8() const { return getType() == Type::BIN8; }
         bool isBin16() const { return getType() == Type::BIN16; }
         bool isBin32() const { return getType() == Type::BIN32; }
+        bool isBin() const { return isBin8() || isBin16() || isBin32(); }
         bool isArray4() const { return getType() == Type::ARRAY4; }
         bool isArray16() const { return getType() == Type::ARRAY16; }
         bool isArray32() const { return getType() == Type::ARRAY32; }
+        bool isArray() const { return isArray4() || isArray16() || isArray32(); }
         bool isMap4() const { return getType() == Type::MAP4; }
         bool isMap16() const { return getType() == Type::MAP16; }
         bool isMap32() const { return getType() == Type::MAP32; }
+        bool isMap() const { return isMap4() || isMap16() || isMap32(); }
         bool isFixExt1() const { return getType() == Type::FIXEXT1; }
         bool isFixExt2() const { return getType() == Type::FIXEXT2; }
         bool isFixExt4() const { return getType() == Type::FIXEXT4; }
         bool isFixExt8() const { return getType() == Type::FIXEXT8; }
         bool isFixExt16() const { return getType() == Type::FIXEXT16; }
+        bool isFixExt() const { return isFixExt1() || isFixExt2() || isFixExt4() || isFixExt8() || isFixExt16(); }
         bool isExt8() const { return getType() == Type::EXT8; }
         bool isExt16() const { return getType() == Type::EXT16; }
         bool isExt32() const { return getType() == Type::EXT32; }
+        bool isExt() const { return isExt8() || isExt16() || isExt32(); }
         bool isTimestamp32() const { return (getType() == Type::TIMESTAMP32) && (getRawBytes<int8_t>(curr_index, 1) == -1); }
         bool isTimestamp64() const { return (getType() == Type::TIMESTAMP64) && (getRawBytes<int8_t>(curr_index, 1) == -1); }
         bool isTimestamp96() const { return (getType() == Type::TIMESTAMP96) && (getRawBytes<int8_t>(curr_index, 2) == -1); }
+        bool isTimestamp() const { return isTimestamp32() || isTimestamp64() || isTimestamp96(); }
 
 
 private:
