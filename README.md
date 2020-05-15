@@ -140,12 +140,25 @@ namespace MsgPacketizer
     template <typename F>
     inline void subscribe(StreamType& stream, const F& callback);
 
+    // get UnpackerRef = std::shared_ptr<MsgPack::Unpacker> of stream and handle it manually
+    UnpackerRef getUnpackerRef(const StreamType& stream)
+
+    // get map o unpackers and handle it manually
+    UnpackerMap& getUnpackerMap()
+
+
     // send arguments dilectly with variable types
     template <typename... Args>
     inline void send(StreamType& stream, const uint8_t index, Args&&... args);
 
     // send binary data
     inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size);
+
+    // send manually packed data
+    inline void send(StreamType& stream, const uint8_t index)
+
+    // get MsgPack::Packer and handle it manually
+    const MsgPack::Packer& getPacker()
 
     // must be called to receive packets
     inline void parse(bool b_exec_cb = true);
