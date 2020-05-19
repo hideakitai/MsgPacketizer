@@ -300,8 +300,8 @@ I reccomend to use low cost but much better performance chip like ESP series.
 
 ## Embedded Libraries
 
-- [ArxTypeTraits v0.1.6](https://github.com/hideakitai/ArxTypeTraits)
-- [ArxContainer v0.3.4](https://github.com/hideakitai/ArxContainer)
+- [ArxTypeTraits v0.1.8](https://github.com/hideakitai/ArxTypeTraits)
+- [ArxContainer v0.3.5](https://github.com/hideakitai/ArxContainer)
 - [DebugLog v0.1.5](https://github.com/hideakitai/DebugLog)
 - [TeensyDirtySTLErrorSolution v0.1.0](https://github.com/hideakitai/TeensyDirtySTLErrorSolution)
 
@@ -317,195 +317,195 @@ I reccomend to use low cost but much better performance chip like ESP series.
 
 ``` C++
 template <typename First, typename ...Rest>
-void serialize(const First& first, Rest&&... rest)
+void serialize(const First& first, Rest&&... rest);
 template <typename T>
-void serialize(const T* data, const size_t size) // only for poitner types
+void serialize(const T* data, const size_t size); // only for poitner types
 
-void pack<T>(const T& t)
-void pack<T>(const T* ptr, const size_t size) // only for pointer types
+void pack<T>(const T& t);
+void pack<T>(const T* ptr, const size_t size); // only for pointer types
 
-const bin_t<uint8_t>& packet() const
-const uint8_t* data() const
-size_t size() const
-size_t indices() const
-void clear()
+const bin_t<uint8_t>& packet() const;
+const uint8_t* data() const;
+size_t size() const;
+size_t indices() const;
+void clear();
 
-void packNil()
-void packNil(const object::nil_t& n)
-void packBool(const bool b)
-void packUInt7(const uint8_t value)
-void packUInt8(const uint8_t value)
-void packUInt16(const uint16_t value)
-void packUInt32(const uint32_t value)
-void packUInt64(const uint64_t value)
-void packInt5(const int8_t value)
-void packInt8(const int8_t value)
-void packInt16(const int16_t value)
-void packInt32(const int32_t value)
-void packInt64(const int64_t value)
-void packFloat32(const float value)
-void packFloat64(const double value)
-void packString5(const str_t& str)
-void packString5(const char* value)
-void packString8(const str_t& str)
-void packString8(const char* value)
-void packString16(const str_t& str)
-void packString16(const char* value)
-void packString32(const str_t& str)
-void packString32(const char* value)
-void packBinary8(const uint8_t* value, const uint8_t size)
-void packBinary16(const uint8_t* value, const uint16_t size)
-void packBinary32(const uint8_t* value, const uint32_t size)
-void packArraySize(const size_t size)
-void packArraySize4(const uint8_t value)
-void packArraySize16(const uint16_t value)
-void packArraySize32(const uint32_t value)
-void packMapSize(const size_t size)
-void packMapSize4(const uint8_t value)
-void packMapSize16(const uint16_t value)
-void packMapSize32(const uint32_t value)
-void packFixExt1(const int8_t type, const uint8_t value)
-void packFixExt2(const int8_t type, const uint16_t value)
-void packFixExt2(const int8_t type, const uint8_t* ptr)
-void packFixExt2(const int8_t type, const uint16_t* ptr)
-void packFixExt4(const int8_t type, const uint32_t value)
-void packFixExt4(const int8_t type, const uint8_t* ptr)
-void packFixExt4(const int8_t type, const uint32_t* ptr)
-void packFixExt8(const int8_t type, const uint64_t value)
-void packFixExt8(const int8_t type, const uint8_t* ptr)
-void packFixExt8(const int8_t type, const uint64_t* ptr)
-void packFixExt16(const int8_t type, const uint64_t value_h, const uint64_t value_l)
-void packFixExt16(const int8_t type, const uint8_t* ptr)
-void packFixExt16(const int8_t type, const uint64_t* ptr)
+void packNil();
+void packNil(const object::nil_t& n);
+void packBool(const bool b);
+void packUInt7(const uint8_t value);
+void packUInt8(const uint8_t value);
+void packUInt16(const uint16_t value);
+void packUInt32(const uint32_t value);
+void packUInt64(const uint64_t value);
+void packInt5(const int8_t value);
+void packInt8(const int8_t value);
+void packInt16(const int16_t value);
+void packInt32(const int32_t value);
+void packInt64(const int64_t value);
+void packFloat32(const float value);
+void packFloat64(const double value);
+void packString5(const str_t& str);
+void packString5(const char* value);
+void packString8(const str_t& str);
+void packString8(const char* value);
+void packString16(const str_t& str);
+void packString16(const char* value);
+void packString32(const str_t& str);
+void packString32(const char* value);
+void packBinary8(const uint8_t* value, const uint8_t size);
+void packBinary16(const uint8_t* value, const uint16_t size);
+void packBinary32(const uint8_t* value, const uint32_t size);
+void packArraySize(const size_t size);
+void packArraySize4(const uint8_t value);
+void packArraySize16(const uint16_t value);
+void packArraySize32(const uint32_t value);
+void packMapSize(const size_t size);
+void packMapSize4(const uint8_t value);
+void packMapSize16(const uint16_t value);
+void packMapSize32(const uint32_t value);
+void packFixExt1(const int8_t type, const uint8_t value);
+void packFixExt2(const int8_t type, const uint16_t value);
+void packFixExt2(const int8_t type, const uint8_t* ptr);
+void packFixExt2(const int8_t type, const uint16_t* ptr);
+void packFixExt4(const int8_t type, const uint32_t value);
+void packFixExt4(const int8_t type, const uint8_t* ptr);
+void packFixExt4(const int8_t type, const uint32_t* ptr);
+void packFixExt8(const int8_t type, const uint64_t value);
+void packFixExt8(const int8_t type, const uint8_t* ptr);
+void packFixExt8(const int8_t type, const uint64_t* ptr);
+void packFixExt16(const int8_t type, const uint64_t value_h, const uint64_t value_l);
+void packFixExt16(const int8_t type, const uint8_t* ptr);
+void packFixExt16(const int8_t type, const uint64_t* ptr);
 template <typename T>
-void packFixExt(const int8_t type, const T value)
-void packFixExt(const int8_t type, const uint64_t value_h, const uint64_t value_l)
-void packFixExt(const int8_t type, const uint8_t* ptr, const uint8_t size)
-void packFixExt(const int8_t type, const uint16_t* ptr, const uint8_t size)
-void packFixExt(const int8_t type, const uint32_t* ptr, const uint8_t size)
-void packFixExt(const int8_t type, const uint64_t* ptr, const uint8_t size)
-void packExtSize8(const int8_t type, const uint8_t size)
-void packExtSize16(const int8_t type, const uint16_t size)
-void packExtSize32(const int8_t type, const uint32_t size)
+void packFixExt(const int8_t type, const T value);
+void packFixExt(const int8_t type, const uint64_t value_h, const uint64_t value_l);
+void packFixExt(const int8_t type, const uint8_t* ptr, const uint8_t size);
+void packFixExt(const int8_t type, const uint16_t* ptr, const uint8_t size);
+void packFixExt(const int8_t type, const uint32_t* ptr, const uint8_t size);
+void packFixExt(const int8_t type, const uint64_t* ptr, const uint8_t size);
+void packExtSize8(const int8_t type, const uint8_t size);
+void packExtSize16(const int8_t type, const uint16_t size);
+void packExtSize32(const int8_t type, const uint32_t size);
 template <typename T, typename U>
-void packExt(const int8_t type, const T* ptr, const U size)
-void packExt(const object::ext& e)
-void packTimestamp32(const uint32_t unix_time_sec)
-void packTimestamp64(const uint64_t unix_time)
-void packTimestamp64(const uint64_t unix_time_sec, const uint32_t unix_time_nsec)
-void packTimestamp96(const int64_t unix_time_sec, const uint32_t unix_time_nsec)
-void packTimestamp(const object::timespec& time)
+void packExt(const int8_t type, const T* ptr, const U size);
+void packExt(const object::ext& e);
+void packTimestamp32(const uint32_t unix_time_sec);
+void packTimestamp64(const uint64_t unix_time);
+void packTimestamp64(const uint64_t unix_time_sec, const uint32_t unix_time_nsec);
+void packTimestamp96(const int64_t unix_time_sec, const uint32_t unix_time_nsec);
+void packTimestamp(const object::timespec& time);
 ```
 
 ### MsgPack::Unpacker
 
 ``` C++
-bool feed(const uint8_t* data, size_t size)
+bool feed(const uint8_t* data, size_t size);
 
 template <typename First, typename ...Rest>
-void deserialize(First& first, Rest&&... rest)
+void deserialize(First& first, Rest&&... rest);
 template <typename... Ts>
-void deserializeToTuple(std::tuple<Ts...>& t)
+void deserializeToTuple(std::tuple<Ts...>& t);
 
 template <typename T>
-void unpack(T& value)
+void unpack(T& value);
 
 template <typename T>
-bool unpackable(const T& value) const
+bool unpackable(const T& value) const;
 
-bool available() const
-size_t size() const
-void index(const size_t i)
-size_t index() const
-void clear()
+bool available() const;
+size_t size() const;
+void index(const size_t i);
+size_t index() const;
+void clear();
 
-bool unpackNil()
-bool unpackBool()
-uint8_t unpackUInt7()
-uint8_t unpackUInt8()
-uint16_t unpackUInt16()
-uint32_t unpackUInt32()
-uint64_t unpackUInt64()
-int8_t unpackInt5()
-int8_t unpackInt8()
-int16_t unpackInt16()
-int32_t unpackInt32()
-int64_t unpackInt64()
-float unpackFloat32()
-double unpackFloat64()
-str_t unpackString5()
-str_t unpackString8()
-str_t unpackString16()
-str_t unpackString32()
+bool unpackNil();
+bool unpackBool();
+uint8_t unpackUInt7();
+uint8_t unpackUInt8();
+uint16_t unpackUInt16();
+uint32_t unpackUInt32();
+uint64_t unpackUInt64();
+int8_t unpackInt5();
+int8_t unpackInt8();
+int16_t unpackInt16();
+int32_t unpackInt32();
+int64_t unpackInt64();
+float unpackFloat32();
+double unpackFloat64();
+str_t unpackString5();
+str_t unpackString8();
+str_t unpackString16();
+str_t unpackString32();
 template <typename T = uint8_t>
-bin_t<T> unpackBinary()
+bin_t<T> unpackBinary();
 template <typename T = uint8_t>
-bin_t<T> unpackBinary8()
+bin_t<T> unpackBinary8();
 template <typename T = uint8_t>
-bin_t<T> unpackBinary16()
+bin_t<T> unpackBinary16();
 template <typename T = uint8_t>
-bin_t<T> unpackBinary32()
+bin_t<T> unpackBinary32();
 template <typename T, size_t N>
-std::array<T, N> unpackBinary()
+std::array<T, N> unpackBinary();
 template <typename T, size_t N>
-std::array<T, N> unpackBinary8()
+std::array<T, N> unpackBinary8();
 template <typename T, size_t N>
-std::array<T, N> unpackBinary16()
+std::array<T, N> unpackBinary16();
 template <typename T, size_t N>
-std::array<T, N> unpackBinary32()
-size_t unpackArraySize()
-size_t unpackMapSize()
-object::ext unpackExt()
-object::timespec unpackTimestamp()
+std::array<T, N> unpackBinary32();
+size_t unpackArraySize();
+size_t unpackMapSize();
+object::ext unpackExt();
+object::timespec unpackTimestamp();
 
-bool isNil() const
-bool isBool() const
-bool isUInt7() const
-bool isUInt8() const
-bool isUInt16() const
-bool isUInt32() const
-bool isUInt64() const
-bool isUInt() const
-bool isInt5() const
-bool isInt8() const
-bool isInt16() const
-bool isInt32() const
-bool isInt64() const
-bool isInt() const
-bool isFloat32() const
-bool isFloat64() const
-bool isFloat() const
-bool isStr5() const
-bool isStr8() const
-bool isStr16() const
-bool isStr32() const
-bool isStr() const
-bool isBin8() const
-bool isBin16() const
-bool isBin32() const
-bool isBin() const
-bool isArray4() const
-bool isArray16() const
-bool isArray32() const
-bool isArray() const
-bool isMap4() const
-bool isMap16() const
-bool isMap32() const
-bool isMap() const
-bool isFixExt1() const
-bool isFixExt2() const
-bool isFixExt4() const
-bool isFixExt8() const
-bool isFixExt16() const
-bool isFixExt() const
-bool isExt8() const
-bool isExt16() const
-bool isExt32() const
-bool isExt() const
-bool isTimestamp32() const
-bool isTimestamp64() const
-bool isTimestamp96() const
-bool isTimestamp() const
+bool isNil() const;
+bool isBool() const;
+bool isUInt7() const;
+bool isUInt8() const;
+bool isUInt16() const;
+bool isUInt32() const;
+bool isUInt64() const;
+bool isUInt() const;
+bool isInt5() const;
+bool isInt8() const;
+bool isInt16() const;
+bool isInt32() const;
+bool isInt64() const;
+bool isInt() const;
+bool isFloat32() const;
+bool isFloat64() const;
+bool isFloat() const;
+bool isStr5() const;
+bool isStr8() const;
+bool isStr16() const;
+bool isStr32() const;
+bool isStr() const;
+bool isBin8() const;
+bool isBin16() const;
+bool isBin32() const;
+bool isBin() const;
+bool isArray4() const;
+bool isArray16() const;
+bool isArray32() const;
+bool isArray() const;
+bool isMap4() const;
+bool isMap16() const;
+bool isMap32() const;
+bool isMap() const;
+bool isFixExt1() const;
+bool isFixExt2() const;
+bool isFixExt4() const;
+bool isFixExt8() const;
+bool isFixExt16() const;
+bool isFixExt() const;
+bool isExt8() const;
+bool isExt16() const;
+bool isExt32() const;
+bool isExt() const;
+bool isTimestamp32() const;
+bool isTimestamp64() const;
+bool isTimestamp96() const;
+bool isTimestamp() const;
 ```
 
 ## Reference

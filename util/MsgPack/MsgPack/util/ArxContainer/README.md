@@ -26,8 +26,6 @@ Please use C++ Standard Template Library for other boards.
 - SPRESENSE
 
 
-
-
 ## Usage
 
 ### vector
@@ -153,6 +151,14 @@ arx::deque<int, 5> ds;
 
 This library will be updated if I want to use more container interfaces on supported boards shown above.
 PRs are welcome!
+
+
+## Used Inside of
+
+- [Packetizer](https://github.com/hideakitai/Packetizer)
+- [MsgPack](https://github.com/hideakitai/MsgPack)
+- [MsgPacketizer](https://github.com/hideakitai/MsgPacketizer)
+- [ArduinoOSC](https://github.com/hideakitai/ArduinoOSC)
 
 
 ## License
