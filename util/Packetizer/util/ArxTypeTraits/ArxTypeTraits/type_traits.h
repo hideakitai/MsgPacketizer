@@ -455,6 +455,9 @@ namespace std {
     template<>
     struct make_index_sequence_impl <1> : index_sequence<0>{};
 
+    template<typename... Ts>
+    using index_sequence_for = make_index_sequence<sizeof...(Ts)>;
+
 } // namespace std
 
 #endif // C++11

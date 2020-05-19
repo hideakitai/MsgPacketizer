@@ -213,7 +213,7 @@ namespace arx {
             }
         }
 
-        void assign(const iterator first, const iterator end)
+        void assign(const_iterator first, const_iterator end)
         {
             clear();
             const char* p = first;
@@ -407,6 +407,7 @@ namespace arx {
     struct map : public RingBuffer<pair<Key, T>, N>
     {
         using iterator = typename RingBuffer<pair<Key, T>, N>::iterator;
+        using const_iterator = typename RingBuffer<pair<Key, T>, N>::const_iterator;
 
         map() : RingBuffer<pair<Key, T>, N>() { }
         map(std::initializer_list<pair<Key, T>> lst) : RingBuffer<pair<Key, T>, N>(lst) { }
@@ -431,11 +432,11 @@ namespace arx {
 
         virtual ~map() {}
 
-        iterator find(const Key& key)
+        const_iterator find(const Key& key) const
         {
             for (size_t i = 0; i < this->size(); ++i)
             {
-                iterator it = this->begin() + i;
+                const_iterator it = this->begin() + i;
                 if (key == it->first)
                     return it;
             }
@@ -458,14 +459,14 @@ namespace arx {
         pair<iterator, bool> insert(const pair<Key, T>& p)
         {
             bool b {false};
-            iterator it = find(p.first);
+            const_iterator it = find(p.first);
             if (it == this->end())
             {
                 this->push(p);
                 b = true;
                 it = this->end() - 1;
             }
-            return {it, b};
+            return {(iterator)it, b};
         }
 
         pair<iterator, bool> emplace(const Key& key, const T& t)
@@ -514,9 +515,9 @@ namespace arx {
             return this->end();
         }
 
-        inline T& operator[] (const Key& key)
+        const T& operator[] (const Key& key)
         {
-            iterator it = find(key);
+            const_iterator it = find(key);
             if (it != this->end()) return it->second;
 
             insert(::arx::make_pair(key, T()));
@@ -536,7 +537,6 @@ namespace arx {
         using RingBuffer<pair<Key, T>, N>::emplace_back;
         using RingBuffer<pair<Key, T>, N>::front;
         using RingBuffer<pair<Key, T>, N>::back;
-        using RingBuffer<pair<Key, T>, N>::operator[];
         using RingBuffer<pair<Key, T>, N>::resize;
         using RingBuffer<pair<Key, T>, N>::assign;
         using RingBuffer<pair<Key, T>, N>::shrink_to_fit;

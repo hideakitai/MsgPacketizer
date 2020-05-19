@@ -71,6 +71,7 @@ Others are automatically enabled/disabled depending on compiler.
 - `std::integer_sequence`
 - `std::index_sequence`
 - `std::make_index_sequence`
+- `std::index_sequence_for`
 
 
 ### C++17 (defined only for boards before C++17)
@@ -93,6 +94,14 @@ Others are automatically enabled/disabled depending on compiler.
 - `arx::is_detected`
 - `arx::is_callable`
 - `arx::function_traits`
+
+
+## Used Inside of
+
+- [Packetizer](https://github.com/hideakitai/Packetizer)
+- [MsgPack](https://github.com/hideakitai/MsgPack)
+- [MsgPacketizer](https://github.com/hideakitai/MsgPacketizer)
+- [ArduinoOSC](https://github.com/hideakitai/ArduinoOSC)
 
 
 ## License
