@@ -14,17 +14,15 @@
 
 ## Packet Protocol
 
+| index  | msgpack | crc8   |
+|--------|---------|--------|
+| 1 byte | N bytes | 1 byte |
 
-| header | index  | msgpack | crc8   | footer |
-|--------|--------|---------|--------|--------|
-| 1 byte | 1 byte | N bytes | 1 byte | 1 byte |
 
-
-- 1 byte header
 - 1 byte index (packet index can be used to identify packet)
 - __N byte serialized msgpack data__
 - 1 byte crc8 (for received data check)
-- 1 byte footer
+- these bytes are encoded to COBS encoding based on [Packetizer](https://github.com/hideakitai/Packetizer)
 
 
 ## Usage
@@ -140,12 +138,25 @@ namespace MsgPacketizer
     template <typename F>
     inline void subscribe(StreamType& stream, const F& callback);
 
+    // get UnpackerRef = std::shared_ptr<MsgPack::Unpacker> of stream and handle it manually
+    UnpackerRef getUnpackerRef(const StreamType& stream);
+
+    // get map o unpackers and handle it manually
+    UnpackerMap& getUnpackerMap();
+
+
     // send arguments dilectly with variable types
     template <typename... Args>
     inline void send(StreamType& stream, const uint8_t index, Args&&... args);
 
     // send binary data
     inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size);
+
+    // send manually packed data
+    inline void send(StreamType& stream, const uint8_t index);
+
+    // get MsgPack::Packer and handle it manually
+    const MsgPack::Packer& getPacker();
 
     // must be called to receive packets
     inline void parse(bool b_exec_cb = true);
@@ -200,8 +211,8 @@ These macros have no effect for STL enabled boards.
 
 ## Embedded Libraries
 
-- [MsgPack v0.1.7](https://github.com/hideakitai/MsgPack)
-- [Packetizer v0.3.6](https://github.com/hideakitai/Packetizer)
+- [MsgPack v0.1.10](https://github.com/hideakitai/MsgPack)
+- [Packetizer v0.4.0](https://github.com/hideakitai/Packetizer)
 
 
 ## License
