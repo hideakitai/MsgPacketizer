@@ -14,17 +14,15 @@
 
 ## Packet Protocol
 
+| index  | msgpack | crc8   |
+|--------|---------|--------|
+| 1 byte | N bytes | 1 byte |
 
-| header | index  | msgpack | crc8   | footer |
-|--------|--------|---------|--------|--------|
-| 1 byte | 1 byte | N bytes | 1 byte | 1 byte |
 
-
-- 1 byte header
 - 1 byte index (packet index can be used to identify packet)
 - __N byte serialized msgpack data__
 - 1 byte crc8 (for received data check)
-- 1 byte footer
+- these bytes are encoded to COBS encoding based on [Packetizer](https://github.com/hideakitai/Packetizer)
 
 
 ## Usage
