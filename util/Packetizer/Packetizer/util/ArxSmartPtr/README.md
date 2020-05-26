@@ -60,6 +60,13 @@ Please see example for more information.
 // Base::Destructor 4
 ```
 
+## Used Inside of
+
+- [Packetizer](https://github.com/hideakitai/Packetizer)
+- [MsgPacketizer](https://github.com/hideakitai/MsgPacketizer)
+- [ArduinoOSC](https://github.com/hideakitai/ArduinoOSC)
+
+
 ## Roadmap
 
 This library will be updated if I want to use more smart pointer interfaces on supported boards shown above.

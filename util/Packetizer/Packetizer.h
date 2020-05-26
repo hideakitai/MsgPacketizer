@@ -2,6 +2,10 @@
 #ifndef HT_SERIAL_PACKETIZER
 #define HT_SERIAL_PACKETIZER
 
+#ifdef ARDUINO
+    #include <Arduino.h>
+#endif
+
 #if defined(ARDUINO_ARCH_AVR)\
  || defined(ARDUINO_ARCH_MEGAAVR)\
  || defined(ARDUINO_ARCH_SAMD)\
@@ -14,10 +18,10 @@
     #define PACKETIZER_ENABLE_STREAM
 #endif
 
+#include "Packetizer/util/ArxTypeTraits/ArxTypeTraits.h"
 #ifdef PACKETIZER_DISABLE_STL
-    #include "util/ArxTypeTraits/ArxTypeTraits.h"
-    #include "util/ArxContainer/ArxContainer.h"
-    #include "util/ArxSmartPtr/ArxSmartPtr.h"
+    #include "Packetizer/util/ArxContainer/ArxContainer.h"
+    #include "Packetizer/util/ArxSmartPtr/ArxSmartPtr.h"
 #else
     #include <vector>
     #include <deque>
@@ -26,247 +30,66 @@
     #include <memory>
 #endif // PACKETIZER_DISABLE_STL
 
-#ifdef PACKETIZER_ENABLE_STREAM
-#ifdef ARDUINO
-    #define PACKETIZER_STREAM_WRITE(stream, data, size) stream.write(data, size);
-#elif defined(OF_VERSION_MAJOR)
-    #define PACKETIZER_STREAM_WRITE(stream, data, size) stream.writeBytes(data, size);
-#endif
-#endif // PACKETIZER_ENABLE_STREAM
-
-#ifdef TEENSYDUINO
-    #include "util/TeensyDirtySTLErrorSolution/TeensyDirtySTLErrorSolution.h"
-#endif
-
-#include "util/CRCx/CRCx.h"
+#include "Packetizer/Types.h"
+#include "Packetizer/Encoding.h"
 
 namespace ht {
 namespace serial {
 namespace packetizer {
 
-#ifdef PACKETIZER_ENABLE_STREAM
-#ifdef ARDUINO
-    using StreamType = Stream;
-#elif defined (OF_VERSION_MAJOR)
-    using StreamType = ofSerial;
-#endif
-#endif // PACKETIZER_ENABLE_STREAM
-
-#ifndef PACKETIZER_START_BYTE
-#define PACKETIZER_START_BYTE 0xC1
-#endif // PACKETIZER_START_BYTE
-
-class Decoder;
-#ifdef PACKETIZER_DISABLE_STL
-
-    #ifndef PACKETIZER_MAX_PACKET_QUEUE_SIZE
-    #define PACKETIZER_MAX_PACKET_QUEUE_SIZE 1
-    #endif // PACKETIZER_MAX_PACKET_QUEUE_SIZE
-
-    #ifndef PACKETIZER_MAX_PACKET_BINARY_SIZE
-    #define PACKETIZER_MAX_PACKET_BINARY_SIZE 128
-    #endif // PACKETIZER_MAX_PACKET_BINARY_SIZE
-
-    #ifndef PACKETIZER_MAX_CALLBACK_QUEUE_SIZE
-    #define PACKETIZER_MAX_CALLBACK_QUEUE_SIZE 4
-    #endif // PACKETIZER_MAX_CALLBACK_QUEUE_SIZE
-
-    #ifndef PACKETIZER_MAX_STREAM_MAP_SIZE
-    #define PACKETIZER_MAX_STREAM_MAP_SIZE 2
-    #endif // PACKETIZER_MAX_STREAM_MAP_SIZE
-
-    using BinaryBuffer = arx::vector<uint8_t, PACKETIZER_MAX_PACKET_BINARY_SIZE>;
-    using EscapeBuffer = arx::deque<uint8_t, PACKETIZER_MAX_PACKET_BINARY_SIZE>;
-    using PacketQueue = arx::deque<BinaryBuffer, PACKETIZER_MAX_PACKET_QUEUE_SIZE>;
-
-    using CallbackType = std::function<void(const uint8_t* data, const uint8_t size)>;
-    using CallbackAlwaysType = std::function<void(const uint8_t index, const uint8_t* data, const uint8_t size)>;
-    using CallbackMap = arx::map<uint8_t, CallbackType, PACKETIZER_MAX_CALLBACK_QUEUE_SIZE>;
-
-    using DecoderRef = arx::shared_ptr<Decoder>;
-    using Packet = BinaryBuffer;
-    #ifdef PACKETIZER_ENABLE_STREAM
-        using DecoderMap = arx::map<StreamType*, DecoderRef, PACKETIZER_MAX_STREAM_MAP_SIZE>;
-    #endif
-
-    using namespace arx;
-
-#else
-
-    #ifndef PACKETIZER_MAX_PACKET_QUEUE_SIZE
-    #define PACKETIZER_MAX_PACKET_QUEUE_SIZE 0
-    #endif // PACKETIZER_MAX_PACKET_QUEUE_SIZE
-
-    using BinaryBuffer = std::vector<uint8_t>;
-    using EscapeBuffer = std::deque<uint8_t>;
-    using PacketQueue = std::deque<BinaryBuffer>;
-
-    using CallbackType = std::function<void(const uint8_t* data, const uint8_t size)>;
-    using CallbackAlwaysType = std::function<void(const uint8_t index, const uint8_t* data, const uint8_t size)>;
-    using CallbackMap = std::map<uint8_t, CallbackType>;
-
-    using DecoderRef = std::shared_ptr<Decoder>;
-    using Packet = BinaryBuffer;
-    #ifdef PACKETIZER_ENABLE_STREAM
-        using DecoderMap = std::map<StreamType*, DecoderRef>;
-    #endif
-
-    using namespace std;
-
-#endif
-
-    static constexpr uint8_t START_BYTE  {PACKETIZER_START_BYTE};
-    static constexpr uint8_t FINISH_BYTE {START_BYTE + 1};
-    static constexpr uint8_t ESCAPE_BYTE {START_BYTE + 2};
-    static constexpr uint8_t ESCAPE_MASK {0x20};
-
-    static constexpr uint8_t INDEX_OFFSET_INDEX = 1;
-    static constexpr uint8_t INDEX_OFFSET_DATA = 2;
-    static constexpr uint8_t INDEX_OFFSET_CRC_ESCAPE_FROM_END = 2;
-    static constexpr uint8_t N_HEADER_SIZE = 2;
-    static constexpr uint8_t N_FOOTER_SIZE = 1; // footer is not bufferred
-    static constexpr uint8_t N_HEADER_FOOTER_SIZE = N_HEADER_SIZE + N_FOOTER_SIZE;
-
-    struct endp {}; // for end of packet sign
-
-
+    template <typename Encoding>
     class Encoder
     {
-        BinaryBuffer buffer;
+        EncoderBaseRef encoder {encoder_t<Encoding>::create()};
 
     public:
 
-        explicit Encoder(const uint8_t idx = 0) { init(idx); }
-
-        void init(const uint8_t index = 0)
+        size_t encode(const uint8_t index, const uint8_t* src, const size_t size, bool b_crc = encoding::default_option.b_crc)
         {
-            buffer.clear();
-            append((uint8_t)START_BYTE, false);
-            append((uint8_t)index);
+            return encoder->encode(index, src, size, b_crc);
+        }
+        size_t encode(const uint8_t* src, const size_t size, bool b_crc = encoding::default_option.b_crc)
+        {
+            return encoder->encode(src, size, b_crc);
         }
 
-        // ---------- pack w/ variadic arguments ----------
-
-        template <typename ...Rest>
-        void pack(const uint8_t first, Rest&& ...args)
-        {
-            append((uint8_t)first);
-            pack(std::forward<Rest>(args)...);
-        }
-        void pack()
-        {
-            footer();
-        }
-
-        // ---------- pack w/ data pointer and size ----------
-
-        void pack(const uint8_t* const sbuf, const uint8_t size)
-        {
-            append((uint8_t*)sbuf, size);
-            footer();
-        }
-
-        // ---------- pack w/ insertion operator ----------
-
-        const endp& operator<< (const endp& e)
-        {
-            footer();
-            return e; // dummy
-        }
-        Encoder& operator<< (const uint8_t arg)
-        {
-            append(arg);
-            return *this;
-        }
-
-        // get packing info
-        const BinaryBuffer& packet() const { return buffer; }
-        size_t size() const { return buffer.size(); }
-        const uint8_t* data() const { return buffer.data(); }
-
-    private:
-
-        void append(const uint8_t* const data, const uint8_t size, const bool b_escape = true)
-        {
-            if (b_escape)
-            {
-                EscapeBuffer escapes;
-                for (uint8_t i = 0; i < size; ++i)
-                    if (is_escape_byte(data[i]))
-                        escapes.push_back(i);
-
-                if (escapes.empty())
-                    for (uint8_t i = 0; i < size; ++i) buffer.push_back(data[i]);
-                else
-                {
-                    size_t start = 0;
-                    while (!escapes.empty())
-                    {
-                        const uint8_t& idx = escapes.front();
-                        append(data + start, idx - start);
-                        append(data[idx], true);
-                        start = idx + 1;
-                        escapes.pop_front();
-                    }
-                    if (start < size) append(data + start, size - start);
-                }
-            }
-            else
-                for (uint8_t i = 0; i < size; ++i) buffer.push_back(data[i]);
-        }
-
-        void append(const uint8_t data, const bool b_escape = true)
-        {
-            if (b_escape && is_escape_byte(data))
-            {
-                buffer.push_back((uint8_t)ESCAPE_BYTE);
-                buffer.push_back((uint8_t)(data ^ ESCAPE_MASK));
-            }
-            else
-                buffer.push_back(data);
-        }
-
-        void footer()
-        {
-            append(crcx::crc8(buffer.data(), buffer.size()));
-            append(FINISH_BYTE, false);
-        }
-
-        bool is_escape_byte(const uint8_t d) const
-        {
-            return ((d == START_BYTE) || (d == ESCAPE_BYTE) || (d == FINISH_BYTE));
-        }
-
+        const uint8_t* data() const { return encoder->data(); };
+        size_t size() const { return encoder->size(); };
+        const Packet& packet() const { return encoder->packet(); }
     };
 
 
+    template <typename Encoding = DefaultEncoding>
     class Decoder
     {
-        BinaryBuffer buffer;
+        DecoderBaseRef decoder {decoder_t<Encoding>::create()};
         PacketQueue packets;
+        IndexQueue indices;
+        CallbackType cb_no_index;
+        CallbackAlwaysType cb_always;
         CallbackMap callbacks;
-        CallbackAlwaysType callback_always;
-
-        bool b_parsing {false};
-        bool b_escape {false};
-
-        uint32_t err_count {0};
 
     public:
+
+        void subscribe(const CallbackType& func)
+        {
+            cb_no_index = func;
+        }
+
+        void subscribe(const CallbackAlwaysType& func)
+        {
+            cb_always = func;
+        }
 
         void subscribe(const uint8_t index, const CallbackType& func)
         {
             callbacks.emplace(make_pair(index, func));
         }
 
-        void subscribe(const CallbackAlwaysType& func)
-        {
-            callback_always = func;
-        }
-
         void unsubscribe()
         {
-            callback_always = nullptr;
+            if (indexing()) cb_always = nullptr;
+            else            cb_no_index = nullptr;
         }
 
         void unsubscribe(uint8_t index)
@@ -276,181 +99,143 @@ class Decoder;
 
         void feed(const uint8_t* const data, const size_t size, bool b_exec_cb = true)
         {
-            for (size_t i = 0; i < size; ++i) feed(data[i], b_exec_cb);
-        }
-
-        void feed(const uint8_t d, bool b_exec_cb = true)
-        {
-            if (d == START_BYTE)
+            for (size_t i = 0; i < size; ++i)
             {
-                reset();
-                buffer.push_back(d);
-                b_parsing = true;
-            }
-            else if (b_parsing)
-            {
-                if (d == FINISH_BYTE)
-                    decode();
-                else if (b_parsing)
-                    buffer.push_back(d);
-            }
+                decoder->feed(data[i], packets, indices);
+                if (PACKETIZER_MAX_PACKET_QUEUE_SIZE != 0)
+                    if (available() > PACKETIZER_MAX_PACKET_QUEUE_SIZE)
+                        pop();
 
-            if (available() && b_exec_cb) callback();
+                if (available() && b_exec_cb) callback();
+            }
         }
 
         void callback()
         {
-            if (!callback_always && callbacks.empty()) return;
-
-            while(available())
+            if (indexing())
             {
-                if (callback_always) callback_always(index(), data(), size());
-                auto it = callbacks.find(index());
-                if (it != callbacks.end()) it->second(data(), size());
-                pop();
-            }
-        }
-
-        bool isParsing() const { return b_parsing; }
-        size_t available() const { return packets.size(); }
-        void pop() { packets.pop_front(); }
-        void pop_back() { packets.pop_back(); }
-
-        uint8_t index() const { return packets.front()[INDEX_OFFSET_INDEX]; }
-        uint8_t size() const { return packets.front().size() - N_HEADER_FOOTER_SIZE; }
-        uint8_t data(const uint8_t i) const { return data()[i]; }
-        const uint8_t* data() const { return packets.front().data() + INDEX_OFFSET_DATA; }
-
-        uint8_t index_back() const { return packets.back()[INDEX_OFFSET_INDEX]; }
-        uint8_t size_back() const { return packets.back().size() - N_HEADER_FOOTER_SIZE; }
-        uint8_t data_back(const uint8_t i) const { return data_back()[i]; }
-        const uint8_t* data_back() const { return packets.back().data() + INDEX_OFFSET_DATA; }
-
-        uint32_t errors() const { return err_count; }
-
-    private:
-
-        void decode()
-        {
-            if (isCrcMatched())
-            {
-                for (auto it = buffer.begin(); it != buffer.end(); ++it)
+                if (!cb_always && callbacks.empty()) return;
+                while(available())
                 {
-                    if (*it == ESCAPE_BYTE)
-                    {
-                        it = buffer.erase(it);
-                        *it = *it ^ ESCAPE_MASK;
-                    }
+                    if (cb_always) cb_always(index(), data(), size());
+                    auto it = callbacks.find(index());
+                    if (it != callbacks.end()) it->second(data(), size());
+                    pop();
                 }
-                packets.push_back(buffer);
             }
             else
-                ++err_count;
-
-            reset();
-
-            if (PACKETIZER_MAX_PACKET_QUEUE_SIZE != 0)
-                if (available() > PACKETIZER_MAX_PACKET_QUEUE_SIZE)
-                    pop();
-        }
-
-        bool isCrcMatched()
-        {
-            uint8_t crc_received = buffer.back();
-            uint8_t crc_offset_size = 1;
-            if (*(buffer.end() - INDEX_OFFSET_CRC_ESCAPE_FROM_END) == ESCAPE_BYTE) // before CRC byte can be ESCAPE_BYTE only if CRC is escaped
             {
-                crc_received ^= ESCAPE_MASK;
-                crc_offset_size = 2;
+                if (!cb_no_index) return;
+                while(available())
+                {
+                    cb_no_index(data(), size());
+                    pop();
+                }
             }
-
-            uint8_t crc = crcx::crc8(buffer.data(), buffer.size() - crc_offset_size);
-            return (crc == crc_received);
         }
 
-        void reset()
-        {
-            buffer.clear();
-            b_parsing = false;
-        }
+        void reset() { packets.clear(); indices.clear(); decoder->reset(); }
+        bool parsing() const { return decoder->parsing(); }
+        size_t available() const { return packets.size(); }
+        void pop() { pop_front(); }
+        void pop_front() { packets.pop_front(); indices.pop_front(); }
+        void pop_back() { packets.pop_back(); indices.pop_back(); }
+
+        const Packet& packet() const { return packets.front(); }
+        uint8_t index() const { return indices.front(); }
+        size_t size() const { return packet().size(); }
+        const uint8_t* data() const { return packet().data(); }
+        uint8_t data(const uint8_t i) const { return packet()[i]; }
+
+        const Packet& packet_latest() const { return packets.back(); }
+        uint8_t index_latest() const { return indices.back(); }
+        size_t size_latest() const { return packet_latest().size(); }
+        const uint8_t* data_latest() const { return packet_latest().data(); }
+        uint8_t data_latest(const uint8_t i) const { return packet_latest()[i]; }
+
+        uint32_t errors() const { return decoder->errors(); }
+
+        void options(bool b_index, bool b_crc) { indexing(b_index); verifying(b_crc); }
+        void indexing(bool b)  { decoder->indexing(b); }
+        void verifying(bool b)  { decoder->verifying(b); }
+
+        bool indexing() const { return decoder->indexing(); }
+        bool verifying() const { return decoder->verifying(); }
     };
 
+    template <typename Encoding>
+    using EncoderRef = shared_ptr<Encoder<Encoding>>;
+    template <typename Encoding>
+    using DecoderRef = shared_ptr<Decoder<Encoding>>;
 
+
+    template <typename Encoding>
     class EncodeManager
     {
-        EncodeManager() {}
+        EncodeManager() : encoder(make_shared<Encoder<Encoding>>()) {}
         EncodeManager(const EncodeManager&) = delete;
         EncodeManager& operator=(const EncodeManager&) = delete;
 
-        Encoder encoder;
+        EncoderRef<Encoding> encoder;
 
     public:
 
-        static EncodeManager& getInstance()
+        static EncodeManager<Encoding>& getInstance()
         {
-            static EncodeManager m;
+            static EncodeManager<Encoding> m;
             return m;
         }
 
-        Encoder& getEncoder()
+        EncoderRef<Encoding> getEncoder()
         {
             return encoder;
         }
     };
 
-    inline const Packet& encode(const uint8_t index, const uint8_t* data, const uint8_t size)
+
+    template <typename Encoding = DefaultEncoding>
+    inline const Packet& encode(const uint8_t index, const uint8_t* data, const size_t size, bool b_crc = encoding::default_option.b_crc)
     {
-        auto& e = EncodeManager::getInstance().getEncoder();
-        e.init(index);
-        e.pack(data, size);
-        return e.packet();
+        auto e = EncodeManager<Encoding>::getInstance().getEncoder();
+        e->encode(index, data, size, b_crc);
+        return e->packet();
     }
 
-    template <typename ...Rest>
-    inline const Packet& encode(const uint8_t index, const uint8_t first, Rest&& ...args)
+    template <typename Encoding = DefaultEncoding>
+    inline const Packet& encode(const uint8_t* data, const size_t size, bool b_crc = encoding::default_option.b_crc)
     {
-        auto& e = EncodeManager::getInstance().getEncoder();
-        e.init(index);
-        return encode(e, first, std::forward<Rest>(args)...);
-    }
-
-    template <typename ...Rest>
-    inline const Packet& encode(Encoder& p, const uint8_t first, Rest&& ...args)
-    {
-        p << first;
-        return encode(p, std::forward<Rest>(args)...);
-    }
-
-    inline const Packet& encode(Encoder& p)
-    {
-        p << endp();
-        return p.packet();
+        auto e = EncodeManager<Encoding>::getInstance().getEncoder();
+        e->encode(data, size, b_crc);
+        return e->packet();
     }
 
 
 #ifdef PACKETIZER_ENABLE_STREAM
 
-    inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size)
+    template <typename Encoding = DefaultEncoding>
+    inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const size_t size, const bool b_crc = encoding::default_option.b_crc)
     {
-        const auto& packet = encode(index, data, size);
+        const auto& packet = encode<Encoding>(index, data, size, b_crc);
         PACKETIZER_STREAM_WRITE(stream, packet.data(), packet.size());
     }
 
-    template <typename ...Args>
-    inline void send(StreamType& stream, const uint8_t index, const uint8_t first, Args&& ...args)
+    template <typename Encoding = DefaultEncoding>
+    inline void send(StreamType& stream, const uint8_t* data, const size_t size, const bool b_crc = encoding::default_option.b_crc)
     {
-        const auto& packet = encode(index, first, std::forward<Args>(args)...);
+        const auto& packet = encode<Encoding>(data, size, b_crc);
         PACKETIZER_STREAM_WRITE(stream, packet.data(), packet.size());
     }
 
+#endif // PACKETIZER_ENABLE_STREAM
 
+    template <typename Encoding = DefaultEncoding>
     class DecodeManager
     {
         DecodeManager() {}
         DecodeManager(const DecodeManager&) = delete;
         DecodeManager& operator=(const DecodeManager&) = delete;
 
-        DecoderMap decoders;
+        DecoderRef<Encoding> decoder;
 
     public:
 
@@ -460,21 +245,40 @@ class Decoder;
             return m;
         }
 
-        DecoderRef subscribe(const StreamType& stream, const uint8_t index, const CallbackType& func)
+        DecoderRef<Encoding> getDecoderRef()
         {
-            auto decoder = getDecoderRef(stream);
-            decoder->subscribe(index, func);
+            if (!decoder) decoder = make_shared<Decoder<Encoding>>();
             return decoder;
         }
 
-        DecoderRef subscribe(const StreamType& stream, const CallbackAlwaysType& func)
+#ifdef PACKETIZER_ENABLE_STREAM
+
+    private:
+
+        DecoderMap<Encoding> decoders;
+
+    public:
+
+        DecoderRef<Encoding> getDecoderRef(const StreamType& stream)
         {
-            auto decoder = getDecoderRef(stream);
-            decoder->subscribe(func);
-            return decoder;
+            StreamType* s = (StreamType*)&stream;
+            if (decoders.find(s) == decoders.end())
+                decoders.insert(make_pair(s, make_shared<Decoder<Encoding>>()));
+            return decoders[s];
         }
 
-        void parse(bool b_exec_cb = true)
+        void options(const bool b_index, const bool b_crc)
+        {
+            decoder->indexing(b_index);
+            decoder->verifying(b_crc);
+            for (auto& d : decoders)
+            {
+                d.second->indexing(b_index);
+                d.second->verifying(b_crc);
+            }
+        }
+
+        void parse(const bool b_exec_cb = true)
         {
             for (auto& d : decoders)
             {
@@ -487,46 +291,164 @@ class Decoder;
             }
         }
 
-        DecoderRef getDecoderRef(const StreamType& stream)
-        {
-            StreamType* s = (StreamType*)&stream;
-            if (decoders.find(s) == decoders.end())
-                decoders.insert(make_pair(s, make_shared<Decoder>()));
-            return decoders[s];
-        }
-
-        const DecoderMap& getDecoderMap() const
-        {
-            return decoders;
-        }
-
-        DecoderMap& getDecoderMap()
-        {
-            return decoders;
-        }
+#endif // PACKETIZER_ENABLE_STREAM
 
     };
 
-
-    template <typename StreamType>
-    DecoderRef subscribe(const StreamType& stream, uint8_t index, const CallbackType& func)
+    template <typename Encoding = DefaultEncoding>
+    inline const Packet& decode(const uint8_t* data, const size_t size)
     {
-        auto decoder = DecodeManager::getInstance().getDecoderRef(stream);
-        decoder->subscribe(index, func);
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
+        decoder->reset();
+        decoder->indexing(encoding::default_option.b_index);
+        decoder->verifying(encoding::default_option.b_crc);
+        decoder->feed(data, size);
+        return decoder->packet();
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> decode(const uint8_t* data, const size_t size, const bool b_index, const bool b_crc = encoding::default_option.b_crc)
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
+        decoder->reset();
+        decoder->indexing(b_index);
+        decoder->verifying(b_crc);
+        decoder->feed(data, size);
         return decoder;
     }
 
-    template <typename StreamType>
-    DecoderRef subscribe(const StreamType& stream, const CallbackAlwaysType& func)
+    template <typename Encoding = DefaultEncoding>
+    inline void global_options(const bool b_index, const bool b_crc)
     {
-        auto decoder = DecodeManager::getInstance().getDecoderRef(stream);
+        encoding::default_option.b_index = b_index;
+        encoding::default_option.b_crc = b_crc;
+        DecodeManager<Encoding>::getInstance().options(b_index, b_crc);
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> options(const bool b_index, const bool b_crc)
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
+        decoder->indexing(b_index);
+        decoder->verifying(b_crc);
+        return decoder;
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> subscribe(const CallbackType& func)
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
         decoder->subscribe(func);
         return decoder;
     }
 
-    void parse(bool b_exec_cb = true)
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> subscribe(const CallbackAlwaysType& func)
     {
-        DecodeManager::getInstance().parse(b_exec_cb);
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
+        decoder->subscribe(func);
+        return decoder;
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> subscribe(const uint8_t index, const CallbackType& func)
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
+        decoder->subscribe(index, func);
+        return decoder;
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> unsubscribe()
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
+        decoder->unsubscribe();
+        return decoder;
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> unsubscribe(const uint8_t index)
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
+        decoder->unsubscribe(index);
+        return decoder;
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> feed(const uint8_t* data, const size_t size, bool b_exec_cb = true)
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
+        decoder->feed(data, size, b_exec_cb);
+        return decoder;
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> getDecoderRef()
+    {
+        return DecodeManager<Encoding>::getInstance().getDecoderRef();
+    }
+
+#ifdef PACKETIZER_ENABLE_STREAM
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> options(const StreamType& stream, const bool b_index, const bool b_crc)
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef(stream);
+        decoder->indexing(b_index);
+        decoder->verifying(b_crc);
+        return decoder;
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> subscribe(const StreamType& stream, const CallbackType& func)
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef(stream);
+        decoder->subscribe(func);
+        return decoder;
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> subscribe(const StreamType& stream, const CallbackAlwaysType& func)
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef(stream);
+        decoder->subscribe(func);
+        return decoder;
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> subscribe(const StreamType& stream, const uint8_t index, const CallbackType& func)
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef(stream);
+        decoder->subscribe(index, func);
+        return decoder;
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> unsubscribe(const StreamType& stream)
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef(stream);
+        decoder->unsubscribe();
+        return decoder;
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> unsubscribe(const StreamType& stream, const uint8_t index)
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef(stream);
+        decoder->unsubscribe(index);
+        return decoder;
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline void parse(bool b_exec_cb = true)
+    {
+        DecodeManager<Encoding>::getInstance().parse(b_exec_cb);
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> getDecoderRef(const StreamType& stream)
+    {
+        return DecodeManager<Encoding>::getInstance().getDecoderRef(stream);
     }
 
 #endif // PACKETIZER_ENABLE_STREAM
