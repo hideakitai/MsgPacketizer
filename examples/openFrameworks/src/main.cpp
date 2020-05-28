@@ -13,7 +13,12 @@ class ofApp : public ofBaseApp
     std::string s;
     std::vector<int> v;
     std::map<std::string, float> m;
-
+    
+    int io = 0;
+    std::string so {"hey"};
+    std::vector<int> vo {111, 222, 333};
+    std::map<std::string, float> mo {{"time", 0.0}, {"fps", 0.0}};
+    
     const uint8_t send_direct_index = 0x12;
     const uint8_t send_lambda_index = 0x34;
     const uint8_t recv_index = 0x56;
@@ -27,6 +32,12 @@ public:
         ofSetBackgroundColor(0);
 
         serial.setup(modem, 115200);
+
+        // publish packet (you can also send function returns)
+        MsgPacketizer::publish(serial, send_direct_index, io, so, vo)
+            ->setFrameRate(60);
+        MsgPacketizer::publish(serial, send_lambda_index, &ofGetFrameRate, mo)
+            ->setFrameRate(60);
 
         // handle updated data from arduino
         MsgPacketizer::subscribe(serial, recv_index,
@@ -56,16 +67,15 @@ public:
     {
         always_info.str(""); always_info.clear();
         echo_back_info.str(""); echo_back_info.clear();
-
-        std::vector<int> vo {111, (int32_t)ofGetFrameNum(), 333};
-        std::map<std::string, float> mo {{"one", 1.1f}, {"two", 2.2f}, {"fps", ofGetFrameRate()}};
+        
+        // update publishing data
+        io = ofGetFrameNum();
+        vo[1] = ofGetFrameNum();
+        mo["time"] = ofGetElapsedTimef();
+        mo["fps"] = ofGetFrameRate();
         
         // must be called
-        MsgPacketizer::parse();
-        
-        // send packet
-        MsgPacketizer::send(serial, send_direct_index, (int32_t)ofGetFrameNum(), "hey", vo);
-        MsgPacketizer::send(serial, send_lambda_index, (float)ofGetFrameRate(), mo);
+        MsgPacketizer::update();
     }
 
     void draw()

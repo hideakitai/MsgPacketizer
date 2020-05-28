@@ -27,6 +27,11 @@ void setup()
     pinMode(LED_BUILTIN, OUTPUT);
     delay(2000);
 
+    // register variables to publish repeatedly
+    MsgPacketizer::publish(Serial, send_index, i, f, s, v, m)
+        ->setFrameRate(60); // and you can change publish cycles
+        // ->setIntervalSec(1.f); // also you can set interval as sec, msec, usec
+
     // update received data directly
     MsgPacketizer::subscribe(Serial, recv_direct_index, i, s, v);
 
@@ -43,8 +48,8 @@ void setup()
     MsgPacketizer::subscribe(Serial,
         [&](const uint8_t index, MsgPack::Unpacker& unpacker)
         {
-            // send updated data
-            MsgPacketizer::send(Serial, send_index, i, f, s, v, m);
+            // // you can also send data in one-line
+            // MsgPacketizer::send(Serial, send_index, i, f, s, v, m);
 
             // indicate by led
             static bool b = false;
@@ -56,5 +61,10 @@ void setup()
 
 void loop()
 {
-    MsgPacketizer::parse(); // must be called to trigger callback
+    // must be called to trigger callback and publish data
+    MsgPacketizer::update();
+
+    // or you can call parse() and post() separately
+    // MsgPacketizer::parse(); // must be called to trigger callback
+    // MsgPacketizer::post(); // must be called to publish
 }
