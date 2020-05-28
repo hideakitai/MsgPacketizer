@@ -5,7 +5,7 @@
 
 ## Feature
 
-- one-line serialize / deserialize + packetize + robust send / receive
+- one-line serialize / deserialize or publish / subscribe + packetize + robust send / receive
 - serializer / deserializer supports almost all standard type of C++ same as [msgpack-c](https://github.com/msgpack/msgpack-c)
 - supports custom class serialization / deserialization
 - serializer / deserializer based on [MsgPack](https://github.com/hideakitai/MsgPack)
