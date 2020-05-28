@@ -146,8 +146,8 @@ namespace MsgPacketizer
     inline UnpackerMap& getUnpackerMap();
 
     // publish arguments periodically
-    template <typename... Ts>
-    inline PublishElementRef publish(const StreamType& stream, const uint8_t index, Ts&&... ts);
+    template <typename... Args>
+    inline PublishElementRef publish(const StreamType& stream, const uint8_t index, Args&&... args);
     // must be called to publish data
     inline void post();
     // send arguments dilectly with variable types

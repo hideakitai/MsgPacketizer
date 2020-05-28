@@ -342,10 +342,10 @@ namespace msgpacketizer {
         Packetizer::send(stream, index, packer.data(), packer.size());
     }
 
-    template <typename... Ts>
-    inline PublishElementRef publish(const StreamType& stream, const uint8_t index, Ts&&... ts)
+    template <typename... Args>
+    inline PublishElementRef publish(const StreamType& stream, const uint8_t index, Args&&... args)
     {
-        return PackerManager::getInstance().publish(stream, index, std::forward<Ts>(ts)...);
+        return PackerManager::getInstance().publish(stream, index, std::forward<Args>(args)...);
     }
 
     inline void post()
