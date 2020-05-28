@@ -27,7 +27,7 @@
 
 ## Usage
 
-### Direct Data Receive + One-Line Send
+### Direct Data Receive + Data Publishing
 
 ``` C++
 #include <MsgPacketizer.h>
@@ -48,15 +48,15 @@ void setup()
 
     // update received data directly
     MsgPacketizer::subscribe(Serial, recv_index, i, f, s, v, m);
+
+    // publish varibales periodically (default 30[times/sec])
+    MsgPacketizer::publish(Serial, send_index, i, f, s, v, m);
 }
 
 void loop()
 {
-    // must be called to receive
-    MsgPacketizer::parse();
-
-    // send received data back
-    MsgPacketizer::send(Serial, send_index, i, f, s, v, m);
+    // must be called to trigger callback and publish data
+    MsgPacketizer::update();
 }
 
 ```
@@ -80,7 +80,7 @@ void setup()
     MsgPacketizer::subscribe(Serial, recv_index,
         [](int i, float f, MsgPack::str_t s, MsgPack::arr_t<int> v, MsgPack::map_t<String, float> m)
         {
-            // send received data back
+            // send received data back in one-line
             MsgPacketizer::send(Serial, send_index, i, f, s, v, m);
         }
     );
@@ -93,6 +93,9 @@ void loop()
 }
 
 ```
+
+Please see examples for more detail.
+
 
 ### Custom Class Adaptation
 
@@ -129,37 +132,38 @@ namespace MsgPacketizer
     // bind variables directly to specified index packet
     template <typename... Args>
     inline void subscribe(StreamType& stream, const uint8_t index, Args&... args);
-
     // bind callback to specified index packet
     template <typename F>
     inline void subscribe(StreamType& stream, const uint8_t index, const F& callback);
-
     // bind callback which is always called regardless of index
     template <typename F>
     inline void subscribe(StreamType& stream, const F& callback);
-
+    // must be called to receive packets
+    inline void parse(bool b_exec_cb = true);
     // get UnpackerRef = std::shared_ptr<MsgPack::Unpacker> of stream and handle it manually
-    UnpackerRef getUnpackerRef(const StreamType& stream);
-
+    inline UnpackerRef getUnpackerRef(const StreamType& stream);
     // get map o unpackers and handle it manually
-    UnpackerMap& getUnpackerMap();
+    inline UnpackerMap& getUnpackerMap();
 
-
+    // publish arguments periodically
+    template <typename... Ts>
+    inline PublishElementRef publish(const StreamType& stream, const uint8_t index, Ts&&... ts);
+    // must be called to publish data
+    inline void post();
     // send arguments dilectly with variable types
     template <typename... Args>
     inline void send(StreamType& stream, const uint8_t index, Args&&... args);
-
     // send binary data
     inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size);
-
     // send manually packed data
     inline void send(StreamType& stream, const uint8_t index);
-
+    // get registerd publish element class
+    inline PublishElementRef getPublishElementRef(const StreamType& stream, const uint8_t index);
     // get MsgPack::Packer and handle it manually
-    const MsgPack::Packer& getPacker();
+    inline const MsgPack::Packer& getPacker();
 
-    // must be called to receive packets
-    inline void parse(bool b_exec_cb = true);
+    // call parse() and post()
+    inline void update();
 }
 ```
 
@@ -181,31 +185,39 @@ And of course you can manage them by defining following macros.
 But these default values are optimized for such boards, please be careful not to excess your boards storage/memory.
 These macros have no effect for STL enabled boards.
 
+#### MsgPacketizer
+
+```C++
+// max publishing elemtnt size in one destination
+#define MSGPACKETIZER_MAX_PUBLISH_ELEMENT_SIZE 5
+// max destinations to publish
+#define MSGPACKETIZER_MAX_PUBLISH_DESTINATION_SIZE 1
+```
 
 #### MsgPack
 
 ``` C++
 // msgpack serialized binary size
-#define MSGPACK_MAX_PACKET_BYTE_SIZE  128
+#define MSGPACK_MAX_PACKET_BYTE_SIZE 96
 // max size of MsgPack::arr_t
-#define MSGPACK_MAX_ARRAY_SIZE          8
+#define MSGPACK_MAX_ARRAY_SIZE 3
 // max size of MsgPack::map_t
-#define MSGPACK_MAX_MAP_SIZE            8
+#define MSGPACK_MAX_MAP_SIZE 3
 // msgpack objects size in one packet
-#define MSGPACK_MAX_OBJECT_SIZE        24
+#define MSGPACK_MAX_OBJECT_SIZE 16
 ```
 
 #### Packetizer
 
 ``` C++
 // max number of decoded packet queues
-#define PACKETIZER_MAX_PACKET_QUEUE_SIZE     1
+#define PACKETIZER_MAX_PACKET_QUEUE_SIZE 1
 // max data bytes in packet
-#define PACKETIZER_MAX_PACKET_BINARY_SIZE  128
+#define PACKETIZER_MAX_PACKET_BINARY_SIZE 96
 // max number of callback for one stream
-#define PACKETIZER_MAX_CALLBACK_QUEUE_SIZE   4
+#define PACKETIZER_MAX_CALLBACK_QUEUE_SIZE 3
 // max number of streams
-#define PACKETIZER_MAX_STREAM_MAP_SIZE       2
+#define PACKETIZER_MAX_STREAM_MAP_SIZE 1
 ```
 
 
