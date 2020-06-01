@@ -45,7 +45,7 @@ namespace msgpack {
 
     public:
 
-        bool feed(const uint8_t* data, size_t size)
+        bool feed(const uint8_t* data, const size_t size)
         {
             raw_data = (uint8_t*)data;
             for (size_t i = 0; i < size; i += getElementSize(indices.size() - 1))
@@ -60,20 +60,69 @@ namespace msgpack {
             unpack(first);
             deserialize(std::forward<Rest>(rest)...);
         }
+
         void deserialize() {}
 
-        template <typename... Ts>
-        void deserializeToTuple(std::tuple<Ts...>& t)
+        template <typename ...Args>
+        void deserialize(const arr_size_t& arr_size, Args&&... args)
         {
-            deserializeToTuple(std::make_index_sequence<sizeof...(Ts)>(), t);
+            size_t size = unpackArraySize();
+            if (size == arr_size.size())
+            {
+                deserialize(std::forward<Args>(args)...);
+            }
+            else
+            {
+                LOG_WARNING("unpack array size is not matched :", arr_size.size(), "must be", size);
+            }
+        }
+
+        template <typename ...Args>
+        void deserialize(const map_size_t& map_size, Args&&... args)
+        {
+            size_t size = unpackMapSize();
+            if (size == map_size.size())
+            {
+                deserialize(std::forward<Args>(args)...);
+            }
+            else
+            {
+                LOG_WARNING("unpack map size is not matched :", map_size.size(), "must be", size);
+            }
+        }
+
+        template <typename ...Args>
+        void from_array(Args&&... args)
+        {
+            deserialize(arr_size_t(sizeof...(args)), std::forward<Args>(args)...);
+        }
+
+        template <typename ...Args>
+        void from_map(Args&&... args)
+        {
+            size_t size = sizeof...(args);
+            if ((size % 2) == 0)
+            {
+                deserialize(map_size_t(size / 2), std::forward<Args>(args)...);
+            }
+            else
+            {
+                LOG_WARNING("serialize arg size not matched for map :", size);
+            }
+        }
+
+        template <typename... Ts>
+        void to_tuple(std::tuple<Ts...>& t)
+        {
+            to_tuple(std::make_index_sequence<sizeof...(Ts)>(), t);
         }
         template <typename... Ts, size_t... Is>
-        void deserializeToTuple(std::index_sequence<Is...>&&, std::tuple<Ts...>& t)
+        void to_tuple(std::index_sequence<Is...>&&, std::tuple<Ts...>& t)
         {
             size_t i {0};
             idx_t {(unpack(std::get<Is>(t)), i++)...};
         }
-        void deserializeToTuple() {}
+        void to_tuple() {}
 
         bool available() const { return b_decoded; }
         size_t size() const { return indices.size(); }
@@ -120,40 +169,28 @@ namespace msgpack {
         auto unpack(T& value)
         -> typename std::enable_if <
             std::is_arithmetic<T>::value &&
-            !std::is_floating_point<T>::value &&
+            std::is_integral<T>::value &&
             !std::is_same<T, bool>::value &&
-            !std::is_same<typename std::remove_cv<T>::type, char*>::value &&
-            !std::is_signed<T>::value
+            !std::is_same<typename std::remove_cv<T>::type, char*>::value
         >::type
         {
-            if      (isUInt7())  value = unpackUInt7();
-            else if (isUInt8())  value = unpackUInt8();
-            else if (isUInt16()) value = unpackUInt16();
-            else if (isUInt32()) value = unpackUInt32();
-            else if (isUInt64()) value = unpackUInt64();
-            else
+            if (unpackable(value))
             {
-                LOG_WARNING("unpack type is not matched :", (int)getType());
-                value = 0;
-                ++curr_index;
+                switch (getType())
+                {
+                    case Type::UINT7:  value = (T)unpackUInt7();  break;
+                    case Type::UINT8:  value = (T)unpackUInt8();  break;
+                    case Type::UINT16: value = (T)unpackUInt16(); break;
+                    case Type::UINT32: value = (T)unpackUInt32(); break;
+                    case Type::UINT64: value = (T)unpackUInt64(); break;
+                    case Type::INT5:   value = (T)unpackInt5();   break;
+                    case Type::INT8:   value = (T)unpackInt8();   break;
+                    case Type::INT16:  value = (T)unpackInt16();  break;
+                    case Type::INT32:  value = (T)unpackInt32();  break;
+                    case Type::INT64:  value = (T)unpackInt64();  break;
+                    default:                                   break;
+                }
             }
-        }
-
-        template <typename T>
-        auto unpack(T& value)
-        -> typename std::enable_if <
-            std::is_arithmetic<T>::value &&
-            !std::is_floating_point<T>::value &&
-            !std::is_same<T, bool>::value &&
-            !std::is_same<typename std::remove_cv<T>::type, char*>::value &&
-            std::is_signed<T>::value
-        >::type
-        {
-            if      (isInt5())  value = unpackInt5();
-            else if (isInt8())  value = unpackInt8();
-            else if (isInt16()) value = unpackInt16();
-            else if (isInt32()) value = unpackInt32();
-            else if (isInt64()) value = unpackInt64();
             else
             {
                 LOG_WARNING("unpack type is not matched :", (int)getType());
@@ -174,8 +211,25 @@ namespace msgpack {
             std::is_floating_point<T>::value
         >::type
         {
-            if      (isFloat32()) value = unpackFloat32();
-            else if (isFloat64()) value = unpackFloat64();
+            if (unpackable(value))
+            {
+                switch (getType())
+                {
+                    case Type::UINT7:   value = (T)unpackUInt7();   break;
+                    case Type::UINT8:   value = (T)unpackUInt8();   break;
+                    case Type::UINT16:  value = (T)unpackUInt16();  break;
+                    case Type::UINT32:  value = (T)unpackUInt32();  break;
+                    case Type::UINT64:  value = (T)unpackUInt64();  break;
+                    case Type::INT5:    value = (T)unpackInt5();    break;
+                    case Type::INT8:    value = (T)unpackInt8();    break;
+                    case Type::INT16:   value = (T)unpackInt16();   break;
+                    case Type::INT32:   value = (T)unpackInt32();   break;
+                    case Type::INT64:   value = (T)unpackInt64();   break;
+                    case Type::FLOAT32: value = (T)unpackFloat32(); break;
+                    case Type::FLOAT64: value = (T)unpackFloat64(); break;
+                    default:                                        break;
+                }
+            }
             else
             {
                 LOG_WARNING("unpack type is not matched :", (int)getType());
@@ -312,7 +366,7 @@ namespace msgpack {
             const size_t size = unpackArraySize();
             if (sizeof...(Args) == size)
             {
-                deserializeToTuple(t);
+                to_tuple(t);
             }
             else
             {
@@ -937,7 +991,7 @@ namespace msgpack {
         // - ints (signed/unsigned)
 
         template <typename T>
-        auto unpackable(const T& value) const
+        auto unpackable(const T&) const
         -> typename std::enable_if <
             std::is_arithmetic<T>::value &&
             !std::is_floating_point<T>::value &&
@@ -947,18 +1001,17 @@ namespace msgpack {
             bool
         >::type
         {
-            (void)value;
-            if      (isUInt7())  return sizeof(T) == sizeof(uint8_t);
-            else if (isUInt8())  return sizeof(T) == sizeof(uint8_t);
-            else if (isUInt16()) return sizeof(T) == sizeof(uint16_t);
-            else if (isUInt32()) return sizeof(T) == sizeof(uint32_t);
-            else if (isUInt64()) return sizeof(T) == sizeof(uint64_t);
+            if      (isUInt7())  return sizeof(T) >= sizeof(uint8_t);
+            else if (isUInt8())  return sizeof(T) >= sizeof(uint8_t);
+            else if (isUInt16()) return sizeof(T) >= sizeof(uint16_t);
+            else if (isUInt32()) return sizeof(T) >= sizeof(uint32_t);
+            else if (isUInt64()) return sizeof(T) >= sizeof(uint64_t);
             else
                 return false;
         }
 
         template <typename T>
-        auto unpackable(const T& value) const
+        auto unpackable(const T&) const
         -> typename std::enable_if <
             std::is_arithmetic<T>::value &&
             !std::is_floating_point<T>::value &&
@@ -968,12 +1021,15 @@ namespace msgpack {
             bool
         >::type
         {
-            (void)value;
-            if      (isInt5())  return sizeof(T) == sizeof(int8_t);
-            else if (isInt8())  return sizeof(T) == sizeof(int8_t);
-            else if (isInt16()) return sizeof(T) == sizeof(int16_t);
-            else if (isInt32()) return sizeof(T) == sizeof(int32_t);
-            else if (isInt64()) return sizeof(T) == sizeof(int64_t);
+            if      (isInt5())   return sizeof(T) >= sizeof(int8_t);
+            else if (isInt8())   return sizeof(T) >= sizeof(int8_t);
+            else if (isInt16())  return sizeof(T) >= sizeof(int16_t);
+            else if (isInt32())  return sizeof(T) >= sizeof(int32_t);
+            else if (isInt64())  return sizeof(T) >= sizeof(int64_t);
+            else if (isUInt7())  return sizeof(T) >= sizeof(int8_t);
+            else if (isUInt8())  return sizeof(T) >= sizeof(int16_t);
+            else if (isUInt16()) return sizeof(T) >= sizeof(uint32_t);
+            else if (isUInt32()) return sizeof(T) >= sizeof(uint64_t);
             else
                 return false;
         }
@@ -984,16 +1040,17 @@ namespace msgpack {
         // - double
 
         template <typename T>
-        auto unpackable(const T& value) const
+        auto unpackable(const T&) const
         -> typename std::enable_if <
             std::is_arithmetic<T>::value &&
             std::is_floating_point<T>::value,
             bool
         >::type
         {
-            (void)value;
-            if      (isFloat32()) return sizeof(T) == sizeof(float);
-            else if (isFloat64()) return sizeof(T) == sizeof(double);
+            if      (isFloat32()) return sizeof(T) >= sizeof(float);
+            else if (isFloat64()) return sizeof(T) >= sizeof(double);
+            else if (isUInt())    return true;
+            else if (isInt())     return true;
             else
                 return false;
         }

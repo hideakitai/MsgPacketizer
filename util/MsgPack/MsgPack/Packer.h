@@ -23,6 +23,7 @@
 #endif // TEENSYDUINO
 
 #include "Types.h"
+#include "util/DebugLog/DebugLog.h"
 
 namespace ht {
 namespace serial {
@@ -51,6 +52,40 @@ namespace msgpack {
 
         void serialize()
         {
+        }
+
+        template <typename ...Args>
+        void serialize(const arr_size_t& arr_size, Args&&... args)
+        {
+            packArraySize(arr_size.size());
+            serialize(std::forward<Args>(args)...);
+        }
+
+        template <typename ...Args>
+        void serialize(const map_size_t& map_size, Args&&... args)
+        {
+            packMapSize(map_size.size());
+            serialize(std::forward<Args>(args)...);
+        }
+
+        template <typename ...Args>
+        void to_array(Args&&... args)
+        {
+            serialize(arr_size_t(sizeof...(args)), std::forward<Args>(args)...);
+        }
+
+        template <typename ...Args>
+        void to_map(Args&&... args)
+        {
+            size_t size = sizeof...(args);
+            if ((size % 2) == 0)
+            {
+                serialize(map_size_t(size / 2), std::forward<Args>(args)...);
+            }
+            else
+            {
+                LOG_WARNING("serialize arg size must be even for map :", size);
+            }
         }
 
         const bin_t<uint8_t>& packet() const { return buffer; }
@@ -102,42 +137,27 @@ namespace msgpack {
         auto pack(const T& value)
         -> typename std::enable_if <
             std::is_arithmetic<T>::value &&
-            !std::is_floating_point<T>::value &&
+            std::is_integral<T>::value &&
             !std::is_same<T, bool>::value &&
-            !std::is_same<typename std::remove_cv<T>::type, char*>::value &&
-            std::is_unsigned<T>::value
+            !std::is_same<typename std::remove_cv<T>::type, char*>::value
         >::type
         {
-            size_t size = sizeof(T);
-            if (size == sizeof(uint8_t))
-                if (value <= (T)BitMask::UINT7) packUInt7(value);
-                else                            packUInt8(value);
-            else if (size == sizeof(uint16_t))  packUInt16(value);
-            else if (size == sizeof(uint32_t))  packUInt32(value);
-            else if (size == sizeof(uint64_t))  packUInt64(value);
-        }
-
-        template <typename T>
-        auto pack(const T& value)
-        -> typename std::enable_if <
-            std::is_arithmetic<T>::value &&
-            !std::is_floating_point<T>::value &&
-            !std::is_same<T, bool>::value &&
-            !std::is_same<typename std::remove_cv<T>::type, char*>::value &&
-            std::is_signed<T>::value
-        >::type
-        {
-            size_t size = sizeof(T);
-            if (size == sizeof(int8_t))
-                if ((value <  0) && value >= ((T)Type::INT5 | ((T)BitMask::INT5 & value)))
-                    packInt5(value);
-                else if ((value >= 0) && (value <= (T)BitMask::UINT7))
-                    packUInt7(value);
-                else
-                    packInt8(value);
-            else if (size == sizeof(int16_t))  packInt16(value);
-            else if (size == sizeof(int32_t))  packInt32(value);
-            else if (size == sizeof(int64_t))  packInt64(value);
+            if (value >= 0)
+            {
+                if      ((uint64_t)value <  (uint64_t)BitMask::UINT7)                       packUInt7(value);
+                else if ((uint64_t)value <= (uint64_t)std::numeric_limits<uint8_t>::max())  packUInt8(value);
+                else if ((uint64_t)value <= (uint64_t)std::numeric_limits<uint16_t>::max()) packUInt16(value);
+                else if ((uint64_t)value <= (uint64_t)std::numeric_limits<uint32_t>::max()) packUInt32(value);
+                else                                                                        packUInt64(value);
+            }
+            else
+            {
+                if      ((int64_t)value >  -(int64_t)BitMask::INT5)                      packInt5(value);
+                else if ((int64_t)value >= (int64_t)std::numeric_limits<int8_t>::min())  packInt8(value);
+                else if ((int64_t)value >= (int64_t)std::numeric_limits<int16_t>::min()) packInt16(value);
+                else if ((int64_t)value >= (int64_t)std::numeric_limits<int32_t>::min()) packInt32(value);
+                else                                                                     packInt64(value);
+            }
         }
 
 

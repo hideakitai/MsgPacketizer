@@ -84,7 +84,7 @@ namespace debug {
     LogLevel log_level = LogLevel::VERBOSE;
 
     template <typename... Args>
-    void log(LogLevel level, const char* file, int line, const char* func, Args&&... args)
+    inline void log(LogLevel level, const char* file, int line, const char* func, Args&&... args)
     {
         if ((log_level == LogLevel::NONE) || (level == LogLevel::NONE)) return;
         if ((int)level <= (int)log_level)

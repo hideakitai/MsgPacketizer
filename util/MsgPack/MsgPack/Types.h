@@ -69,6 +69,27 @@ namespace msgpack {
     using str_t = std::string;
 #endif
 
+    namespace type
+    {
+        struct ArraySize
+        {
+            size_t sz;
+        public:
+            explicit ArraySize(const size_t size) : sz(size) {}
+            size_t size() const { return sz; }
+        };
+        struct MapSize
+        {
+            size_t sz;
+        public:
+            explicit MapSize(const size_t size) : sz(size) {}
+            size_t size() const { return sz; }
+        };
+    }
+
+    using arr_size_t = type::ArraySize;
+    using map_size_t = type::MapSize;
+
 
     namespace object
     {
@@ -208,13 +229,23 @@ namespace msgpack {
 
 
 #define MSGPACK_DEFINE(...) \
-    void to_msgpack(MsgPack::Packer& p) const \
+    void to_msgpack(MsgPack::Packer& packer) const \
     { \
-        p.serialize(__VA_ARGS__); \
+        packer.to_array(__VA_ARGS__); \
     } \
-    void from_msgpack(MsgPack::Unpacker& p) \
+    void from_msgpack(MsgPack::Unpacker& unpacker) \
     { \
-        p.deserialize(__VA_ARGS__); \
+        unpacker.from_array(__VA_ARGS__); \
+    }
+
+#define MSGPACK_DEFINE_MAP(...) \
+    void to_msgpack(MsgPack::Packer& packer) const \
+    { \
+        packer.to_map(__VA_ARGS__); \
+    } \
+    void from_msgpack(MsgPack::Unpacker& unpacker) \
+    { \
+        unpacker.from_map(__VA_ARGS__); \
     }
 
 #define MSGPACK_BASE(base) (*const_cast<base *>(static_cast<base const*>(this)))

@@ -7,6 +7,9 @@
  || defined(ARDUINO_ARCH_SAMD)\
  || defined(ARDUINO_spresense_ast)
 #define HT_SERIAL_MSGPACK_DISABLE_STL
+#endif
+
+#ifndef MSGPACK_ENABLE_DEBUG_LOG
 #define NDEBUG // disable conversion warning
 #endif
 

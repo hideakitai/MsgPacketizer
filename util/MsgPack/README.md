@@ -54,9 +54,42 @@ void loop()
 }
 ```
 
+## Encode / Decode to Collections without Container
+
+In msgpack, there two collection types: `Array` and `Map`.
+C++ containers will be converted to one of them but you can do that from individual parameters.
+To `pack` / `unpack` values as such collections in a simple way, please use these functions.
+
+```C++
+packer.to_array(i, f, s); // becoms array format [i, f, s];
+unpacker.from_array(ii, ff, ss); // unpack from array format to ii, ff, ss
+
+packer.to_map("i", i, "f", f); // becoms {"i":i, "f":f}
+unpacker.from_map(ki, ii, kf, ff); // unpack from map to ii, ff, ss
+```
+
+The same conversion can be achieved using `serialize` and `deserialize`.
+
+```C++
+packer.serialize(MsgPack::arr_size_t(3), i, f, s); // [i, f, s]
+unpacker.deserialize(MsgPack::arr_size_t(3), ii, ff, ss);
+
+packer.serialize(MsgPack::map_size_t(2), "i", i, "f", f); // {"i":i, "f":f}
+unpacker.deserialize(MsgPack::map_size_t(2), ki, ii, kf, ff);
+```
+
+Here, `MsgPack::arr_size_t` and `MsgPack::map_size_t` are used to identify the size of `Array` and `Map` format in `serialize` or `deserialize`.
+This way is expandable to `pack` and `unpack` complex data structure because it can be nested.
+
+```C++
+// {"i":i, "arr":[ii, iii]}
+packer.serialize(MsgPack::map_size_t(2), "i", i, "arr", MsgPack::arr_size_t(2), ii, iii);
+unpacker.deserialize(MsgPack::map_size_t(2), ki, i, karr, MsgPack::arr_size_t(2), ii, iii);
+```
+
 ## Custom Class Adaptation
 
-To serialize / deserialize custom type you defined, please use `MSGPACK_DEFINE()` macro inside of your class.
+To serialize / deserialize custom type you defined, please use `MSGPACK_DEFINE()` macro inside of your class. This macro enables you to convert your custom class to `Array` format.
 
 ``` C++
 struct CustomClass
@@ -64,12 +97,11 @@ struct CustomClass
     int i;
     float f;
     MsgPack::str_t s;
-
-    MSGPACK_DEFINE(i, f, s);
+    MSGPACK_DEFINE(i, f, s); // -> [i, f, s]
 };
 ```
 
-After that, you can pack your class completely same as other types.
+After that, you can `serialize` your class completely same as other types.
 
 ``` C++
 int i;
@@ -78,8 +110,41 @@ MsgPack::str_t s;
 CustomClass c;
 
 MsgPack::Packer packer;
-packer.serialize(i, f, s, c); // -> packer.serialize(i, f, s, c.i, c.f, c.s)
+packer.serialize(i, f, s, c);
+// -> packer.serialize(i, f, s, arr_size_t(3), c.i, c.f, c.s)
+
+int ii;
+float ff;
+MsgPack::str_t ss;
+CustomClass cc;
+
+MsgPack::Unpacker unpacker;
+unpacker.feed(packer.data(), packer.size());
+unpacker.deserialize(ii, ff, ss, cc);
 ```
+
+You can also wrap your custom class to `Map` format by using `MSGPACK_DEFINE_MAP` macro.
+Please note that you need "key" string for `Map` format.
+
+``` C++
+struct CustomClass
+{
+    MsgPack::str_t key_i {"i"}; int i;
+    MsgPack::str_t key_f {"f"}; float f;
+    MSGPACK_DEFINE_MAP(key_i, i, key_f, f); // -> {"i":i, "f":f}
+};
+
+CustomClass c;
+MsgPack::Packer packer;
+packer.serialize(c);
+// -> packer.serialize(map_size_t(2), c.key_i, c.i, c.key_f, c.f)
+
+CustomClass cc;
+MsgPack::Unpacker unpacker;
+unpacker.feed(packer.data(), packer.size());
+unpacker.deserialize(cc);
+```
+
 
 ### Custom Class with Inheritance
 
@@ -90,23 +155,111 @@ struct Base
 {
     int i;
     float f;
-
     MSGPACK_DEFINE(i, f);
 };
 
 struct Derived : public Base
 {
     MsgPack::str_t s;
-
-    MSGPACK_DEFINE(s, MSGPACK_BASE(Base)); // -> packer.serialize(s, Base::i, Base::f)
+    MSGPACK_DEFINE(s, MSGPACK_BASE(Base));
+    // -> packer.serialize(arr_size_t(2), s, arr_size_t(2), Base::i, Base::f)
 };
 ```
+
+If you wamt to use `Map` format in derived class, add "key" for your `MSGPACK_BASE`.
+
+```C++
+struct Derived : public Base
+{
+    MsgPack::str_t key_s; MsgPack::str_t s;
+    MsgPack::str_t key_b; // key for base class
+    MSGPACK_DEFINE_MAP(key_s, s, key_b, MSGPACK_BASE(Base));
+    // -> packer.serialize(map_size_t(2), key_s, s, key_b, arr_size_t(2), Base::i, Base::f)
+};
+```
+
+
+### Nested Custom Class
+
+You can nest custom classes to express complex data structure.
+
+```C++
+// serialize and deserialize nested structure
+// {"i":i, "f":f, "a":["str", {"first":1, "second":"two"}]}
+
+// {"first":1, "second":"two"}
+struct MyMap
+{
+    MsgPack::str_t key_first; int i;
+    MsgPack::str_t key_second; MsgPack::str_t s;
+    MSGPACK_DEFINE_MAP(key_first, i, key_second, s);
+};
+
+// ["str", {"first":1, "second":"two"}]
+struct MyArr
+{
+    MsgPack::str_t s;
+    MyMap m;
+    MSGPACK_DEFINE(s, m):
+};
+
+// {"i":i, "f":f, "a":["str", {"first":1, "second":"two"}]}
+struct MyNestedClass
+{
+    MsgPack::str_t key_i; int i;
+    MsgPack::str_t key_f; int f;
+    MsgPack::str_t key_a;
+    MyArr arr;
+    MSGPACK_DEFINE_MAP(key_i, i, key_f, f, key_a, arr);
+};
+```
+
+And you can `serialize` / `deserialize` as same as other types.
+
+```C++
+MyNestedClass c;
+MsgPack::Packer packer;
+packer.serialize(c);
+
+MyNestedClass cc;
+MsgPack::Unpacker unpacker;
+unpacker.feed(packer.data(), packer.size());
+unpacker.deserialize(cc);
+```
+
+
+## JSON and Other language's msgpack compatibility
+
+In other languages like JavaScript, Python and etc. has also library for msgpack.
+But some libraries can NOT convert msgpack in "plain" style.
+They always wrap them into collections like `Array` or `Map` by default.
+For example, you can't convert "plain" format in other languages.
+
+```C++
+packer.serialize(i, f, s);                // "plain" format is NOT unpackable
+packer.serialize(arr_size_t(3), i, f, s); // unpackable if you wrap that into Array
+```
+
+It is because the msgpack is used as based on JSON (I think).
+So you need to use `Array` format for JSON array, and `Map` for Json Object.
+To achieve that, there are several ways.
+
+- use `to_array` or `to_map` to convert to simple structure
+- use `serialize()` or `deserialize()` with `arr_size_t` / `map_size_t` for complex structure
+- use custom class as JSON array / object which is wrapped into `Array` / `Map`
+- use custom class nest recursively for more complex structure
+- use `ArduinoJson` for more flexible handling of JSON (__TBD__)
+
+
+### Use MsgPack with ArduinoJson
+
+__TBD__
 
 
 ## Supported Type Adaptors
 
 These are the lists of types which can be `serialize` and `deserialize`.
-You can also `pack()` variable one by one.
+You can also `pack()`  or `unpack()` variable one by one.
 
 ### NIL
 
@@ -192,26 +345,18 @@ You can also `pack()` variable one by one.
 
 ### Additional Types for MsgPack
 
-There are some additional types are defined for compatibility to no-stl Arduino and other general C++ apps.
+There are some additional types are defined to express msgpack formats easily.
 
 #### Type Aliases for Str / Bin / Array / Map
 
-For no-stl Arduino, these type aliases are defined.
-Please see "Memory Management" section and [ArxContainer](https://github.com/hideakitai/ArxContainer) for detail.
+These types have type aliases like this:
 
-- `MsgPack::str_t` = `String`
-- `MsgPack::bin_t<T>` = `arx::vector<T, N = MSGPACK_MAX_PACKET_BYTE_SIZE>`
-- `MsgPack::arr_t<T>` = `arx::vector<T, N = MSGPACK_MAX_ARRAY_SIZE>`
-- `MsgPack::map_t<T, U>` = `arx::map<T, U, N = MSGPACK_MAX_MAP_SIZE>`
-
-For other stl-enabled Arduino, these types are:
-
-- `MsgPack::str_t` = `String`
+- `MsgPack::str_t` = `String` (Arduino only)
 - `MsgPack::bin_t<T>` = `std::vector<T>`
 - `MsgPack::arr_t<T>` = `std::vector<T>`
 - `MsgPack::map_t<T, U>` = `std::map<T, U>`
 
-For general C++ apps, only difference is:
+For general C++ apps (not Arduino), `str_t` is defined as:
 
 - `MsgPack::str_t` = `std::string`
 
@@ -256,8 +401,24 @@ unpacker.feed(packer.data(), packer.size());
 unpacker.deserialize(r); // deserialize timestamp type
 ```
 
-
 ## Other Options
+
+### Enable Error Info
+
+Error information report is disabled by default. You can enable it by defining this macro.
+
+```C++
+#define MSGPACK_ENABLE_DEBUG_LOG
+```
+
+Also you can change debug info stream by calling this macro (default: `Serial`).
+
+```C++
+DEBUG_LOG_ATTACH_STREAM(Serial1);
+```
+
+See [DebugLog](https://github.com/hideakitai/DebugLog) for details.
+
 
 ### Packet Data Storage Class Inside
 
@@ -286,8 +447,16 @@ But these default values are optimized for such boards, please be careful not to
 // msgpack objects size in one packet
 #define MSGPACK_MAX_OBJECT_SIZE        24
 ```
-
 These macros have no effect for STL enabled boards.
+
+In addtion for such boards, type aliases for following types are different from others.
+
+- `MsgPack::str_t` = `String`
+- `MsgPack::bin_t<T>` = `arx::vector<T, N = MSGPACK_MAX_PACKET_BYTE_SIZE>`
+- `MsgPack::arr_t<T>` = `arx::vector<T, N = MSGPACK_MAX_ARRAY_SIZE>`
+- `MsgPack::map_t<T, U>` = `arx::map<T, U, N = MSGPACK_MAX_MAP_SIZE>`
+
+Please see "Memory Management" section and [ArxContainer](https://github.com/hideakitai/ArxContainer) for detail.
 
 
 ### STL library for Arduino Support
@@ -302,7 +471,7 @@ I reccomend to use low cost but much better performance chip like ESP series.
 
 - [ArxTypeTraits v0.1.8](https://github.com/hideakitai/ArxTypeTraits)
 - [ArxContainer v0.3.6](https://github.com/hideakitai/ArxContainer)
-- [DebugLog v0.1.5](https://github.com/hideakitai/DebugLog)
+- [DebugLog v0.1.6](https://github.com/hideakitai/DebugLog)
 - [TeensyDirtySTLErrorSolution v0.1.0](https://github.com/hideakitai/TeensyDirtySTLErrorSolution)
 
 
@@ -320,6 +489,15 @@ template <typename First, typename ...Rest>
 void serialize(const First& first, Rest&&... rest);
 template <typename T>
 void serialize(const T* data, const size_t size); // only for poitner types
+    template <typename ...Args>
+void serialize(const arr_size_t& arr_size, Args&&... args);
+template <typename ...Args>
+void serialize(const map_size_t& map_size, Args&&... args);
+
+template <typename ...Args>
+void to_array(Args&&... args);
+template <typename ...Args>
+void to_map(Args&&... args);
 
 void pack<T>(const T& t);
 void pack<T>(const T* ptr, const size_t size); // only for pointer types
@@ -404,8 +582,18 @@ bool feed(const uint8_t* data, size_t size);
 
 template <typename First, typename ...Rest>
 void deserialize(First& first, Rest&&... rest);
+template <typename ...Args>
+void deserialize(const arr_size_t& arr_size, Args&&... args);
+template <typename ...Args>
+void deserialize(const map_size_t& map_size, Args&&... args);
+
+template <typename ...Args>
+void from_array(Args&&... args);
+template <typename ...Args>
+void from_map(Args&&... args);
+
 template <typename... Ts>
-void deserializeToTuple(std::tuple<Ts...>& t);
+void to_tuple(std::tuple<Ts...>& t);
 
 template <typename T>
 void unpack(T& value);
