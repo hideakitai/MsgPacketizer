@@ -43,8 +43,8 @@
 #define PACKETIZER_USE_INDEX_AS_DEFAULT
 #define PACKETIZER_USE_CRC_AS_DEFAULT
 
-#include <util/Packetizer/Packetizer.h>
-#include <util/MsgPack/MsgPack.h>
+#include "util/Packetizer/Packetizer.h"
+#include "util/MsgPack/MsgPack.h"
 
 namespace ht {
 namespace serial {
