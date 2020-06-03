@@ -74,8 +74,6 @@ namespace msgpacketizer {
             void setIntervalMsec(const float ms) { interval_us = (uint32_t)(ms * 1000.f); }
             void setIntervalSec(const float sec) { interval_us = (uint32_t)(sec * 1000.f * 1000.f); }
 
-            // void init(Message& m, const String& addr) { m.init(addr); }
-
             virtual ~Base() {}
             virtual void encodeTo(MsgPack::Packer& p) = 0;
         };
@@ -299,11 +297,33 @@ namespace msgpacketizer {
             return publish_impl(stream, index, make_element_ref(getter));
         }
 
-        template <typename... Ts>
-        PublishElementRef publish(const StreamType& stream, const uint8_t index, Ts&&... ts)
+        template <typename... Args>
+        PublishElementRef publish(const StreamType& stream, const uint8_t index, Args&&... args)
         {
-            ElementTupleRef v { make_element_ref(std::forward<Ts>(ts))... };
+            ElementTupleRef v { make_element_ref(std::forward<Args>(args))... };
             return publish_impl(stream, index, make_element_ref(v));
+        }
+
+        template <typename... Args>
+        PublishElementRef publish_arr(const StreamType& stream, const uint8_t index, Args&&... args)
+        {
+            static MsgPack::arr_size_t s(sizeof...(args));
+            return publish(stream, index, s, std::forward<Args>(args)...);
+        }
+
+        template <typename... Args>
+        PublishElementRef publish_map(const StreamType& stream, const uint8_t index, Args&&... args)
+        {
+            if ((sizeof...(args) % 2) == 0)
+            {
+                static MsgPack::map_size_t s(sizeof...(args) / 2);
+                return publish(stream, index, s, std::forward<Args>(args)...);
+            }
+            else
+            {
+                LOG_WARNING("serialize arg size must be even for map :", size);
+                return nullptr;
+            }
         }
 
         PublishElementRef getPublishElementRef(const StreamType& stream, const uint8_t index)
@@ -346,9 +366,46 @@ namespace msgpacketizer {
     }
 
     template <typename... Args>
+    inline void send_arr(StreamType& stream, const uint8_t index, Args&&... args)
+    {
+        auto& packer = PackerManager::getInstance().getPacker();
+        packer.clear();
+        packer.serialize(MsgPack::arr_size_t(sizeof...(args)), std::forward<Args>(args)...);
+        Packetizer::send(stream, index, packer.data(), packer.size());
+    }
+
+    template <typename... Args>
+    inline void send_map(StreamType& stream, const uint8_t index, Args&&... args)
+    {
+        if ((sizeof...(args) % 2) == 0)
+        {
+            auto& packer = PackerManager::getInstance().getPacker();
+            packer.clear();
+            packer.serialize(MsgPack::arr_size_t(sizeof...(args) / 2), std::forward<Args>(args)...);
+            Packetizer::send(stream, index, packer.data(), packer.size());
+        }
+        else
+        {
+            LOG_WARNING("serialize arg size must be even for map :", size);
+        }
+    }
+
+    template <typename... Args>
     inline PublishElementRef publish(const StreamType& stream, const uint8_t index, Args&&... args)
     {
         return PackerManager::getInstance().publish(stream, index, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    inline PublishElementRef publish_arr(const StreamType& stream, const uint8_t index, Args&&... args)
+    {
+        return PackerManager::getInstance().publish_arr(stream, index, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    inline PublishElementRef publish_map(const StreamType& stream, const uint8_t index, Args&&... args)
+    {
+        return PackerManager::getInstance().publish_map(stream, index, std::forward<Args>(args)...);
     }
 
     inline void post()
@@ -415,6 +472,40 @@ namespace msgpacketizer {
         });
     }
 
+    template <typename... Args>
+    inline void subscribe_arr(StreamType& stream, const uint8_t index, Args&... args)
+    {
+        static MsgPack::arr_size_t s(sizeof...(args));
+        Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size)
+        {
+            auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
+            unpacker->clear();
+            unpacker->feed(data, size);
+            unpacker->deserialize(s, args...);
+        });
+    }
+
+    template <typename... Args>
+    inline void subscribe_map(StreamType& stream, const uint8_t index, Args&... args)
+    {
+        if ((sizeof...(args) % 2) == 0)
+        {
+            static MsgPack::map_size_t s(sizeof...(args) / 2);
+            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size)
+            {
+                auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
+                unpacker->clear();
+                unpacker->feed(data, size);
+                unpacker->deserialize(s, args...);
+            });
+        }
+        else
+        {
+            LOG_WARNING("deserialize arg size must be even for map :", size);
+        }
+    }
+
+
     namespace detail
     {
         template <typename R, typename... Args>
@@ -427,7 +518,7 @@ namespace msgpacketizer {
                     unpacker->clear();
                     unpacker->feed(data, size);
                     std::tuple<std::remove_cvref_t<Args>...> t;
-                    unpacker->deserializeToTuple(t);
+                    unpacker->to_tuple(t);
                     std::apply(cb, t);
                 }
             );
