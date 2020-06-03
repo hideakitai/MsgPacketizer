@@ -429,6 +429,19 @@ namespace msgpack {
         }
 
 
+        // ---------- Array/Map Size format ----------
+
+        void pack(const arr_size_t& t)
+        {
+            packArraySize(t.size());
+        }
+
+        void pack(const map_size_t& t)
+        {
+            packMapSize(t.size());
+        }
+
+
         /////////////////////////////////////////
         // ---------- msgpack types ---------- //
         /////////////////////////////////////////

@@ -494,6 +494,19 @@ namespace msgpack {
         }
 
 
+        // ---------- Array/Map Size format ----------
+
+        void unpack(arr_size_t& t)
+        {
+            t = arr_size_t(unpackArraySize());
+        }
+
+        void unpack(map_size_t& t)
+        {
+            t = map_size_t(unpackMapSize());
+        }
+
+
         /////////////////////////////////////////
         // ---------- msgpack types ---------- //
         /////////////////////////////////////////
@@ -1047,12 +1060,24 @@ namespace msgpack {
             bool
         >::type
         {
-            if      (isFloat32()) return sizeof(T) >= sizeof(float);
-            else if (isFloat64()) return sizeof(T) >= sizeof(double);
-            else if (isUInt())    return true;
-            else if (isInt())     return true;
-            else
-                return false;
+            switch(getType())
+            {
+                case Type::UINT7:
+                case Type::UINT8:
+                case Type::UINT16:
+                case Type::UINT32:
+                case Type::UINT64:
+                case Type::INT5:
+                case Type::INT8:
+                case Type::INT16:
+                case Type::INT32:
+                case Type::INT64:
+                case Type::FLOAT32:
+                case Type::FLOAT64:
+                    return true;
+                default:
+                    return false;
+            }
         }
 
 

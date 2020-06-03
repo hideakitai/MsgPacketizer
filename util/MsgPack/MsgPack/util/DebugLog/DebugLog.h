@@ -70,7 +70,7 @@ namespace debug {
     }
 
 #ifdef ARDUINO
-    inline void assert(bool b, const char* file, int line, const char* func, const char* expr)
+    inline void assertion(bool b, const char* file, int line, const char* func, const char* expr)
     {
         while (!b)
         {
@@ -127,7 +127,7 @@ namespace debug {
 #define LOG_VERBOSE(...) arx::debug::log(arx::debug::LogLevel::VERBOSE, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
 #ifdef ARDUINO
     #define DEBUG_LOG_ATTACH_STREAM(s) arx::debug::attach(s)
-    #define ASSERT(b) arx::debug::assert((b), __FILENAME__, __LINE__, __func__, #b)
+    #define ASSERT(b) arx::debug::assertion((b), __FILENAME__, __LINE__, __func__, #b)
 #else
     #define DEBUG_LOG_ATTACH_STREAM(s) ((void)0)
     #include <cassert>

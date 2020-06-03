@@ -75,14 +75,14 @@ namespace msgpack {
         {
             size_t sz;
         public:
-            explicit ArraySize(const size_t size) : sz(size) {}
+            explicit ArraySize(const size_t size = 0) : sz(size) {}
             size_t size() const { return sz; }
         };
         struct MapSize
         {
             size_t sz;
         public:
-            explicit MapSize(const size_t size) : sz(size) {}
+            explicit MapSize(const size_t size = 0) : sz(size) {}
             size_t size() const { return sz; }
         };
     }
