@@ -42,6 +42,9 @@
 
 #define PACKETIZER_USE_INDEX_AS_DEFAULT
 #define PACKETIZER_USE_CRC_AS_DEFAULT
+#ifdef MSGPACKETIZER_ENABLE_DEBUG_LOG
+    #define MSGPACK_ENABLE_DEBUG_LOG
+#endif
 
 #include "util/Packetizer/Packetizer.h"
 #include "util/MsgPack/MsgPack.h"
