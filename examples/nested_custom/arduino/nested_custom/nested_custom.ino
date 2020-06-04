@@ -39,7 +39,8 @@ void setup()
     );
 
     // publish nested value
-    MsgPacketizer::publish(Serial, send_index, nested);
+    MsgPacketizer::publish(Serial, send_index, nested)
+        ->setFrameRate(120.f);
 }
 
 void loop()
