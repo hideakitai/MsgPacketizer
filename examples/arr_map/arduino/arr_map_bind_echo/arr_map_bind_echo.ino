@@ -30,9 +30,9 @@ void setup()
 
     // register variables to publish repeatedly
     MsgPacketizer::publish(Serial, send_index_arr, a)
-        ->setIntervalSec(1.f);
+        ->setFrameRate(120.f);
     MsgPacketizer::publish(Serial, send_index_map, m)
-        ->setIntervalSec(1.5f);
+        ->setFrameRate(120.f);
 }
 
 void loop()
