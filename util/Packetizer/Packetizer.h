@@ -284,9 +284,10 @@ namespace packetizer {
             {
                 while (const int size = d.first->available())
                 {
-                    uint8_t data[size];
+                    uint8_t* data = new uint8_t[size];
                     d.first->readBytes((char*)data, size);
                     d.second->feed(data, size, b_exec_cb);
+                    delete[] data;
                 }
             }
         }
