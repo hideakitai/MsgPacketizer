@@ -143,7 +143,8 @@ namespace msgpack {
             std::is_arithmetic<T>::value &&
             std::is_integral<T>::value &&
             !std::is_same<T, bool>::value &&
-            !std::is_same<typename std::remove_cv<T>::type, char*>::value
+            !std::is_same<typename std::remove_cv<T>::type, char*>::value &&
+            !std::is_signed<T>::value
         >::type
         {
             if (unpackable(value))
@@ -155,12 +156,98 @@ namespace msgpack {
                     case Type::UINT16: value = (T)unpackUInt16(); break;
                     case Type::UINT32: value = (T)unpackUInt32(); break;
                     case Type::UINT64: value = (T)unpackUInt64(); break;
+                    default:                                      break;
+                }
+            }
+            else
+            {
+                LOG_WARNING("unpack type is not matched :", (int)getType());
+                value = 0;
+                ++curr_index;
+            }
+        }
+
+        template <typename T>
+        auto unpack(T& value)
+        -> typename std::enable_if <
+            std::is_arithmetic<T>::value &&
+            std::is_integral<T>::value &&
+            !std::is_same<T, bool>::value &&
+            !std::is_same<typename std::remove_cv<T>::type, char*>::value &&
+            std::is_signed<T>::value
+        >::type
+        {
+            if (unpackable(value))
+            {
+                switch (getType())
+                {
                     case Type::INT5:   value = (T)unpackInt5();   break;
                     case Type::INT8:   value = (T)unpackInt8();   break;
                     case Type::INT16:  value = (T)unpackInt16();  break;
                     case Type::INT32:  value = (T)unpackInt32();  break;
                     case Type::INT64:  value = (T)unpackInt64();  break;
-                    default:                                   break;
+                    case Type::UINT7:  value = (T)unpackUInt7();  break;
+                    case Type::UINT8:
+                    {
+                        if (sizeof(T) > sizeof(int8_t))
+                            value = (T)unpackUInt8();
+                        else
+                        {
+                            uint8_t v = unpackUInt8();
+                            if (v <= (uint8_t)std::numeric_limits<int8_t>::max())
+                                value = (T)v;
+                            else
+                                value = 0;
+                        }
+                        break;
+                    }
+                    case Type::UINT16:
+                    {
+                        if (sizeof(T) > sizeof(int16_t))
+                            value = (T)unpackUInt16();
+                        else
+                        {
+                            uint16_t v = unpackUInt16();
+                            if (v <= (uint16_t)std::numeric_limits<int16_t>::max())
+                                value = (T)v;
+                            else
+                                value = 0;
+                        }
+                        break;
+                    }
+                    case Type::UINT32:
+                    {
+                        if (sizeof(T) > sizeof(int32_t))
+                            value = (T)unpackUInt32();
+                        else
+                        {
+                            uint32_t v = unpackUInt32();
+                            if (v <= (uint32_t)std::numeric_limits<int32_t>::max())
+                                value = (T)v;
+                            else
+                                value = 0;
+                        }
+                        break;
+                    }
+                    case Type::UINT64:
+                    {
+                        if (sizeof(T) > sizeof(int64_t))
+                            value = (T)unpackUInt64();
+                        else
+                        {
+                            uint64_t v = unpackUInt64();
+                            if (v <= (uint64_t)std::numeric_limits<int64_t>::max())
+                                value = (T)v;
+                            else
+                                value = 0;
+                        }
+                        break;
+                    }
+                    default:
+                    {
+                        value = 0;
+                        break;
+                    }
                 }
             }
             else
@@ -1012,9 +1099,10 @@ namespace msgpack {
             else if (isInt32())  return sizeof(T) >= sizeof(int32_t);
             else if (isInt64())  return sizeof(T) >= sizeof(int64_t);
             else if (isUInt7())  return sizeof(T) >= sizeof(int8_t);
-            else if (isUInt8())  return sizeof(T) >= sizeof(int16_t);
-            else if (isUInt16()) return sizeof(T) >= sizeof(uint32_t);
-            else if (isUInt32()) return sizeof(T) >= sizeof(uint64_t);
+            else if (isUInt8())  return sizeof(T) >= sizeof(int8_t);
+            else if (isUInt16()) return sizeof(T) >= sizeof(int16_t);
+            else if (isUInt32()) return sizeof(T) >= sizeof(int32_t);
+            else if (isUInt64()) return sizeof(T) >= sizeof(int64_t);
             else
                 return false;
         }
