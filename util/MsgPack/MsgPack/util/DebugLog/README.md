@@ -23,8 +23,8 @@ void setup()
     PRINTLN(1, 2.2, "you can", "print variable args")
 
     // default: DebugLogLevel::VERBOSE
-    LOG_SET_LEVEL(DebugLogLevel::ERROR); // only ERROR log is printed
-    LOG_SET_LEVEL(DebugLogLevel::WARNING); // ERROR and WARNING is printed
+    LOG_SET_LEVEL(DebugLogLevel::ERRORS); // only ERROR log is printed
+    LOG_SET_LEVEL(DebugLogLevel::WARNINGS); // ERROR and WARNING is printed
     LOG_SET_LEVEL(DebugLogLevel::VERBOSE); // all log is printed
 
     LOG_ERROR("this is error log");

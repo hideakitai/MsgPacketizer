@@ -80,7 +80,7 @@ namespace debug {
     }
 #endif
 
-    enum class LogLevel {NONE, ERROR, WARNING, VERBOSE};
+    enum class LogLevel {NONE, ERRORS, WARNINGS, VERBOSE};
     LogLevel log_level = LogLevel::VERBOSE;
 
     template <typename... Args>
@@ -90,9 +90,9 @@ namespace debug {
         if ((int)level <= (int)log_level)
         {
             string_t lvl_str;
-            if      (level == LogLevel::ERROR)   lvl_str = "ERROR";
-            else if (level == LogLevel::WARNING) lvl_str = "WARNING";
-            else if (level == LogLevel::VERBOSE) lvl_str = "VERBOSE";
+            if      (level == LogLevel::ERRORS)   lvl_str = "ERROR";
+            else if (level == LogLevel::WARNINGS) lvl_str = "WARNING";
+            else if (level == LogLevel::VERBOSE)  lvl_str = "VERBOSE";
             print("[", lvl_str, "]", file, ":", line, ":", func, "() :");
 #ifdef ARDUINO
             println(detail::forward<Args>(args)...);
@@ -122,8 +122,8 @@ namespace debug {
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
 #define PRINT(...) arx::debug::print(__VA_ARGS__)
 #define PRINTLN(...) arx::debug::println(__VA_ARGS__)
-#define LOG_ERROR(...) arx::debug::log(arx::debug::LogLevel::ERROR, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
-#define LOG_WARNING(...) arx::debug::log(arx::debug::LogLevel::WARNING, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
+#define LOG_ERROR(...) arx::debug::log(arx::debug::LogLevel::ERRORS, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
+#define LOG_WARNING(...) arx::debug::log(arx::debug::LogLevel::WARNINGS, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
 #define LOG_VERBOSE(...) arx::debug::log(arx::debug::LogLevel::VERBOSE, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
 #ifdef ARDUINO
     #define DEBUG_LOG_ATTACH_STREAM(s) arx::debug::attach(s)

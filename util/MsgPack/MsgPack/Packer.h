@@ -213,11 +213,11 @@ namespace msgpack {
         void pack(const uint8_t* bin, const size_t size)
         {
             if (size <= std::numeric_limits<uint8_t>::max())
-                packBinary8(bin, size);
+                packBinary8(bin, (uint8_t)size);
             else if (size <= std::numeric_limits<uint16_t>::max())
-                packBinary16(bin, size);
+                packBinary16(bin, (uint16_t)size);
             else if (size <= std::numeric_limits<uint32_t>::max())
-                packBinary32(bin, size);
+                packBinary32(bin, (uint32_t)size);
         }
 
         void pack(const bin_t<char>& bin)
@@ -650,11 +650,11 @@ namespace msgpack {
         void packArraySize(const size_t size)
         {
             if (size < (1 << 4))
-                packArraySize4(size);
+                packArraySize4((uint8_t)size);
             else if (size <= std::numeric_limits<uint16_t>::max())
-                packArraySize16(size);
+                packArraySize16((uint16_t)size);
             else if (size <= std::numeric_limits<uint32_t>::max())
-                packArraySize32(size);
+                packArraySize32((uint32_t)size);
         }
 
         void packArraySize4(const uint8_t value)
@@ -683,11 +683,11 @@ namespace msgpack {
         void packMapSize(const size_t size)
         {
             if (size < (1 << 4))
-                packMapSize4(size);
+                packMapSize4((uint8_t)size);
             else if (size <= std::numeric_limits<uint16_t>::max())
-                packMapSize16(size);
+                packMapSize16((uint16_t)size);
             else if (size <= std::numeric_limits<uint32_t>::max())
-                packMapSize32(size);
+                packMapSize32((uint32_t)size);
         }
 
         void packMapSize4(const uint8_t value)

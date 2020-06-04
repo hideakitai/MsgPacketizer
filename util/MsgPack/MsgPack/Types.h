@@ -71,19 +71,21 @@ namespace msgpack {
 
     namespace type
     {
-        struct ArraySize
+        class ArraySize
         {
             size_t sz;
         public:
             explicit ArraySize(const size_t size = 0) : sz(size) {}
             size_t size() const { return sz; }
+            void size(const size_t s) { sz = s; }
         };
-        struct MapSize
+        class MapSize
         {
             size_t sz;
         public:
             explicit MapSize(const size_t size = 0) : sz(size) {}
             size_t size() const { return sz; }
+            void size(const size_t s) { sz = s; }
         };
     }
 

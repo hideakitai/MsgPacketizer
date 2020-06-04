@@ -60,54 +60,26 @@ namespace msgpack {
             unpack(first);
             deserialize(std::forward<Rest>(rest)...);
         }
-
         void deserialize() {}
-
-        template <typename ...Args>
-        void deserialize(const arr_size_t& arr_size, Args&&... args)
-        {
-            size_t size = unpackArraySize();
-            if (size == arr_size.size())
-            {
-                deserialize(std::forward<Args>(args)...);
-            }
-            else
-            {
-                LOG_WARNING("unpack array size is not matched :", arr_size.size(), "must be", size);
-            }
-        }
-
-        template <typename ...Args>
-        void deserialize(const map_size_t& map_size, Args&&... args)
-        {
-            size_t size = unpackMapSize();
-            if (size == map_size.size())
-            {
-                deserialize(std::forward<Args>(args)...);
-            }
-            else
-            {
-                LOG_WARNING("unpack map size is not matched :", map_size.size(), "must be", size);
-            }
-        }
 
         template <typename ...Args>
         void from_array(Args&&... args)
         {
-            deserialize(arr_size_t(sizeof...(args)), std::forward<Args>(args)...);
+            static arr_size_t sz;
+            deserialize(sz, std::forward<Args>(args)...);
         }
 
         template <typename ...Args>
         void from_map(Args&&... args)
         {
-            size_t size = sizeof...(args);
-            if ((size % 2) == 0)
+            if ((sizeof...(args) % 2) == 0)
             {
-                deserialize(map_size_t(size / 2), std::forward<Args>(args)...);
+                static arr_size_t sz;
+                deserialize(sz, std::forward<Args>(args)...);
             }
             else
             {
-                LOG_WARNING("serialize arg size not matched for map :", size);
+                LOG_WARNING("serialize arg size not matched for map :", sizeof...(args));
             }
         }
 
