@@ -282,8 +282,9 @@ namespace packetizer {
         {
             for (auto& d : decoders)
             {
-                while (const int size = d.first->available())
+                while (d.first->available() > 0)
                 {
+                    const int size = d.first->available();
                     uint8_t* data = new uint8_t[size];
                     d.first->readBytes((char*)data, size);
                     d.second->feed(data, size, b_exec_cb);
