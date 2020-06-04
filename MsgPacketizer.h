@@ -475,13 +475,13 @@ namespace msgpacketizer {
     template <typename... Args>
     inline void subscribe_arr(StreamType& stream, const uint8_t index, Args&... args)
     {
-        static MsgPack::arr_size_t s(sizeof...(args));
+        static MsgPack::arr_size_t sz;
         Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size)
         {
             auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
             unpacker->clear();
             unpacker->feed(data, size);
-            unpacker->deserialize(s, args...);
+            unpacker->deserialize(sz, args...);
         });
     }
 
@@ -490,13 +490,13 @@ namespace msgpacketizer {
     {
         if ((sizeof...(args) % 2) == 0)
         {
-            static MsgPack::map_size_t s(sizeof...(args) / 2);
+            static MsgPack::map_size_t sz;
             Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size)
             {
                 auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                 unpacker->clear();
                 unpacker->feed(data, size);
-                unpacker->deserialize(s, args...);
+                unpacker->deserialize(sz, args...);
             });
         }
         else
