@@ -16,7 +16,7 @@ void setup()
 
     // register variables to publish repeatedly
     MsgPacketizer::publish_arr(Serial, send_index, i, f, s)
-        ->setFrameRate(60); // and you can change publish cycles
+        ->setFrameRate(120); // and you can change publish cycles
         // ->setIntervalSec(1.f); // also you can set interval as sec, msec, usec
 
     // you can subscribe values like this for more flexible way
