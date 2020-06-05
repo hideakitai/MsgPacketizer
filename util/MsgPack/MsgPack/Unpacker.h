@@ -917,52 +917,52 @@ namespace msgpack {
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
-                return std::move(object::ext(ext_type, ptr, 1));
+                if (ptr) return std::move(object::ext(ext_type, ptr, 1));
             }
             else if (isFixExt2())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
-                return std::move(object::ext(ext_type, ptr, 2));
+                if (ptr) return std::move(object::ext(ext_type, ptr, 2));
             }
             else if (isFixExt4())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
-                return std::move(object::ext(ext_type, ptr, 4));
+                if (ptr) return std::move(object::ext(ext_type, ptr, 4));
             }
             else if (isFixExt8())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
-                return std::move(object::ext(ext_type, ptr, 8));
+                if (ptr) return std::move(object::ext(ext_type, ptr, 8));
             }
             else if (isFixExt16())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
-                return std::move(object::ext(ext_type, ptr, 16));
+                if (ptr) return std::move(object::ext(ext_type, ptr, 16));
             }
             else if (isExt8())
             {
                 uint8_t size = getRawBytes<uint8_t>(curr_index, 1);
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 2);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 3);
-                return std::move(object::ext(ext_type, ptr, size));
+                if (ptr) return std::move(object::ext(ext_type, ptr, size));
             }
             else if (isExt16())
             {
                 uint16_t size = getRawBytes<uint16_t>(curr_index, 1);
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 3);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 4);
-                return std::move(object::ext(ext_type, ptr, size));
+                if (ptr) return std::move(object::ext(ext_type, ptr, size));
             }
             else if (isExt32())
             {
                 uint32_t size = getRawBytes<uint32_t>(curr_index, 1);
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 5);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 6);
-                return std::move(object::ext(ext_type, ptr, size));
+                if (ptr) return std::move(object::ext(ext_type, ptr, size));
             }
 
             return std::move(object::ext());
@@ -1412,6 +1412,11 @@ private:
         template <typename DataType>
         DataType getRawBytes(const size_t idx, const size_t offset) const
         {
+            if (idx >= indices.size())
+            {
+                LOG_WARNING("index overrun: idx", idx, " must be <", indices.size());
+                return std::move(DataType());
+            }
             DataType data;
             const auto size = sizeof(DataType);
             for (uint8_t b = 0; b < size; ++b)
@@ -1425,6 +1430,11 @@ private:
 
         uint8_t* getRawBytePtr(const size_t idx, const size_t offset) const
         {
+            if (idx >= indices.size())
+            {
+                LOG_WARNING("index overrun: idx", idx, " must be <", indices.size());
+                return nullptr;
+            }
             auto index = indices[idx] + offset;
             return raw_data + index;
         }
@@ -1434,9 +1444,15 @@ private:
             return getType(curr_index);
         }
 
-        Type getType(const size_t i) const
+        Type getType(const size_t idx) const
         {
-            uint8_t raw = getRawBytes<uint8_t>(i, 0);
+            if (idx >= indices.size())
+            {
+                LOG_WARNING("index overrun: idx", idx, " must be <", indices.size());
+                return Type::NA;
+            }
+
+            uint8_t raw = getRawBytes<uint8_t>(idx, 0);
             if      (raw <  (uint8_t)Type::MAP4)   return Type::UINT7;
             else if (raw <  (uint8_t)Type::ARRAY4) return Type::MAP4;
             else if (raw <  (uint8_t)Type::STR5)   return Type::ARRAY4;
