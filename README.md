@@ -94,35 +94,35 @@ void loop()
 
 ```
 
-Please see examples for more detail.
 
+### Nested Data with Custom Class
 
-### Custom Class Adaptation
-
-To serialize / deserialize custom type you defined, please use `MSGPACK_DEFINE()` macro inside of your class.
+To serialize / deserialize nested data, defining custom class is recommended. For example, to make `{"k1": v, "k2":[i, f, s]}`:
 
 ``` C++
-struct CustomClass
+struct ArrayData
 {
-    int i;
-    float f;
-    MsgPack::str_t s;
-
-    MSGPACK_DEFINE(i, f, s);
+    int i; float f; MsgPack::str_t s;
+    MSGPACK_DEFINE(i, f, s); // [i, f, s]
+};
+struct NestedData
+{
+    MsgPack::str_t k1, k2; int v;
+    ArrayData a;
+    MSGPACK_DEFINE_MAP(k1, v, k2, a); // {"k1": v, "k2":[i, f, s]}
 };
 ```
 
-After that, you can serialize / deserialize your class completely same as other types.
+and you can serialize / deserialize your class completely same as other types.
 
 ``` C++
-int i;
-float f;
-CustomClass c;
-MsgPacketizer::send(Serial, send_index, i, f, c); // -> send(i, f, c.i, c.f, c.s)
-MsgPacketizer::subscribe(Serial, recv_index, i, f, c); // this is also ok
+NestedData n;
+MsgPacketizer::publish(Serial, send_index, n);
+MsgPacketizer::subscribe(Serial, recv_index, n);
 ```
 
-Please see [MsgPack](https://github.com/hideakitai/MsgPack) for more detail.
+Please see examples and [MsgPack](https://github.com/hideakitai/MsgPack) for more detail.
+
 
 ## APIs
 
@@ -132,6 +132,12 @@ namespace MsgPacketizer
     // bind variables directly to specified index packet
     template <typename... Args>
     inline void subscribe(StreamType& stream, const uint8_t index, Args&... args);
+    // bind variables directly to specified index packet with array format
+    template <typename... Args>
+    inline void subscribe_arr(StreamType& stream, const uint8_t index, Args&... args);
+    // bind variables directly to specified index packet with map format
+    template <typename... Args>
+    inline void subscribe_map(StreamType& stream, const uint8_t index, Args&... args);
     // bind callback to specified index packet
     template <typename F>
     inline void subscribe(StreamType& stream, const uint8_t index, const F& callback);
@@ -148,6 +154,12 @@ namespace MsgPacketizer
     // publish arguments periodically
     template <typename... Args>
     inline PublishElementRef publish(const StreamType& stream, const uint8_t index, Args&&... args);
+    // publish arguments periodically as array format
+    template <typename... Args>
+    inline PublishElementRef publish_arr(const StreamType& stream, const uint8_t index, Args&&... args);
+    // publish arguments periodically as map format
+    template <typename... Args>
+    inline PublishElementRef publish_map(const StreamType& stream, const uint8_t index, Args&&... args);
     // must be called to publish data
     inline void post();
     // send arguments dilectly with variable types
@@ -159,6 +171,12 @@ namespace MsgPacketizer
     inline void send(StreamType& stream, const uint8_t index);
     // get registerd publish element class
     inline PublishElementRef getPublishElementRef(const StreamType& stream, const uint8_t index);
+    // send args as array format
+    template <typename... Args>
+    inline void send_arr(StreamType& stream, const uint8_t index, Args&&... args);
+    // send args as map format
+    template <typename... Args>
+    inline void send_map(StreamType& stream, const uint8_t index, Args&&... args);
     // get MsgPack::Packer and handle it manually
     inline const MsgPack::Packer& getPacker();
 
@@ -166,6 +184,13 @@ namespace MsgPacketizer
     inline void update();
 }
 ```
+
+## Other Options
+
+```C++
+#define MSGPACKETIZER_ENABLE_DEBUG_LOG
+```
+
 
 
 ## For NO-STL Boards
