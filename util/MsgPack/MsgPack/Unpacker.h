@@ -691,7 +691,7 @@ namespace msgpack {
                 for (uint8_t c = 0; c < size; ++c) str += getRawBytes<char>(curr_index, c + 1);
             }
             ++curr_index;
-            return std::move(str);
+            return str;
         }
 
         str_t unpackString8()
@@ -703,7 +703,7 @@ namespace msgpack {
                 for (uint8_t c = 0; c < size; ++c) str += getRawBytes<char>(curr_index, c + 1 + sizeof(uint8_t));
             }
             ++curr_index;
-            return std::move(str);
+            return str;
         }
 
         str_t unpackString16()
@@ -715,7 +715,7 @@ namespace msgpack {
                 for (uint16_t c = 0; c < size; ++c) str += getRawBytes<char>(curr_index, c + 1 + sizeof(uint16_t));
             }
             ++curr_index;
-            return std::move(str);
+            return str;
         }
 
         str_t unpackString32()
@@ -727,7 +727,7 @@ namespace msgpack {
                 for (uint32_t c = 0; c < size; ++c) str += getRawBytes<char>(curr_index, c + 1 + sizeof(uint32_t));
             }
             ++curr_index;
-            return std::move(str);
+            return str;
         }
 
 
@@ -741,11 +741,11 @@ namespace msgpack {
             bin_t<T>
         >::type
         {
-            if      (isBin8())  return std::move(unpackBinary8<T>());
-            else if (isBin16()) return std::move(unpackBinary16<T>());
-            else if (isBin32()) return std::move(unpackBinary32<T>());
+            if      (isBin8())  return unpackBinary8<T>();
+            else if (isBin16()) return unpackBinary16<T>();
+            else if (isBin32()) return unpackBinary32<T>();
             else                ++curr_index;
-            return std::move(bin_t<T>());
+            return bin_t<T>();
         }
 
         template <typename T = uint8_t>
@@ -763,7 +763,7 @@ namespace msgpack {
                 for (uint8_t v = 0; v < size; ++v) data.emplace_back(getRawBytes<T>(curr_index, v + 1 + sizeof(uint8_t)));
             }
             ++curr_index;
-            return std::move(data);
+            return data;
         }
 
         template <typename T = uint8_t>
@@ -781,7 +781,7 @@ namespace msgpack {
                 for (uint16_t v = 0; v < size; ++v) data.emplace_back(getRawBytes<T>(curr_index, v + 1 + sizeof(uint16_t)));
             }
             ++curr_index;
-            return std::move(data);
+            return data;
         }
 
         template <typename T = uint8_t>
@@ -799,7 +799,7 @@ namespace msgpack {
                 for (uint32_t v = 0; v < size; ++v) data.emplace_back(getRawBytes<T>(curr_index, v + 1 + sizeof(uint32_t)));
             }
             ++curr_index;
-            return std::move(data);
+            return data;
         }
 
 #ifndef HT_SERIAL_MSGPACK_DISABLE_STL
@@ -812,11 +812,11 @@ namespace msgpack {
             std::array<T, N>
         >::type
         {
-            if      (isBin8())  return std::move(unpackBinary8<T, N>());
-            else if (isBin16()) return std::move(unpackBinary16<T, N>());
-            else if (isBin32()) return std::move(unpackBinary32<T, N>());
+            if      (isBin8())  return unpackBinary8<T, N>();
+            else if (isBin16()) return unpackBinary16<T, N>();
+            else if (isBin32()) return unpackBinary32<T, N>();
             else                ++curr_index;
-            return std::move(std::array<T, N>());
+            return std::array<T, N>();
         }
 
         template <typename T, size_t N>
@@ -834,7 +834,7 @@ namespace msgpack {
                 for (uint8_t v = 0; v < size; ++v) data[v] = getRawBytes<T>(curr_index, v + 1 + sizeof(uint8_t));
             }
             ++curr_index;
-            return std::move(data);
+            return data;
         }
 
         template <typename T, size_t N>
@@ -852,7 +852,7 @@ namespace msgpack {
                 for (uint16_t v = 0; v < size; ++v) data[v] = getRawBytes<T>(curr_index, v + 1 + sizeof(uint16_t));
             }
             ++curr_index;
-            return std::move(data);
+            return data;
         }
 
         template <typename T, size_t N>
@@ -870,7 +870,7 @@ namespace msgpack {
                 for (uint32_t v = 0; v < size; ++v) data[v] = getRawBytes<T>(curr_index, v + 1 + sizeof(uint32_t));
             }
             ++curr_index;
-            return std::move(data);
+            return data;
         }
 
 #endif // HT_SERIAL_MSGPACK_DISABLE_STL
@@ -917,55 +917,55 @@ namespace msgpack {
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
-                if (ptr) return std::move(object::ext(ext_type, ptr, 1));
+                if (ptr) return object::ext(ext_type, ptr, 1);
             }
             else if (isFixExt2())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
-                if (ptr) return std::move(object::ext(ext_type, ptr, 2));
+                if (ptr) return object::ext(ext_type, ptr, 2);
             }
             else if (isFixExt4())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
-                if (ptr) return std::move(object::ext(ext_type, ptr, 4));
+                if (ptr) return object::ext(ext_type, ptr, 4);
             }
             else if (isFixExt8())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
-                if (ptr) return std::move(object::ext(ext_type, ptr, 8));
+                if (ptr) return object::ext(ext_type, ptr, 8);
             }
             else if (isFixExt16())
             {
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 1);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 2);
-                if (ptr) return std::move(object::ext(ext_type, ptr, 16));
+                if (ptr) return object::ext(ext_type, ptr, 16);
             }
             else if (isExt8())
             {
                 uint8_t size = getRawBytes<uint8_t>(curr_index, 1);
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 2);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 3);
-                if (ptr) return std::move(object::ext(ext_type, ptr, size));
+                if (ptr) return object::ext(ext_type, ptr, size);
             }
             else if (isExt16())
             {
                 uint16_t size = getRawBytes<uint16_t>(curr_index, 1);
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 3);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 4);
-                if (ptr) return std::move(object::ext(ext_type, ptr, size));
+                if (ptr) return object::ext(ext_type, ptr, size);
             }
             else if (isExt32())
             {
                 uint32_t size = getRawBytes<uint32_t>(curr_index, 1);
                 int8_t ext_type = getRawBytes<int8_t>(curr_index, 5);
                 uint8_t* ptr = getRawBytePtr(curr_index++, 6);
-                if (ptr) return std::move(object::ext(ext_type, ptr, size));
+                if (ptr) return object::ext(ext_type, ptr, size);
             }
 
-            return std::move(object::ext());
+            return object::ext();
         }
 
 
@@ -1026,7 +1026,7 @@ namespace msgpack {
             {
                 LOG_WARNING("unpack timestamp object-type not matched :", (int)getType());
             }
-            return std::move(ts);
+            return ts;
         }
 
 
@@ -1415,7 +1415,7 @@ private:
             if (idx >= indices.size())
             {
                 LOG_WARNING("index overrun: idx", idx, " must be <", indices.size());
-                return std::move(DataType());
+                return DataType();
             }
             DataType data;
             const auto size = sizeof(DataType);
@@ -1425,7 +1425,7 @@ private:
                 auto index = indices[idx] + offset + distance;
                 ((uint8_t*)&data)[b] = raw_data[index];
             }
-            return std::move(data);
+            return data;
         }
 
         uint8_t* getRawBytePtr(const size_t idx, const size_t offset) const
