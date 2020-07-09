@@ -93,7 +93,7 @@ namespace debug {
             if      (level == LogLevel::ERRORS)   lvl_str = "ERROR";
             else if (level == LogLevel::WARNINGS) lvl_str = "WARNING";
             else if (level == LogLevel::VERBOSE)  lvl_str = "VERBOSE";
-            print("[", lvl_str, "]", file, ":", line, ":", func, "() :");
+            print("[", lvl_str, "]", file, ":", line, ":", func, ":");
 #ifdef ARDUINO
             println(detail::forward<Args>(args)...);
 #else
@@ -138,6 +138,7 @@ namespace debug {
 
 
 #define LOG_SET_LEVEL(lvl) arx::debug::log_level = lvl
+#define LOG_GET_LEVEL() arx::debug::log_level
 using DebugLogLevel = arx::debug::LogLevel;
 
 
