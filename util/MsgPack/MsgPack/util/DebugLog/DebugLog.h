@@ -4,6 +4,7 @@
 
 #ifdef ARDUINO
     #include <Arduino.h>
+    #include <SD.h>
     #include <stdarg.h>
 #else
     #include <iostream>
@@ -25,21 +26,43 @@ namespace debug {
     }
 
 #ifdef ARDUINO
+    using string_t = String;
     Stream* stream {&Serial};
     inline void attach(Stream& s) { stream = &s; }
-    using string_t = String;
+    bool b_only_sd {false};
+    SDClass* sd {nullptr};
+    File file;
+    String filename;
+    inline void attach(SDClass& s, const String& path, bool only_sd)
+    {
+        sd = &s;
+        filename = path;
+        b_only_sd = only_sd;
+    }
 #else
     using string_t = std::string;
 #endif
 
-    inline void print() { }
+    inline void print() { if (file) file.close(); }
 
     template<typename Head, typename... Tail>
     inline void print(Head&& head, Tail&&... tail)
     {
 #ifdef ARDUINO
-        stream->print(head);
-        stream->print(" ");
+        if (!b_only_sd)
+        {
+            stream->print(head);
+            stream->print(" ");
+        }
+        if (sd)
+        {
+            if (!file) file = sd->open(filename.c_str(), FILE_WRITE);
+            if (file)
+            {
+                file.print(head);
+                file.print(" ");
+            }
+        }
         print(detail::forward<Tail>(tail)...);
 #else
         std::cout << head << " ";
@@ -50,7 +73,15 @@ namespace debug {
     inline void println()
     {
 #ifdef ARDUINO
-        stream->println();
+        if (!b_only_sd)
+        {
+            stream->println();
+        }
+        if (file)
+        {
+            file.println();
+            file.close();
+        }
 #else
         std::cout << std::endl;
 #endif
@@ -60,8 +91,20 @@ namespace debug {
     inline void println(Head&& head, Tail&&... tail)
     {
 #ifdef ARDUINO
-        stream->print(head);
-        stream->print(" ");
+        if (!b_only_sd)
+        {
+            stream->print(head);
+            stream->print(" ");
+        }
+        if (sd)
+        {
+            if (!file) file = sd->open(filename.c_str(), FILE_WRITE);
+            if (file)
+            {
+                file.print(head);
+                file.print(" ");
+            }
+        }
         println(detail::forward<Tail>(tail)...);
 #else
         std::cout << head << " ";
@@ -115,6 +158,7 @@ namespace debug {
 #define ASSERT(b) ((void)0)
 #ifdef ARDUINO
     #define DEBUG_LOG_ATTACH_STREAM(s) ((void)0)
+    #define DEBUG_LOG_TO_SD(s, f, b) ((void)0)
 #endif
 
 #else // NDEBUG
@@ -127,9 +171,11 @@ namespace debug {
 #define LOG_VERBOSE(...) arx::debug::log(arx::debug::LogLevel::VERBOSE, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
 #ifdef ARDUINO
     #define DEBUG_LOG_ATTACH_STREAM(s) arx::debug::attach(s)
+    #define DEBUG_LOG_TO_SD(s, f, b) arx::debug::attach(s, f, b)
     #define ASSERT(b) arx::debug::assertion((b), __FILENAME__, __LINE__, __func__, #b)
 #else
     #define DEBUG_LOG_ATTACH_STREAM(s) ((void)0)
+    #define DEBUG_LOG_TO_SD(s, f, b) ((void)0)
     #include <cassert>
     #define ASSERT(b) assert(b)
 #endif
