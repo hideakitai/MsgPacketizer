@@ -2,11 +2,14 @@
 
 Serial based assertion and log library for Arduino
 
+
 ## Feature
 
 - print variadic arguments in one line
+- release mode (`#define NDEBUG`) can disables print/log debug info
 - log level control
-- automatically save to SD card
+- control automatically/manually saving to SD card
+- [SdFat](https://github.com/greiman/SdFat) support
 
 
 ## Usage
@@ -24,25 +27,18 @@ void setup()
     Serial.begin(115200);
 
     // you can change target stream (default: Serial, only for Arduino)
-    // DEBUG_LOG_ATTACH_STREAM(Serial2);
-
-    // you can also log to sd card automatically when you call log function
-    if (SD.begin())
-    {
-        String filename = "test.txt";
-        DEBUG_LOG_TO_SD(SD, filename, false); // 3rd arg: if only log to SD or not
-    }
+    // DebugLog::attach(Serial2);
 
     PRINT("this is for debug");
     PRINTLN(1, 2.2, "you can", "print variable args")
 
     // check log level 0: NONE, 1: ERRORS, 2: WARNINGS, 3: VERBOSE
-    PRINTLN("current log level is", (int)LOG_GET_LEVEL());
+    PRINTLN("current log level is", (int)DebugLog::logLevel());
 
     // set log level (default: DebugLogLevel::VERBOSE)
-    LOG_SET_LEVEL(DebugLogLevel::ERRORS); // only ERROR log is printed
-    LOG_SET_LEVEL(DebugLogLevel::WARNINGS); // ERROR and WARNING is printed
-    LOG_SET_LEVEL(DebugLogLevel::VERBOSE); // all log is printed
+    DebugLog::logLevel(DebugLogLevel::ERRORS); // only ERROR log is printed
+    DebugLog::logLevel(DebugLogLevel::WARNINGS); // ERROR and WARNING is printed
+    DebugLog::logLevel(DebugLogLevel::VERBOSE); // all log is printed
 
     LOG_ERROR("this is error log");
     LOG_WARNING("this is warning log");
@@ -56,7 +52,8 @@ void setup()
 ### Log Level
 
 ```C++
-enum class LogLevel {
+enum class LogLevel
+{
     NONE     = 0,
     ERRORS   = 1,
     WARNINGS = 2,
@@ -66,11 +63,42 @@ enum class LogLevel {
 
 ### Save Log to SD Card
 
-Please see `examples/sdcard` for more details. And please note:
+```C++
+// if you want to use standard SD library
+#include <SD.h>
 
-- sd logging is automatically done if you call log functions
-- logging to file `open` and `close` file object everty time you call log functions
-- one log function call takes 5-10 ms if you log to SD
+// if you want to use SdFat
+// #include <SdFat.h>
+// SdFat SD;
+// SdFatSdio SD;
+
+// after that, include DebugLog.h
+#include <DebugLog.h>
+
+void setup()
+{
+  if (SD.begin())
+  {
+    String filename = "test.txt";
+    DebugLog::attach(SD, filename, false, true);
+    // 3rd arg => true: auto save every logging, false: manually save
+    // 4th arg => true: only log to SD, false: also print via Serial
+  }
+
+  // if 3rd arg is true, logs will be automatically saved to SD
+  LOG_ERROR("error!");
+
+  // if 3rd arg is false, you should manually save logs
+  // however this is much faster than auto save (saving takes few milliseconds)
+  DebugLog::flush(); // manually save to SD card and continue logging
+  // DebugLog::close(); // flush() and finish logging (ASSERT won't be saved to SD)
+}
+```
+
+Please see `examples/sdcard` , `examples/sdcard_manual_save` for more details. And please note:
+
+- one log function call can takes 3-20 ms if you log to SD (depending on environment)
+- if you disable auto save, you should call `DebugLog::flush()` or `close()` to save logs
 
 
 ## Used Inside of
