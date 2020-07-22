@@ -2,18 +2,16 @@
     "name": "MsgPack",
     "keywords": "msgpack,serial",
     "description": "MessagePack implementation for Arduino (compatible with other C++ apps)",
-    "repository":
-    {
+    "repository": {
         "type": "git",
         "url": "https://github.com/hideakitai/MsgPack.git"
     },
-    "authors":
-    {
+    "authors": {
         "name": "Hideaki Tai",
         "url": "https://github.com/hideakitai",
         "maintainer": true
     },
-    "version": "0.2.10",
+    "version": "0.2.11",
     "license": "MIT",
     "frameworks": "arduino",
     "platforms": "*"
