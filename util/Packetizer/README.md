@@ -37,7 +37,7 @@ These options are disabled by default.
 If you use them, original data array is modified like:
 
 | index  | data    | crc8   |
-|--------|---------|--------|
+| ------ | ------- | ------ |
 | 1 byte | N bytes | 1 byte |
 
 CRC8 will be calcurated including index byte.
@@ -189,7 +189,7 @@ None
 ## Embedded Libraries
 
 - [ArxTypeTraits v0.1.12](https://github.com/hideakitai/ArxTypeTraits)
-- [ArxContainer v0.3.7](https://github.com/hideakitai/ArxContainer)
+- [ArxContainer v0.3.8](https://github.com/hideakitai/ArxContainer)
 - [ArxSmartPtr v0.1.2](https://github.com/hideakitai/ArxSmartPtr)
 - [CRCx v0.2.1](https://github.com/hideakitai/CRCx)
 - [TeensyDirtySTLErrorSolution v0.1.0](https://github.com/hideakitai/TeensyDirtySTLErrorSolution)
