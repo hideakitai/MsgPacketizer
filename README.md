@@ -15,7 +15,7 @@
 ## Packet Protocol
 
 | index  | msgpack | crc8   |
-|--------|---------|--------|
+| ------ | ------- | ------ |
 | 1 byte | N bytes | 1 byte |
 
 
@@ -248,8 +248,8 @@ These macros have no effect for STL enabled boards.
 
 ## Embedded Libraries
 
-- [MsgPack v0.2.10](https://github.com/hideakitai/MsgPack)
-- [Packetizer v0.4.5](https://github.com/hideakitai/Packetizer)
+- [MsgPack v0.2.11](https://github.com/hideakitai/MsgPack)
+- [Packetizer v0.4.6](https://github.com/hideakitai/Packetizer)
 
 
 ## License
