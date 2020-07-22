@@ -2,18 +2,16 @@
     "name": "MsgPacketizer",
     "keywords": "serialize,msgpack,serial",
     "description": "msgpack based serializer and deserializer with packetize for Arduino and more",
-    "repository":
-    {
+    "repository": {
         "type": "git",
         "url": "https://github.com/hideakitai/MsgPacketizer.git"
     },
-    "authors":
-    {
+    "authors": {
         "name": "Hideaki Tai",
         "url": "https://github.com/hideakitai",
         "maintainer": true
     },
-    "version": "0.2.11",
+    "version": "0.2.12",
     "license": "MIT",
     "frameworks": "arduino",
     "platforms": "*"
