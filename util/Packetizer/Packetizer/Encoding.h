@@ -125,7 +125,6 @@ namespace encoding
             buffer.index = 0;
             buffer.data.clear();
             b_parsing = false;
-            err_count = 0;
         }
 
         bool parsing() const { return b_parsing; }

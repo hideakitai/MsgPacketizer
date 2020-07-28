@@ -198,6 +198,7 @@ None
 ## Used Inside of
 
 - [MsgPacketizer](https://github.com/hideakitai/MsgPacketizer)
+- [ES920](https://github.com/hideakitai/ES920)
 
 
 ## License
