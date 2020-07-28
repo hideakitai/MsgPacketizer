@@ -17,17 +17,19 @@ namespace encoding
     {
     protected:
         Packet buffer;
+        bool b_crc {PACKETIZER_DEFAULT_CRC_SETTING};
     public:
         virtual ~EncoderBase() {}
         virtual void header() = 0;
         virtual void append(const uint8_t data) = 0;
         virtual void footer() = 0;
-        const uint8_t* data() const { return buffer.data(); };
-        size_t size() const { return buffer.size(); };
+        const uint8_t* data() const { return buffer.data.data(); };
+        size_t size() const { return buffer.data.size(); };
         const Packet& packet() const { return buffer; }
 
-        size_t encode(const uint8_t index, const uint8_t* src, const size_t size, bool b_crc = default_option.b_crc)
+        size_t encode(const uint8_t index, const uint8_t* src, const size_t size, bool b_use_crc)
         {
+            verifying(b_use_crc);
             header();
             append(index);
             for (size_t i = 0; i < size; ++i) append(src[i]);
@@ -36,14 +38,28 @@ namespace encoding
             return this->size();
         }
 
-        size_t encode(const uint8_t* src, const size_t size, bool b_crc = default_option.b_crc)
+        size_t encode(const uint8_t index, const uint8_t* src, const size_t size)
         {
+            return encode(index, src, size, b_crc);
+        }
+
+        size_t encode(const uint8_t* src, const size_t size, bool b_use_crc)
+        {
+            verifying(b_use_crc);
             header();
             for (size_t i = 0; i < size; ++i) append(src[i]);
             if (b_crc) append(crcx::crc8(src, size)); // crc is only for *src (exclude index)
             footer();
             return this->size();
         }
+
+        size_t encode(const uint8_t* src, const size_t size)
+        {
+            return encode(src, size, b_crc);
+        }
+
+        bool verifying() const { return b_crc; }
+        void verifying(bool b)  { b_crc = b; }
     };
 
 
@@ -52,8 +68,8 @@ namespace encoding
     protected:
 
         Packet buffer;
-        bool b_index {default_option.b_index};
-        bool b_crc {default_option.b_crc};
+        bool b_index {PACKETIZER_DEFAULT_INDEX_SETTING};
+        bool b_crc {PACKETIZER_DEFAULT_CRC_SETTING};
         bool b_parsing {false};
         uint32_t err_count {0};
 
@@ -61,28 +77,28 @@ namespace encoding
 
         virtual ~DecoderBase() {}
 
-        virtual void feed(const uint8_t data, PacketQueue& packets, IndexQueue& indices)
+        virtual void feed(const uint8_t data, PacketQueue& packets)
         {
             if (data == marker())
             {
-                if (!buffer.empty())
+                if (!buffer.data.empty())
                 {
-                    buffer.emplace_back(data);
-                    Packet packet = decode(buffer.data(), buffer.size());
+                    buffer.data.emplace_back(data);
+                    Packet packet = decode(buffer.data.data(), buffer.data.size());
                     if (b_index)
                     {
-                        indices.emplace_back(packet.front());
-                        packet.erase(packet.begin()); // index
+                        packet.index = packet.data.front();
+                        packet.data.erase(packet.data.begin()); // index
                     }
                     else
                     {
-                        indices.emplace_back(0);
+                        packet.index = 0;
                     }
                     if (b_crc)
                     {
-                        if (crcx::crc8(packet.data(), packet.size() - 1) == packet.back())
+                        if (crcx::crc8(packet.data.data(), packet.data.size() - 1) == packet.data.back())
                         {
-                            packet.pop_back(); // crc
+                            packet.data.pop_back(); // crc
                             packets.emplace_back(std::move(packet));
                         }
                         else
@@ -99,15 +115,17 @@ namespace encoding
             }
             else
             {
-                buffer.emplace_back(data);
+                buffer.data.emplace_back(data);
                 b_parsing = true;
             }
         }
 
         void reset()
         {
-            buffer.clear();
+            buffer.index = 0;
+            buffer.data.clear();
             b_parsing = false;
+            err_count = 0;
         }
 
         bool parsing() const { return b_parsing; }
@@ -148,8 +166,9 @@ namespace encoding
             {
                 next_zero_count = 1;
                 next_zero_index = 0;
-                buffer.clear();
-                buffer.emplace_back(MARKER_DUMMY); // for next zero index
+                buffer.index = 0;
+                buffer.data.clear();
+                buffer.data.emplace_back(MARKER_DUMMY); // for next zero index
             }
 
             virtual void append(const uint8_t data) override
@@ -158,35 +177,35 @@ namespace encoding
                 {
                     // after completed no-zero 254 byte block, continue to next block
                     next_zero_count = 1;
-                    next_zero_index = buffer.size();
-                    buffer.emplace_back(MARKER_DUMMY); // dummy for next zero index
+                    next_zero_index = buffer.data.size();
+                    buffer.data.emplace_back(MARKER_DUMMY); // dummy for next zero index
                 }
 
                 if (data != MARKER_END)
                 {
-                    buffer.emplace_back(data);
+                    buffer.data.emplace_back(data);
                     ++next_zero_count;
                 }
                 else // input is zero
                 {
-                    buffer[next_zero_index] = next_zero_count;
+                    buffer.data[next_zero_index] = next_zero_count;
                     next_zero_count = 1;
-                    next_zero_index = buffer.size();
-                    buffer.emplace_back(MARKER_DUMMY); // for next zero index
+                    next_zero_index = buffer.data.size();
+                    buffer.data.emplace_back(MARKER_DUMMY); // for next zero index
                 }
 
                 if (next_zero_count == 0xFF) // complete no-zero 254 byte block
                 {
-                    buffer[next_zero_index] = next_zero_count;
+                    buffer.data[next_zero_index] = next_zero_count;
                     next_zero_count = NEXT_ZERO_AFTER_NOZERO_PACKET;
-                    next_zero_index = buffer.size();
+                    next_zero_index = buffer.data.size();
                 }
             }
 
             virtual void footer() override
             {
-                buffer[next_zero_index] = next_zero_count; // last zero before end marker
-                buffer.emplace_back(MARKER_END);
+                buffer.data[next_zero_index] = next_zero_count; // last zero before end marker
+                buffer.data.emplace_back(MARKER_END);
             }
         };
 
@@ -217,7 +236,7 @@ namespace encoding
                             rest = next_zero = *src; // size to next zero byte
                             if (next_zero == MARKER_END)
                                 break; // end packet
-                            packet.emplace_back(0);
+                            packet.data.emplace_back(0);
                         }
                         else // overhead byte of no-zero packet
                         {
@@ -228,7 +247,7 @@ namespace encoding
                     }
                     else
                     {
-                        packet.emplace_back(*src);
+                        packet.data.emplace_back(*src);
                     }
                 }
 
@@ -258,31 +277,32 @@ namespace encoding
 
             virtual void header() override
             {
-                buffer.clear();
-                buffer.emplace_back(MARKER_END); // double-ended slip
+                buffer.index = 0;
+                buffer.data.clear();
+                buffer.data.emplace_back(MARKER_END); // double-ended slip
             }
 
             virtual void append(const uint8_t data) override
             {
                 if(data == MARKER_END)
                 {
-                    buffer.emplace_back(MARKER_ESC);
-                    buffer.emplace_back(MARKER_ESC_END);
+                    buffer.data.emplace_back(MARKER_ESC);
+                    buffer.data.emplace_back(MARKER_ESC_END);
                 }
                 else if(data == MARKER_ESC)
                 {
-                    buffer.emplace_back(MARKER_ESC);
-                    buffer.emplace_back(MARKER_ESC_ESC);
+                    buffer.data.emplace_back(MARKER_ESC);
+                    buffer.data.emplace_back(MARKER_ESC_ESC);
                 }
                 else
                 {
-                    buffer.emplace_back(data);
+                    buffer.data.emplace_back(data);
                 }
             }
 
             virtual void footer() override
             {
-                buffer.emplace_back(MARKER_END);
+                buffer.data.emplace_back(MARKER_END);
             }
         };
 
@@ -308,14 +328,14 @@ namespace encoding
                     else if (src[i] == MARKER_ESC) // escaped byte
                     {
                         if (src[i + 1] == MARKER_ESC_END)
-                            packet.emplace_back(MARKER_END);
+                            packet.data.emplace_back(MARKER_END);
                         else if (src[i + 1] == MARKER_ESC_ESC)
-                            packet.emplace_back(MARKER_ESC);
+                            packet.data.emplace_back(MARKER_ESC);
                         ++i;
                     }
                     else
                     {
-                        packet.emplace_back(src[i]);
+                        packet.data.emplace_back(src[i]);
                     }
                 }
 

@@ -111,7 +111,7 @@ void setup()
         [&](const uint8_t index, const uint8_t* data, const size_t size)
         {
             // send back to same index
-            Packetizer::send(Serial, index, packet.data(), packet.size());
+            Packetizer::send(Serial, index, data, size);
         }
     );
 }
@@ -128,12 +128,12 @@ void loop()
 Just to encode / decode packets, you can use global mathod like:
 
 ```C++
-Packetizer::Packet p_in {0x11, 0x22, 0x00, 0x33};
-const auto& p_buff = Packetizer::encode(p_in.data(), p_in.size());
-const auto& p_out = Packetizer::decode(p_buff.data(), p_buff.size());
+Packetizer::Packet p_in {0xAB, {0x11, 0x22, 0x00, 0x33}}; // {index, {data}}
+const auto& p_buff = Packetizer::encode(p_in.index, p_in.data.data(), p_in.data.size());
+const auto& p_out = Packetizer::decode(p_buff.data.data(), p_buff.data.size());
 ```
 
-`Packetizer::Packet` is alias for `std::vector<uint8_t>`.
+`Packetizer::Packet` is alias for `struct { uint8_t index; std::vector<uint8_t> data };`.
 
 
 ## Other Options

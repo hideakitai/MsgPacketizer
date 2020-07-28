@@ -44,18 +44,29 @@ namespace packetizer {
 
     public:
 
-        size_t encode(const uint8_t index, const uint8_t* src, const size_t size, bool b_crc = encoding::default_option.b_crc)
+        size_t encode(const uint8_t index, const uint8_t* src, const size_t size, bool b_crc)
         {
             return encoder->encode(index, src, size, b_crc);
         }
-        size_t encode(const uint8_t* src, const size_t size, bool b_crc = encoding::default_option.b_crc)
+        size_t encode(const uint8_t index, const uint8_t* src, const size_t size)
+        {
+            return encoder->encode(index, src, size);
+        }
+        size_t encode(const uint8_t* src, const size_t size, bool b_crc)
         {
             return encoder->encode(src, size, b_crc);
+        }
+        size_t encode(const uint8_t* src, const size_t size)
+        {
+            return encoder->encode(src, size);
         }
 
         const uint8_t* data() const { return encoder->data(); };
         size_t size() const { return encoder->size(); };
         const Packet& packet() const { return encoder->packet(); }
+
+        void verifying(bool b)  { encoder->verifying(b); }
+        bool verifying() const { return encoder->verifying(); }
     };
 
 
@@ -64,7 +75,6 @@ namespace packetizer {
     {
         DecoderBaseRef decoder {decoder_t<Encoding>::create()};
         PacketQueue packets;
-        IndexQueue indices;
         CallbackType cb_no_index;
         CallbackAlwaysType cb_always;
         CallbackMap callbacks;
@@ -101,7 +111,7 @@ namespace packetizer {
         {
             for (size_t i = 0; i < size; ++i)
             {
-                decoder->feed(data[i], packets, indices);
+                decoder->feed(data[i], packets);
                 if (PACKETIZER_MAX_PACKET_QUEUE_SIZE != 0)
                     if (available() > PACKETIZER_MAX_PACKET_QUEUE_SIZE)
                         pop();
@@ -134,24 +144,24 @@ namespace packetizer {
             }
         }
 
-        void reset() { packets.clear(); indices.clear(); decoder->reset(); }
+        void reset() { packets.clear(); decoder->reset(); }
         bool parsing() const { return decoder->parsing(); }
         size_t available() const { return packets.size(); }
         void pop() { pop_front(); }
-        void pop_front() { packets.pop_front(); indices.pop_front(); }
-        void pop_back() { packets.pop_back(); indices.pop_back(); }
+        void pop_front() { packets.pop_front(); }
+        void pop_back() { packets.pop_back(); }
 
         const Packet& packet() const { return packets.front(); }
-        uint8_t index() const { return indices.front(); }
-        size_t size() const { return packet().size(); }
-        const uint8_t* data() const { return packet().data(); }
-        uint8_t data(const uint8_t i) const { return packet()[i]; }
+        uint8_t index() const { return packets.front().index; }
+        size_t size() const { return packet().data.size(); }
+        const uint8_t* data() const { return packet().data.data(); }
+        uint8_t data(const uint8_t i) const { return packet().data[i]; }
 
         const Packet& packet_latest() const { return packets.back(); }
-        uint8_t index_latest() const { return indices.back(); }
-        size_t size_latest() const { return packet_latest().size(); }
-        const uint8_t* data_latest() const { return packet_latest().data(); }
-        uint8_t data_latest(const uint8_t i) const { return packet_latest()[i]; }
+        uint8_t index_latest() const { return packets.back().index; }
+        size_t size_latest() const { return packet_latest().data.size(); }
+        const uint8_t* data_latest() const { return packet_latest().data.data(); }
+        uint8_t data_latest(const uint8_t i) const { return packet_latest().data[i]; }
 
         uint32_t errors() const { return decoder->errors(); }
 
@@ -194,36 +204,74 @@ namespace packetizer {
 
 
     template <typename Encoding = DefaultEncoding>
-    inline const Packet& encode(const uint8_t index, const uint8_t* data, const size_t size, bool b_crc = encoding::default_option.b_crc)
+    inline const Packet& encode(const uint8_t index, const uint8_t* data, const size_t size, const bool b_crc)
     {
         auto e = EncodeManager<Encoding>::getInstance().getEncoder();
-        e->encode(index, data, size, b_crc);
+        e->verifying(b_crc);
+        e->encode(index, data, size);
         return e->packet();
     }
 
     template <typename Encoding = DefaultEncoding>
-    inline const Packet& encode(const uint8_t* data, const size_t size, bool b_crc = encoding::default_option.b_crc)
+    inline const Packet& encode(const uint8_t index, const uint8_t* data, const size_t size)
     {
         auto e = EncodeManager<Encoding>::getInstance().getEncoder();
-        e->encode(data, size, b_crc);
+        e->encode(index, data, size);
         return e->packet();
     }
 
+    template <typename Encoding = DefaultEncoding>
+    inline const Packet& encode(const uint8_t* data, const size_t size, const bool b_crc)
+    {
+        auto e = EncodeManager<Encoding>::getInstance().getEncoder();
+        e->verifying(b_crc);
+        e->encode(data, size);
+        return e->packet();
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline const Packet& encode(const uint8_t* data, const size_t size)
+    {
+        auto e = EncodeManager<Encoding>::getInstance().getEncoder();
+        e->encode(data, size);
+        return e->packet();
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline void encode_option(const bool b_crc)
+    {
+        auto e = EncodeManager<Encoding>::getInstance().getEncoder();
+        e->verifying(b_crc);
+    }
 
 #ifdef PACKETIZER_ENABLE_STREAM
 
     template <typename Encoding = DefaultEncoding>
-    inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const size_t size, const bool b_crc = encoding::default_option.b_crc)
+    inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const size_t size, const bool b_crc)
     {
         const auto& packet = encode<Encoding>(index, data, size, b_crc);
-        PACKETIZER_STREAM_WRITE(stream, packet.data(), packet.size());
+        PACKETIZER_STREAM_WRITE(stream, packet.data.data(), packet.data.size());
     }
 
     template <typename Encoding = DefaultEncoding>
-    inline void send(StreamType& stream, const uint8_t* data, const size_t size, const bool b_crc = encoding::default_option.b_crc)
+    inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const size_t size)
+    {
+        const auto& packet = encode<Encoding>(index, data, size);
+        PACKETIZER_STREAM_WRITE(stream, packet.data.data(), packet.data.size());
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline void send(StreamType& stream, const uint8_t* data, const size_t size, const bool b_crc)
     {
         const auto& packet = encode<Encoding>(data, size, b_crc);
-        PACKETIZER_STREAM_WRITE(stream, packet.data(), packet.size());
+        PACKETIZER_STREAM_WRITE(stream, packet.data.data(), packet.data.size());
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline void send(StreamType& stream, const uint8_t* data, const size_t size)
+    {
+        const auto& packet = encode<Encoding>(data, size);
+        PACKETIZER_STREAM_WRITE(stream, packet.data.data(), packet.data.size());
     }
 
 #endif // PACKETIZER_ENABLE_STREAM
@@ -293,6 +341,13 @@ namespace packetizer {
             }
         }
 
+        void reset()
+        {
+            decoder->reset();
+            for (auto& d : decoders)
+                d.second->reset();
+        }
+
 #endif // PACKETIZER_ENABLE_STREAM
 
     };
@@ -302,33 +357,36 @@ namespace packetizer {
     {
         auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
         decoder->reset();
-        decoder->indexing(encoding::default_option.b_index);
-        decoder->verifying(encoding::default_option.b_crc);
+        decoder->indexing(PACKETIZER_DEFAULT_INDEX_SETTING);
+        decoder->verifying(PACKETIZER_DEFAULT_CRC_SETTING);
         decoder->feed(data, size);
         return decoder->packet();
     }
 
     template <typename Encoding = DefaultEncoding>
-    inline DecoderRef<Encoding> decode(const uint8_t* data, const size_t size, const bool b_index, const bool b_crc = encoding::default_option.b_crc)
+    inline const Packet& decode(const uint8_t* data, const size_t size, const bool b_crc)
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
+        decoder->reset();
+        decoder->indexing(PACKETIZER_DEFAULT_INDEX_SETTING);
+        decoder->verifying(b_crc);
+        decoder->feed(data, size);
+        return decoder->packet();
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline const Packet& decode(const uint8_t* data, const size_t size, const bool b_index, const bool b_crc)
     {
         auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
         decoder->reset();
         decoder->indexing(b_index);
         decoder->verifying(b_crc);
         decoder->feed(data, size);
-        return decoder;
+        return decoder->packet();
     }
 
     template <typename Encoding = DefaultEncoding>
-    inline void global_options(const bool b_index, const bool b_crc)
-    {
-        encoding::default_option.b_index = b_index;
-        encoding::default_option.b_crc = b_crc;
-        DecodeManager<Encoding>::getInstance().options(b_index, b_crc);
-    }
-
-    template <typename Encoding = DefaultEncoding>
-    inline DecoderRef<Encoding> options(const bool b_index, const bool b_crc)
+    inline DecoderRef<Encoding> decode_option(const bool b_index, const bool b_crc)
     {
         auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
         decoder->indexing(b_index);
@@ -381,6 +439,14 @@ namespace packetizer {
     {
         auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
         decoder->feed(data, size, b_exec_cb);
+        return decoder;
+    }
+
+    template <typename Encoding = DefaultEncoding>
+    inline DecoderRef<Encoding> reset()
+    {
+        auto decoder = DecodeManager<Encoding>::getInstance().getDecoderRef();
+        decoder->reset();
         return decoder;
     }
 

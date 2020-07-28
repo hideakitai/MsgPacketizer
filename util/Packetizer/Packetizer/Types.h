@@ -64,9 +64,9 @@ template <typename Encoding> class Decoder;
     #define PACKETIZER_MAX_STREAM_MAP_SIZE 2
     #endif // PACKETIZER_MAX_STREAM_MAP_SIZE
 
-    using Packet = arx::vector<uint8_t, PACKETIZER_MAX_PACKET_BINARY_SIZE>;
+    using PacketData = arx::vector<uint8_t, PACKETIZER_MAX_PACKET_BINARY_SIZE>;
+    struct Packet { uint8_t index; PacketData data; };
     using PacketQueue = arx::deque<Packet, PACKETIZER_MAX_PACKET_QUEUE_SIZE>;
-    using IndexQueue = arx::deque<uint8_t, PACKETIZER_MAX_PACKET_QUEUE_SIZE>;
 
     using CallbackType = std::function<void(const uint8_t* data, const size_t size)>;
     using CallbackAlwaysType = std::function<void(const uint8_t index, const uint8_t* data, const size_t size)>;
@@ -87,9 +87,9 @@ template <typename Encoding> class Decoder;
     #define PACKETIZER_MAX_PACKET_QUEUE_SIZE 0
     #endif // PACKETIZER_MAX_PACKET_QUEUE_SIZE
 
-    using Packet = std::vector<uint8_t>;
+    using PacketData = std::vector<uint8_t>;
+    struct Packet { uint8_t index; PacketData data; };
     using PacketQueue = std::deque<Packet>;
-    using IndexQueue = std::deque<uint8_t>;
 
     using CallbackType = std::function<void(const uint8_t* data, const size_t size)>;
     using CallbackMap = std::map<uint8_t, CallbackType>;
@@ -110,21 +110,18 @@ template <typename Encoding> class Decoder;
     {
         struct COBS {};
         struct SLIP {};
+    } // namespace encoder
 
-        struct DefaultOption {
 #ifdef PACKETIZER_USE_INDEX_AS_DEFAULT
-            bool b_index {true};
+    #define PACKETIZER_DEFAULT_INDEX_SETTING true
 #else
-            bool b_index {false};
+    #define PACKETIZER_DEFAULT_INDEX_SETTING false
 #endif
 #ifdef PACKETIZER_USE_CRC_AS_DEFAULT
-            bool b_crc {true};
+    #define PACKETIZER_DEFAULT_CRC_SETTING true
 #else
-            bool b_crc {false};
+    #define PACKETIZER_DEFAULT_CRC_SETTING false
 #endif
-        } default_option;
-
-    } // namespace encoder
 
 #ifdef PACKETIZER_SET_DEFAULT_ENCODING_SLIP
     using DefaultEncoding = encoding::SLIP;

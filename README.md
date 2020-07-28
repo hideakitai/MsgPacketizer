@@ -249,7 +249,7 @@ These macros have no effect for STL enabled boards.
 ## Embedded Libraries
 
 - [MsgPack v0.2.11](https://github.com/hideakitai/MsgPack)
-- [Packetizer v0.4.6](https://github.com/hideakitai/Packetizer)
+- [Packetizer v0.5.0](https://github.com/hideakitai/Packetizer)
 
 
 ## License
