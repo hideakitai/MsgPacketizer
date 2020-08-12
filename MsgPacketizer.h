@@ -321,7 +321,7 @@ namespace msgpacketizer {
             }
             else
             {
-                LOG_WARNING("serialize arg size must be even for map :", size);
+                LOG_WARNING("serialize arg size must be even for map :", sizeof...(args));
                 return nullptr;
             }
         }
@@ -386,7 +386,7 @@ namespace msgpacketizer {
         }
         else
         {
-            LOG_WARNING("serialize arg size must be even for map :", size);
+            LOG_WARNING("serialize arg size must be even for map :", sizeof...(args));
         }
     }
 
@@ -501,7 +501,7 @@ namespace msgpacketizer {
         }
         else
         {
-            LOG_WARNING("deserialize arg size must be even for map :", size);
+            LOG_WARNING("deserialize arg size must be even for map :", sizeof...(args));
         }
     }
 
