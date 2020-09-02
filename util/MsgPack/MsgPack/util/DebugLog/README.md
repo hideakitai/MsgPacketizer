@@ -27,18 +27,18 @@ void setup()
     Serial.begin(115200);
 
     // you can change target stream (default: Serial, only for Arduino)
-    // DebugLog::attach(Serial2);
+    // LOG_ATTACH_SERIAL(Serial2);
 
     PRINT("this is for debug");
     PRINTLN(1, 2.2, "you can", "print variable args")
 
     // check log level 0: NONE, 1: ERRORS, 2: WARNINGS, 3: VERBOSE
-    PRINTLN("current log level is", (int)DebugLog::logLevel());
+    PRINTLN("current log level is", (int)LOG_GET_LEVEL());
 
     // set log level (default: DebugLogLevel::VERBOSE)
-    DebugLog::logLevel(DebugLogLevel::ERRORS); // only ERROR log is printed
-    DebugLog::logLevel(DebugLogLevel::WARNINGS); // ERROR and WARNING is printed
-    DebugLog::logLevel(DebugLogLevel::VERBOSE); // all log is printed
+    LOG_SET_LEVEL(DebugLogLevel::ERRORS); // only ERROR log is printed
+    LOG_SET_LEVEL(DebugLogLevel::WARNINGS); // ERROR and WARNING is printed
+    LOG_SET_LEVEL(DebugLogLevel::VERBOSE); // all log is printed
 
     LOG_ERROR("this is error log");
     LOG_WARNING("this is warning log");
@@ -80,7 +80,7 @@ void setup()
   if (SD.begin())
   {
     String filename = "test.txt";
-    DebugLog::attach(SD, filename, false, true);
+    LOG_ATTACH_SD(SD, filename, false, true);
     // 3rd arg => true: auto save every logging, false: manually save
     // 4th arg => true: only log to SD, false: also print via Serial
   }
@@ -90,7 +90,7 @@ void setup()
 
   // if 3rd arg is false, you should manually save logs
   // however this is much faster than auto save (saving takes few milliseconds)
-  DebugLog::flush(); // manually save to SD card and continue logging
+  LOG_SD_FLUSH(); // manually save to SD card and continue logging
   // DebugLog::close(); // flush() and finish logging (ASSERT won't be saved to SD)
 }
 ```
@@ -98,7 +98,7 @@ void setup()
 Please see `examples/sdcard` , `examples/sdcard_manual_save` for more details. And please note:
 
 - one log function call can takes 3-20 ms if you log to SD (depending on environment)
-- if you disable auto save, you should call `DebugLog::flush()` or `close()` to save logs
+- if you disable auto save, you should call `LOG_SD_FLUSH()` or `LOG_SD_CLOSE()` to save logs
 
 
 ## Used Inside of

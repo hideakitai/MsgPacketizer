@@ -27,8 +27,6 @@ namespace debug {
 // serial loggers
 #ifdef ARDUINO
     using string_t = String;
-    Stream* stream {&Serial};
-    inline void attach(Stream& s) { stream = &s; }
 #else
     using string_t = std::string;
 #endif
@@ -116,142 +114,177 @@ namespace debug {
         virtual size_t println(void) override { return file.println(); }
     };
 
-    Logger* logger {nullptr};
-    bool b_auto_save {false};
-    bool b_only_sd {false};
+#endif // sd loggers
 
-    inline void flush()
-    {
-        if (logger) logger->flush();
-    }
+    enum class LogLevel {NONE, ERRORS, WARNINGS, VERBOSE};
 
-    inline void close()
+    class Manager
     {
-        flush();
-        if (logger) delete logger;
-    }
+#ifdef ARDUINO
+        Stream* stream {&Serial};
+        Logger* logger {nullptr};
+#endif
+        LogLevel log_level = LogLevel::VERBOSE;
+        bool b_auto_save {false};
+        bool b_only_sd {false};
+
+        // singleton
+        Manager() {}
+        Manager(const Manager &) = delete;
+        Manager &operator=(const Manager &) = delete;
+
+    public:
+
+        ~Manager()
+        {
+#ifdef ARDUINO
+            if (logger) delete logger;
+#endif
+        }
+
+        static Manager &get()
+        {
+            static Manager m;
+            return m;
+        }
+
+#ifdef ARDUINO
+        void attach(Stream& s) { stream = &s; }
+
+        void flush()
+        {
+            if (logger) logger->flush();
+        }
+
+        void close()
+        {
+            flush();
+            if (logger) delete logger;
+        }
 
 #ifdef FILE_WRITE
-    template <typename SdType>
-    inline void attach(SdType& s, const String& path, bool auto_save, bool only_sd = false)
-    {
-        close();
-        logger = new SdLogger<SdType, File>(s, path);
-        b_auto_save = auto_save;
-        b_only_sd = only_sd;
-    }
+        template <typename SdType>
+        void attach(SdType& s, const String& path, bool auto_save, bool only_sd = false)
+        {
+            close();
+            logger = new SdLogger<SdType, File>(s, path);
+            b_auto_save = auto_save;
+            b_only_sd = only_sd;
+        }
 #endif
 
 #endif // ARDUINO
 
-    inline void print()
-    {
+        void print()
+        {
 #ifdef ARDUINO
-        if (logger && b_auto_save) logger->flush();
+            if (logger && b_auto_save) logger->flush();
 #endif
-    }
+        }
 
-    template<typename Head, typename... Tail>
-    inline void print(Head&& head, Tail&&... tail)
-    {
+        template<typename Head, typename... Tail>
+        void print(Head&& head, Tail&&... tail)
+        {
 #ifdef ARDUINO
-        if (!b_only_sd)
-        {
-            stream->print(head);
-            stream->print(" ");
-        }
-        if (logger)
-        {
-            logger->print(head);
-            logger->print(" ");
-        }
-        print(detail::forward<Tail>(tail)...);
-#else
-        std::cout << head << " ";
-        print(std::forward<Tail>(tail)...);
-#endif
-    }
-
-    inline void println()
-    {
-#ifdef ARDUINO
-        if (!b_only_sd)
-        {
-            stream->println();
-        }
-        if (logger)
-        {
-            logger->println();
-            if (b_auto_save) logger->flush();
-        }
-#else
-        std::cout << std::endl;
-#endif
-    }
-
-    template<typename Head, typename... Tail>
-    inline void println(Head&& head, Tail&&... tail)
-    {
-#ifdef ARDUINO
-        if (!b_only_sd)
-        {
-            stream->print(head);
-            stream->print(" ");
-        }
-        if (logger)
-        {
-            logger->print(head);
-            logger->print(" ");
-        }
-        println(detail::forward<Tail>(tail)...);
-#else
-        std::cout << head << " ";
-        println(std::forward<Tail>(tail)...);
-#endif
-    }
-
-#ifdef ARDUINO
-    inline void assertion(bool b, const char* file, int line, const char* func, const char* expr)
-    {
-        while (!b)
-        {
-            println("[ ASSERT ]", file, ":", line, ":", func, "() :", expr);
-            if (logger) logger->flush();
-            delay(1000);
-        }
-    }
-#endif
-
-    enum class LogLevel {NONE, ERRORS, WARNINGS, VERBOSE};
-    LogLevel log_level = LogLevel::VERBOSE;
-
-    inline void logLevel(const LogLevel l) { log_level = l; }
-    inline LogLevel logLevel() { return log_level; }
-
-    template <typename... Args>
-    inline void log(LogLevel level, const char* file, int line, const char* func, Args&&... args)
-    {
-        if ((log_level == LogLevel::NONE) || (level == LogLevel::NONE)) return;
-        if ((int)level <= (int)log_level)
-        {
-            string_t lvl_str;
-            switch (level)
+            if (!b_only_sd)
             {
-                case LogLevel::ERRORS:   lvl_str = "ERROR";   break;
-                case LogLevel::WARNINGS: lvl_str = "WARNING"; break;
-                case LogLevel::VERBOSE:  lvl_str = "VERBOSE"; break;
-                default:                 lvl_str = "";        break;
+                stream->print(head);
+                stream->print(" ");
             }
-#ifdef ARDUINO
-            println("[", lvl_str, "]", file, ":", line, ":", func, ":", detail::forward<Args>(args)...);
+            if (logger)
+            {
+                logger->print(head);
+                logger->print(" ");
+            }
+            print(detail::forward<Tail>(tail)...);
 #else
-            println("[", lvl_str, "]", file, ":", line, ":", func, ":", std::forward<Args>(args)...);
+            std::cout << head << " ";
+            print(std::forward<Tail>(tail)...);
 #endif
         }
-    }
+
+        void println()
+        {
+#ifdef ARDUINO
+            if (!b_only_sd)
+            {
+                stream->println();
+            }
+            if (logger)
+            {
+                logger->println();
+                if (b_auto_save) logger->flush();
+            }
+#else
+            std::cout << std::endl;
+#endif
+        }
+
+        template<typename Head, typename... Tail>
+        void println(Head&& head, Tail&&... tail)
+        {
+#ifdef ARDUINO
+            if (!b_only_sd)
+            {
+                stream->print(head);
+                stream->print(" ");
+            }
+            if (logger)
+            {
+                logger->print(head);
+                logger->print(" ");
+            }
+            println(detail::forward<Tail>(tail)...);
+#else
+            std::cout << head << " ";
+            println(std::forward<Tail>(tail)...);
+#endif
+        }
+
+#ifdef ARDUINO
+        void assertion(bool b, const char* file, int line, const char* func, const char* expr)
+        {
+            while (!b)
+            {
+                println("[ ASSERT ]", file, ":", line, ":", func, "() :", expr);
+                if (logger) logger->flush();
+                delay(1000);
+            }
+        }
+#endif
+
+        void logLevel(const LogLevel l) { log_level = l; }
+        LogLevel logLevel() { return log_level; }
+
+        template <typename... Args>
+        void log(LogLevel level, const char* file, int line, const char* func, Args&&... args)
+        {
+            if ((log_level == LogLevel::NONE) || (level == LogLevel::NONE)) return;
+            if ((int)level <= (int)log_level)
+            {
+                string_t lvl_str;
+                switch (level)
+                {
+                    case LogLevel::ERRORS:   lvl_str = "ERROR";   break;
+                    case LogLevel::WARNINGS: lvl_str = "WARNING"; break;
+                    case LogLevel::VERBOSE:  lvl_str = "VERBOSE"; break;
+                    default:                 lvl_str = "";        break;
+                }
+#ifdef ARDUINO
+                println("[", lvl_str, "]", file, ":", line, ":", func, ":", detail::forward<Args>(args)...);
+#else
+                println("[", lvl_str, "]", file, ":", line, ":", func, ":", std::forward<Args>(args)...);
+#endif
+            }
+        }
+    };
 
 } // namespace debug
 } // namespace ard
+
+
+namespace DebugLog = arx::debug;
+using DebugLogLevel = arx::debug::LogLevel;
 
 #ifdef NDEBUG
 
@@ -260,28 +293,36 @@ namespace debug {
 #define LOG_ERROR(...) ((void)0)
 #define LOG_WARNING(...) ((void)0)
 #define LOG_VERBOSE(...) ((void)0)
+#define LOG_GET_LEVEL() ((void)0)
+#define LOG_SET_LEVEL(l) ((void)0)
+#define LOG_ATTACH_SERIAL() ((void)0)
+#define LOG_ATTACH_SD(l) ((void)0)
+#define LOG_SD_FLUSH() ((void)0)
+#define LOG_SD_CLOSE() ((void)0)
 #define ASSERT(b) ((void)0)
 
 #else // NDEBUG
 
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
-#define PRINT(...) arx::debug::print(__VA_ARGS__)
-#define PRINTLN(...) arx::debug::println(__VA_ARGS__)
-#define LOG_ERROR(...) arx::debug::log(arx::debug::LogLevel::ERRORS, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
-#define LOG_WARNING(...) arx::debug::log(arx::debug::LogLevel::WARNINGS, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
-#define LOG_VERBOSE(...) arx::debug::log(arx::debug::LogLevel::VERBOSE, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
+#define PRINT(...) DebugLog::Manager::get().print(__VA_ARGS__)
+#define PRINTLN(...) DebugLog::Manager::get().println(__VA_ARGS__)
+#define LOG_ERROR(...) DebugLog::Manager::get().log(arx::debug::LogLevel::ERRORS, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
+#define LOG_WARNING(...) DebugLog::Manager::get().log(arx::debug::LogLevel::WARNINGS, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
+#define LOG_VERBOSE(...) DebugLog::Manager::get().log(arx::debug::LogLevel::VERBOSE, __FILENAME__, __LINE__, __func__, __VA_ARGS__)
+#define LOG_GET_LEVEL() DebugLog::Manager::get().logLevel()
+#define LOG_SET_LEVEL(l) DebugLog::Manager::get().logLevel(l)
 #ifdef ARDUINO
-    #define ASSERT(b) arx::debug::assertion((b), __FILENAME__, __LINE__, __func__, #b)
+    #define LOG_ATTACH_SERIAL(s) DebugLog::Manager::get().attach(s)
+    #define LOG_ATTACH_SD(s, p, b, ...) DebugLog::Manager::get().attach(s, p, b, __VA_ARGS__)
+    #define LOG_SD_FLUSH() DebugLog::Manager::get().flush()
+    #define LOG_SD_CLOSE() DebugLog::Manager::get().close()
+    #define ASSERT(b) DebugLog::Manager::get().assertion((b), __FILENAME__, __LINE__, __func__, #b)
 #else
     #include <cassert>
     #define ASSERT(b) assert(b)
 #endif
 
 #endif // #ifdef NDEBUG
-
-
-namespace DebugLog = arx::debug;
-using DebugLogLevel = arx::debug::LogLevel;
 
 
 #endif // ARX_DEBUGLOG_H
