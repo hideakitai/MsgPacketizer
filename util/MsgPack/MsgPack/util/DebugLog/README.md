@@ -40,9 +40,17 @@ void setup()
     LOG_SET_LEVEL(DebugLogLevel::WARNINGS); // ERROR and WARNING is printed
     LOG_SET_LEVEL(DebugLogLevel::VERBOSE); // all log is printed
 
+    // set log output format options (show file, line, and func)
+    // default: true, true, true
+    LOG_SET_OPTION(false, false, true);
+
     LOG_ERROR("this is error log");
     LOG_WARNING("this is warning log");
     LOG_VERBOSE("this is verbose log");
+
+    // you can change delimiter from default " " to anything
+    LOG_SET_DELIMITER(" and ");
+    LOG_VERBOSE(1, 2, 3, 4, 5);
 
     int x = 1;
     ASSERT(x != 1); // if assertion failed, Serial endlessly prints message
