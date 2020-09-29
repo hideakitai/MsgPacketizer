@@ -146,7 +146,6 @@ The storage size of such boards for packets, queue of packets, max packet binary
 - AVR
 - megaAVR
 - SAMD
-- SPRESENSE
 
 
 ### Memory Management (for NO-STL Boards)
@@ -188,9 +187,9 @@ None
 
 ## Embedded Libraries
 
-- [ArxTypeTraits v0.1.12](https://github.com/hideakitai/ArxTypeTraits)
-- [ArxContainer v0.3.8](https://github.com/hideakitai/ArxContainer)
-- [ArxSmartPtr v0.1.2](https://github.com/hideakitai/ArxSmartPtr)
+- [ArxTypeTraits v0.2.0](https://github.com/hideakitai/ArxTypeTraits)
+- [ArxContainer v0.3.9](https://github.com/hideakitai/ArxContainer)
+- [ArxSmartPtr v0.2.0](https://github.com/hideakitai/ArxSmartPtr)
 - [CRCx v0.2.1](https://github.com/hideakitai/CRCx)
 - [TeensyDirtySTLErrorSolution v0.1.0](https://github.com/hideakitai/TeensyDirtySTLErrorSolution)
 

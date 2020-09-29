@@ -6,30 +6,14 @@
     #include <Arduino.h>
 #endif
 
-#if defined(ARDUINO_ARCH_AVR)\
- || defined(ARDUINO_ARCH_MEGAAVR)\
- || defined(ARDUINO_ARCH_SAMD)\
- || defined(ARDUINO_spresense_ast)
-    #define PACKETIZER_DISABLE_STL
-#endif
-
 #if defined(ARDUINO)\
  || defined(OF_VERSION_MAJOR)
     #define PACKETIZER_ENABLE_STREAM
 #endif
 
 #include "Packetizer/util/ArxTypeTraits/ArxTypeTraits.h"
-#ifdef PACKETIZER_DISABLE_STL
-    #include "Packetizer/util/ArxContainer/ArxContainer.h"
-    #include "Packetizer/util/ArxSmartPtr/ArxSmartPtr.h"
-#else
-    #include <vector>
-    #include <deque>
-    #include <map>
-    #include <functional>
-    #include <memory>
-#endif // PACKETIZER_DISABLE_STL
-
+#include "Packetizer/util/ArxContainer/ArxContainer.h"
+#include "Packetizer/util/ArxSmartPtr/ArxSmartPtr.h"
 #include "Packetizer/Types.h"
 #include "Packetizer/Encoding.h"
 
@@ -174,15 +158,15 @@ namespace packetizer {
     };
 
     template <typename Encoding>
-    using EncoderRef = shared_ptr<Encoder<Encoding>>;
+    using EncoderRef = std::shared_ptr<Encoder<Encoding>>;
     template <typename Encoding>
-    using DecoderRef = shared_ptr<Decoder<Encoding>>;
+    using DecoderRef = std::shared_ptr<Decoder<Encoding>>;
 
 
     template <typename Encoding>
     class EncodeManager
     {
-        EncodeManager() : encoder(make_shared<Encoder<Encoding>>()) {}
+        EncodeManager() : encoder(std::make_shared<Encoder<Encoding>>()) {}
         EncodeManager(const EncodeManager&) = delete;
         EncodeManager& operator=(const EncodeManager&) = delete;
 
@@ -295,7 +279,7 @@ namespace packetizer {
 
         DecoderRef<Encoding> getDecoderRef()
         {
-            if (!decoder) decoder = make_shared<Decoder<Encoding>>();
+            if (!decoder) decoder = std::make_shared<Decoder<Encoding>>();
             return decoder;
         }
 
@@ -311,7 +295,7 @@ namespace packetizer {
         {
             StreamType* s = (StreamType*)&stream;
             if (decoders.find(s) == decoders.end())
-                decoders.insert(make_pair(s, make_shared<Decoder<Encoding>>()));
+                decoders.insert(make_pair(s, std::make_shared<Decoder<Encoding>>()));
             return decoders[s];
         }
 

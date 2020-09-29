@@ -5,6 +5,7 @@
 #include "Types.h"
 #include "util/CRCx/CRCx.h"
 #include "util/ArxTypeTraits/ArxTypeTraits.h"
+#include "util/ArxSmartPtr/ArxSmartPtr.h"
 
 namespace ht {
 namespace serial {
@@ -140,8 +141,8 @@ namespace encoding
         virtual uint8_t marker() const = 0;
     };
 
-    using EncoderBaseRef = shared_ptr<EncoderBase>;
-    using DecoderBaseRef = shared_ptr<DecoderBase>;
+    using EncoderBaseRef = std::shared_ptr<EncoderBase>;
+    using DecoderBaseRef = std::shared_ptr<DecoderBase>;
 
 
     namespace cobs
@@ -159,7 +160,7 @@ namespace encoding
 
             virtual ~Encoder() {}
 
-            static EncoderBaseRef create() { return make_shared<Encoder>(); }
+            static EncoderBaseRef create() { return std::make_shared<Encoder>(); }
 
             virtual void header() override
             {
@@ -215,7 +216,7 @@ namespace encoding
 
             virtual ~Decoder() {}
 
-            static DecoderBaseRef create() { return make_shared<Decoder>(); }
+            static DecoderBaseRef create() { return std::make_shared<Decoder>(); }
 
         private:
 
@@ -272,7 +273,7 @@ namespace encoding
 
             virtual ~Encoder() {}
 
-            static EncoderBaseRef create() { return make_shared<Encoder>(); }
+            static EncoderBaseRef create() { return std::make_shared<Encoder>(); }
 
             virtual void header() override
             {
@@ -311,7 +312,7 @@ namespace encoding
 
             virtual ~Decoder() {}
 
-            static DecoderBaseRef create() { return make_shared<Decoder>(); }
+            static DecoderBaseRef create() { return std::make_shared<Decoder>(); }
 
         private:
 
