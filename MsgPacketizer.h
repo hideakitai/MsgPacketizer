@@ -3,11 +3,12 @@
 #ifndef HT_SERIAL_MSGPACKETIZER_H
 #define HT_SERIAL_MSGPACKETIZER_H
 
-#if defined(ARDUINO_ARCH_AVR)\
- || defined(ARDUINO_ARCH_MEGAAVR)\
- || defined(ARDUINO_ARCH_SAMD)\
- || defined(ARDUINO_spresense_ast)
-#define HT_SERIAL_MSGPACKETIZER_DISABLE_STL
+#include "util/Packetizer/Packetizer.h"
+#include "util/MsgPack/MsgPack.h"
+
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
+    // use standard c++ libraries
+#else
 #ifndef MSGPACKETIZER_MAX_PUBLISH_ELEMENT_SIZE
 #define MSGPACKETIZER_MAX_PUBLISH_ELEMENT_SIZE 5
 #endif
@@ -38,16 +39,13 @@
 #ifndef PACKETIZER_MAX_STREAM_MAP_SIZE
 #define PACKETIZER_MAX_STREAM_MAP_SIZE 1
 #endif
-#endif
+#endif // have libstdc++11
 
 #define PACKETIZER_USE_INDEX_AS_DEFAULT
 #define PACKETIZER_USE_CRC_AS_DEFAULT
 #ifdef MSGPACKETIZER_ENABLE_DEBUG_LOG
     #define MSGPACK_ENABLE_DEBUG_LOG
 #endif
-
-#include "util/Packetizer/Packetizer.h"
-#include "util/MsgPack/MsgPack.h"
 
 namespace ht {
 namespace serial {
@@ -78,12 +76,11 @@ namespace msgpacketizer {
             virtual void encodeTo(MsgPack::Packer& p) = 0;
         };
 
-#ifdef HT_SERIAL_MSGPACKETIZER_DISABLE_STL
-        using Ref = arx::shared_ptr<Base>;
-        using TupleRef = arx::vector<Ref, MSGPACKETIZER_MAX_PUBLISH_ELEMENT_SIZE>;
-#else
         using Ref = std::shared_ptr<Base>;
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
         using TupleRef = std::vector<Ref>;
+#else
+        using TupleRef = arx::vector<Ref, MSGPACKETIZER_MAX_PUBLISH_ELEMENT_SIZE>;
 #endif
 
         template <typename T>
@@ -206,17 +203,17 @@ namespace msgpacketizer {
     };
 
 
-#ifdef HT_SERIAL_MSGPACKETIZER_DISABLE_STL
-    using PackerMap = arx::map<Destination, PublishElementRef, MSGPACKETIZER_MAX_PUBLISH_DESTINATION_SIZE>;
-    using UnpackerRef = arx::shared_ptr<MsgPack::Unpacker>;
-    using UnpackerMap = arx::map<StreamType*, UnpackerRef, PACKETIZER_MAX_STREAM_MAP_SIZE>;
-    using namespace arx;
-#else
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
     using PackerMap = std::map<Destination, PublishElementRef>;
     using UnpackerRef = std::shared_ptr<MsgPack::Unpacker>;
     using UnpackerMap = std::map<StreamType*, UnpackerRef>;
     using namespace std;
-#endif // HT_SERIAL_MSGPACKETIZER_DISABLE_STL
+#else
+    using PackerMap = arx::map<Destination, PublishElementRef, MSGPACKETIZER_MAX_PUBLISH_DESTINATION_SIZE>;
+    using UnpackerRef = std::shared_ptr<MsgPack::Unpacker>;
+    using UnpackerMap = arx::map<StreamType*, UnpackerRef, PACKETIZER_MAX_STREAM_MAP_SIZE>;
+    using namespace arx;
+#endif
 
 
     class PackerManager
@@ -444,7 +441,7 @@ namespace msgpacketizer {
         {
             StreamType* s = (StreamType*)&stream;
             if (decoders.find(s) == decoders.end())
-                decoders.insert(make_pair(s, make_shared<MsgPack::Unpacker>()));
+                decoders.insert(make_pair(s, std::make_shared<MsgPack::Unpacker>()));
             return decoders[s];
         }
 
@@ -468,7 +465,7 @@ namespace msgpacketizer {
             auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
             unpacker->clear();
             unpacker->feed(data, size);
-            unpacker->deserialize(args...);
+            unpacker->deserialize(std::forward<Args>(args)...);
         });
     }
 
@@ -481,7 +478,7 @@ namespace msgpacketizer {
             auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
             unpacker->clear();
             unpacker->feed(data, size);
-            unpacker->deserialize(sz, args...);
+            unpacker->deserialize(sz, std::forward<Args>(args)...);
         });
     }
 
@@ -496,7 +493,7 @@ namespace msgpacketizer {
                 auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                 unpacker->clear();
                 unpacker->feed(data, size);
-                unpacker->deserialize(sz, args...);
+                unpacker->deserialize(sz, std::forward<Args>(args)...);
             });
         }
         else
