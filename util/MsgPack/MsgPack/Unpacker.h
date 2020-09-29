@@ -4,9 +4,8 @@
 #define HT_SERIAL_MSGPACK_UNPACKER_H
 
 #include "util/ArxTypeTraits/ArxTypeTraits.h"
-#ifdef HT_SERIAL_MSGPACK_DISABLE_STL
-    #include "util/ArxContainer/ArxContainer.h"
-#else
+#include "util/ArxContainer/ArxContainer.h"
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
     #include <vector>
     #include <array>
     #include <deque>
@@ -18,7 +17,9 @@
     #include <map>
     #include <unordered_map>
     #include <limits>
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#else // Do not have libstdc++11
+    // containers are disabled
+#endif
 #ifdef TEENSYDUINO
     #include "util/TeensyDirtySTLErrorSolution/TeensyDirtySTLErrorSolution.h"
 #endif // TEENSYDUINO
@@ -29,12 +30,6 @@
 namespace ht {
 namespace serial {
 namespace msgpack {
-
-#ifdef HT_SERIAL_MSGPACK_DISABLE_STL
-    using namespace arx;
-#else
-    using namespace std;
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
 
     class Unpacker
     {
@@ -336,7 +331,7 @@ namespace msgpack {
             bin = unpackBinary<T>();
         }
 
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
 
         template <typename T, size_t N>
         auto unpack(std::array<T, N>& bin)
@@ -348,7 +343,7 @@ namespace msgpack {
             bin = unpackBinary<T, N>();
         }
 
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#endif // Do not have libstdc++11
 
 
         // ---------- ARRAY format family ----------
@@ -377,7 +372,7 @@ namespace msgpack {
             arr.shrink_to_fit();
         }
 
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
 
         template <typename T, size_t N>
         auto unpack(std::array<T, N>& arr)
@@ -488,7 +483,7 @@ namespace msgpack {
             unpackArrayContainerSet(arr);
         }
 
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#endif // Do not have libstdc++11
 
 
         // ---------- MAP format family ----------
@@ -504,7 +499,7 @@ namespace msgpack {
             unpackMapContainer(mp);
         }
 
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
 
         template <typename T, typename U>
         void unpack(std::multimap<T, U>& mp)
@@ -524,7 +519,7 @@ namespace msgpack {
             unpackMapContainer(mp);
         }
 
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#endif // Do not have libstdc++11
 
 
         // ---------- EXT format family ----------
@@ -671,13 +666,13 @@ namespace msgpack {
 
         double unpackFloat64()
         {
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
             double ret = isFloat64() ? getRawBytes<double>(curr_index, 1) : 0;
             ++curr_index;
             return ret;
-#else
+#else // Do not have libstdc++11
             return (isFloat32() || isFloat64()) ? unpackFloat32() : 0; // Uno, etc. does not support double
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#endif // Do not have libstdc++11
         }
 
         // ---------- STR format family ----------
@@ -802,7 +797,7 @@ namespace msgpack {
             return data;
         }
 
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
 
         template <typename T, size_t N>
         auto unpackBinary()
@@ -873,7 +868,7 @@ namespace msgpack {
             return data;
         }
 
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#endif // Do not have libstdc++11
 
 
         // ---------- ARRAY format family ----------
@@ -1173,7 +1168,7 @@ namespace msgpack {
             return isBin();
         }
 
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
 
         template <typename T, size_t N>
         auto unpackable(const std::array<T, N>& bin) const
@@ -1187,7 +1182,7 @@ namespace msgpack {
             return isBin();
         }
 
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#endif // Do not have libstdc++11
 
 
         // ---------- ARRAY format family ----------
@@ -1216,7 +1211,7 @@ namespace msgpack {
             return isArray();
         }
 
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
 
         template <typename T, size_t N>
         auto unpackable(const std::array<T, N>& arr) const
@@ -1293,7 +1288,7 @@ namespace msgpack {
             return isArray();
         }
 
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#endif // Do not have libstdc++11
 
 
         // ---------- MAP format family ----------
@@ -1310,7 +1305,7 @@ namespace msgpack {
             return isMap();
         }
 
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
 
         template <typename T, typename U>
         bool unpackable(const std::multimap<T, U>& mp) const
@@ -1333,7 +1328,7 @@ namespace msgpack {
             return isMap();
         }
 
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#endif // Do not have libstdc++11
 
 
         // ---------- EXT format family ----------
@@ -1527,13 +1522,13 @@ private:
             }
         }
 
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
         template <template <typename...> class C, class T>
         void unpackArrayContainerArray(C<T>& arr)
-#else
+#else // Do not have libstdc++11
         template <typename T>
         void unpackArrayContainerArray(arr_t<T>& arr)
-#endif
+#endif // Do not have libstdc++11
         {
             const size_t size = unpackArraySize();
             if (arr.size() == size)
@@ -1558,13 +1553,13 @@ private:
             }
         }
 
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
         template <template <typename...> class C, class T>
         void unpackArrayContainerSet(C<T>& arr)
-#else
+#else // Do not have libstdc++11
         template <typename T>
         void unpackArrayContainerSet(arr_t<T>& arr)
-#endif
+#endif // Do not have libstdc++11
         {
             const size_t size = unpackArraySize();
             if (size == 0)
@@ -1583,13 +1578,13 @@ private:
             }
         }
 
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
         template <template <typename...> class C, class T, class U>
         void unpackMapContainer(C<T, U>& mp)
-#else
+#else // Do not have libstdc++11
         template <typename T, typename U>
         void unpackMapContainer(map_t<T, U>& mp)
-#endif
+#endif // Do not have libstdc++11
         {
             const size_t size = unpackMapSize();
             if (size == 0)

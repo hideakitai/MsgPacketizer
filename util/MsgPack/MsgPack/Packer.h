@@ -3,9 +3,8 @@
 #define HT_SERIAL_MSGPACK_PACKER_H
 
 #include "util/ArxTypeTraits/ArxTypeTraits.h"
-#ifdef HT_SERIAL_MSGPACK_DISABLE_STL
-    #include "util/ArxContainer/ArxContainer.h"
-#else
+#include "util/ArxContainer/ArxContainer.h"
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
     #include <vector>
     #include <array>
     #include <deque>
@@ -17,7 +16,10 @@
     #include <map>
     #include <unordered_map>
     #include <limits>
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#else // Do not have libstdc++11
+    // containers are disabled
+#endif
+
 #ifdef TEENSYDUINO
     #include "util/TeensyDirtySTLErrorSolution/TeensyDirtySTLErrorSolution.h"
 #endif // TEENSYDUINO
@@ -230,7 +232,7 @@ namespace msgpack {
             pack(bin.data(), bin.size());
         }
 
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
 
         template <size_t N>
         void pack(const std::array<char, N>& bin)
@@ -244,7 +246,7 @@ namespace msgpack {
             pack(bin.data(), bin.size());
         }
 
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#endif // have libstdc++11
 
         // ---------- ARRAY format family ----------
         // - T[]
@@ -282,7 +284,7 @@ namespace msgpack {
             packArrayContainer(arr);
         }
 
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
 
         template <typename T, size_t N>
         auto pack(const std::array<T, N>& arr)
@@ -308,7 +310,7 @@ namespace msgpack {
             pack(arr.second);
         }
 
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#endif // have libstdc++11
 
         template<size_t I = 0, typename... Ts>
         auto pack(const std::tuple<Ts...>& t)
@@ -325,7 +327,7 @@ namespace msgpack {
         {
         }
 
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
 
         template <typename T>
         void pack(const std::list<T>& arr)
@@ -365,7 +367,7 @@ namespace msgpack {
             packArrayContainer(arr);
         }
 
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#endif // have libstdc++11
 
         // ---------- MAP format family ----------
         // - std::map
@@ -380,7 +382,7 @@ namespace msgpack {
             packMapContainer(mp);
         }
 
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
 
         template <typename T, typename U>
         void pack(const std::multimap<T, U>& mp)
@@ -401,7 +403,7 @@ namespace msgpack {
         }
 
 
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#endif // have libstdc++11
 
         // ---------- EXT format family ----------
 
@@ -556,13 +558,13 @@ namespace msgpack {
 
         void packFloat64(const double value)
         {
-#ifndef HT_SERIAL_MSGPACK_DISABLE_STL
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
             packRawByte(Type::FLOAT64);
             packRawReversed(value);
             ++n_indices;
 #else
             packFloat32((const float)value); // Uno, etc. does not support double
-#endif // HT_SERIAL_MSGPACK_DISABLE_STL
+#endif // have libstdc++11
         }
 
 
