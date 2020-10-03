@@ -40,16 +40,16 @@ namespace msgpack {
 
         template <typename First, typename ...Rest>
         auto serialize(const First& first, Rest&&... rest)
-        -> typename std::enable_if<!std::is_pointer<First>::value>::type
+        -> typename std::enable_if<
+            !std::is_pointer<First>::value
+            || std::is_same<First, const char*>::value
+#ifdef ARDUINO
+            || std::is_same<First, const __FlashStringHelper*>::value
+#endif
+        >::type
         {
             pack(first);
             serialize(std::forward<Rest>(rest)...);
-        }
-
-        template <typename T>
-        void serialize(const T* data, const size_t size)
-        {
-            pack(data, size);
         }
 
         void serialize()
@@ -185,24 +185,24 @@ namespace msgpack {
         // - char[]
         // - std::string
 
-        void pack(const char* str)
-        {
-            str_t s(str);
-            pack(s);
-        }
-
         void pack(const str_t& str)
         {
-            if (str.length() <= (size_t)BitMask::STR5)
-                packString5(str);
-            else if (str.length() <= std::numeric_limits<uint8_t>::max())
-                packString8(str);
-            else if (str.length() <= std::numeric_limits<uint16_t>::max())
-                packString16(str);
-            else if (str.length() <= std::numeric_limits<uint32_t>::max())
-                packString32(str);
+            packString(str, getStringSize(str));
         }
-
+        void pack(const char* str)
+        {
+            packString(str, getStringSize(str));
+        }
+        void pack(const char* str, const size_t size)
+        {
+            packString(str, size);
+        }
+#ifdef ARDUINO
+        void pack(const __FlashStringHelper* str)
+        {
+            packString(str, getStringSize(str));
+        }
+#endif
 
         // ---------- BIN format family ----------
         // - unsigned char*
@@ -570,56 +570,154 @@ namespace msgpack {
 
         // ---------- STR format family ----------
 
+        template <typename T>
+        void packString(const T& str)
+        {
+            packString(str, getStringSize(str));
+        }
+
+        template <typename T>
+        void packString(const T& str, const size_t len)
+        {
+            if (len <= (size_t)BitMask::STR5)
+                packString5(str, len);
+            else if (len <= std::numeric_limits<uint8_t>::max())
+                packString8(str, len);
+            else if (len <= std::numeric_limits<uint16_t>::max())
+                packString16(str, len);
+            else if (len <= std::numeric_limits<uint32_t>::max())
+                packString32(str, len);
+        }
+
         void packString5(const str_t& str)
         {
-            packRawByte((uint8_t)Type::STR5 | (str.length() & (uint8_t)BitMask::STR5));
-            packRawBytes(str.c_str(), str.length());
-            ++n_indices;
+            packString5(str, getStringSize(str));
+        }
+        void packString5(const str_t& str, const size_t len)
+        {
+            packString5(str.c_str(), len);
         }
         void packString5(const char* value)
         {
-            str_t str(value);
-            packString5(str);
+            packString5(value, getStringSize(value));
+        }
+        void packString5(const char* value, const size_t len)
+        {
+            packRawByte((uint8_t)Type::STR5 | ((uint8_t)len & (uint8_t)BitMask::STR5));
+            packRawBytes(value, len);
+            ++n_indices;
         }
 
         void packString8(const str_t& str)
         {
-            packRawByte(Type::STR8);
-            packRawByte((uint8_t)str.length());
-            packRawBytes(str.c_str(), str.length());
-            ++n_indices;
+            packString8(str, getStringSize(str));
+        }
+        void packString8(const str_t& str, const size_t len)
+        {
+            packString8(str.c_str(), len);
         }
         void packString8(const char* value)
         {
-            str_t str(value);
-            packString8(str);
+            packString8(value, getStringSize(value));
+        }
+        void packString8(const char* value, const size_t len)
+        {
+            packRawByte(Type::STR8);
+            packRawByte((uint8_t)len);
+            packRawBytes(value, len);
+            ++n_indices;
         }
 
         void packString16(const str_t& str)
         {
-            packRawByte(Type::STR16);
-            packRawReversed((uint16_t)str.length());
-            packRawBytes(str.c_str(), str.length());
-            ++n_indices;
+            packString16(str, getStringSize(str));
+        }
+        void packString16(const str_t& str, const size_t len)
+        {
+            packString16(str.c_str(), len);
         }
         void packString16(const char* value)
         {
-            str_t str(value);
-            packString16(str);
+            packString16(value, getStringSize(value));
+        }
+        void packString16(const char* value, const size_t len)
+        {
+            packRawByte(Type::STR16);
+            packRawReversed((uint16_t)len);
+            packRawBytes(value, len);
+            ++n_indices;
         }
 
         void packString32(const str_t& str)
         {
-            packRawByte(Type::STR32);
-            packRawReversed((uint32_t)str.length());
-            packRawBytes(str.c_str(), str.length());
-            ++n_indices;
+            packString32(str, getStringSize(str));
+        }
+        void packString32(const str_t& str, const size_t len)
+        {
+            packString32(str.c_str(), len);
         }
         void packString32(const char* value)
         {
-            str_t str(value);
-            packString32(str);
+            packString32(value, getStringSize(value));
         }
+        void packString32(const char* value, const size_t len)
+        {
+            packRawByte(Type::STR32);
+            packRawReversed((uint32_t)len);
+            packRawBytes(value, len);
+            ++n_indices;
+        }
+
+#ifdef ARDUINO
+
+        void packString5(const __FlashStringHelper* str)
+        {
+            packString5(str, getStringSize(str));
+        }
+        void packString5(const __FlashStringHelper* str, const size_t len)
+        {
+            packRawByte((uint8_t)Type::STR5 | ((uint8_t)len & (uint8_t)BitMask::STR5));
+            packFlashString(str);
+            ++n_indices;
+        }
+
+        void packString8(const __FlashStringHelper* str)
+        {
+            packString8(str, getStringSize(str));
+        }
+        void packString8(const __FlashStringHelper* str, const size_t len)
+        {
+            packRawByte(Type::STR8);
+            packRawByte((uint8_t)len);
+            packFlashString(str);
+            ++n_indices;
+        }
+
+        void packString16(const __FlashStringHelper* str)
+        {
+            packString16(str, getStringSize(str));
+        }
+        void packString16(const __FlashStringHelper* str, const size_t len)
+        {
+            packRawByte(Type::STR16);
+            packRawReversed((uint16_t)len);
+            packFlashString(str);
+            ++n_indices;
+        }
+
+        void packString32(const __FlashStringHelper* str)
+        {
+            packString32(str, getStringSize(str));
+        }
+        void packString32(const __FlashStringHelper* str, const size_t len)
+        {
+            packRawByte(Type::STR32);
+            packRawReversed((uint32_t)len);
+            packFlashString(str);
+            ++n_indices;
+        }
+
+#endif
 
         // ---------- BIN format family ----------
 
@@ -995,6 +1093,36 @@ namespace msgpack {
                 pack(m.second);
             }
         }
+
+        size_t getStringSize(const str_t& str) const
+        {
+            return str.length();
+        }
+
+        size_t getStringSize(const char* str) const
+        {
+            return strlen(str);
+        }
+
+#ifdef ARDUINO
+
+        size_t getStringSize(const __FlashStringHelper* str) const
+        {
+            return strlen_P((const char*)str);
+        }
+
+        void packFlashString(const __FlashStringHelper* str)
+        {
+            char* p = (char*)str;
+            while (1)
+            {
+                uint8_t c = pgm_read_byte(p++);
+                if (c == 0) break;
+                packRawByte(c);
+            }
+        }
+
+#endif
     };
 
 } // namespace msgpack
