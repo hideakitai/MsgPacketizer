@@ -353,7 +353,7 @@ namespace msgpacketizer {
     {
         auto& packer = PackerManager::getInstance().getPacker();
         packer.clear();
-        packer.serialize(data, size);
+        packer.pack(data, size);
         Packetizer::send(stream, index, packer.data(), packer.size());
     }
 
