@@ -1599,7 +1599,11 @@ private:
                     T t; U u;
                     unpack(t);
                     unpack(u);
-                    mp.emplace(make_pair(t, u));
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
+                    mp.emplace(std::make_pair(t, u));
+#else
+                    mp.emplace(arx::make_pair(t, u));
+#endif
                 }
             }
         }
