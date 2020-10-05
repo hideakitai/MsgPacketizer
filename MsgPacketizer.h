@@ -459,7 +459,7 @@ namespace msgpacketizer {
 
 
     template <typename... Args>
-    inline void subscribe(StreamType& stream, const uint8_t index, Args&... args)
+    inline void subscribe(StreamType& stream, const uint8_t index, Args&&... args)
     {
         Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size)
         {
@@ -471,7 +471,7 @@ namespace msgpacketizer {
     }
 
     template <typename... Args>
-    inline void subscribe_arr(StreamType& stream, const uint8_t index, Args&... args)
+    inline void subscribe_arr(StreamType& stream, const uint8_t index, Args&&... args)
     {
         static MsgPack::arr_size_t sz;
         Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size)
@@ -484,7 +484,7 @@ namespace msgpacketizer {
     }
 
     template <typename... Args>
-    inline void subscribe_map(StreamType& stream, const uint8_t index, Args&... args)
+    inline void subscribe_map(StreamType& stream, const uint8_t index, Args&&... args)
     {
         if ((sizeof...(args) % 2) == 0)
         {
