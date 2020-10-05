@@ -3,6 +3,12 @@
 #ifndef HT_SERIAL_MSGPACKETIZER_H
 #define HT_SERIAL_MSGPACKETIZER_H
 
+#define PACKETIZER_USE_INDEX_AS_DEFAULT
+#define PACKETIZER_USE_CRC_AS_DEFAULT
+#ifdef MSGPACKETIZER_ENABLE_DEBUG_LOG
+    #define MSGPACK_ENABLE_DEBUG_LOG
+#endif
+
 #include "util/Packetizer/Packetizer.h"
 #include "util/MsgPack/MsgPack.h"
 
@@ -41,11 +47,6 @@
 #endif
 #endif // have libstdc++11
 
-#define PACKETIZER_USE_INDEX_AS_DEFAULT
-#define PACKETIZER_USE_CRC_AS_DEFAULT
-#ifdef MSGPACKETIZER_ENABLE_DEBUG_LOG
-    #define MSGPACK_ENABLE_DEBUG_LOG
-#endif
 
 namespace ht {
 namespace serial {
