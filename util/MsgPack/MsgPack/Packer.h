@@ -52,9 +52,7 @@ namespace msgpack {
             serialize(std::forward<Rest>(rest)...);
         }
 
-        void serialize()
-        {
-        }
+        void serialize() {}
 
         template <typename ...Args>
         void serialize(const arr_size_t& arr_size, Args&&... args)
@@ -81,13 +79,9 @@ namespace msgpack {
         {
             size_t size = sizeof...(args);
             if ((size % 2) == 0)
-            {
                 serialize(map_size_t(size / 2), std::forward<Args>(args)...);
-            }
             else
-            {
-                LOG_WARNING("serialize arg size must be even for map :", size);
-            }
+                LOG_ERROR(F("serialize arg size must be even for map:"), size);
         }
 
         const bin_t<uint8_t>& packet() const { return buffer; }
@@ -144,22 +138,7 @@ namespace msgpack {
             !std::is_same<typename std::remove_cv<T>::type, char*>::value
         >::type
         {
-            if (value >= 0)
-            {
-                if      ((uint64_t)value <  (uint64_t)BitMask::UINT7)                       packUInt7(value);
-                else if ((uint64_t)value <= (uint64_t)std::numeric_limits<uint8_t>::max())  packUInt8(value);
-                else if ((uint64_t)value <= (uint64_t)std::numeric_limits<uint16_t>::max()) packUInt16(value);
-                else if ((uint64_t)value <= (uint64_t)std::numeric_limits<uint32_t>::max()) packUInt32(value);
-                else                                                                        packUInt64(value);
-            }
-            else
-            {
-                if      ((int64_t)value >  -(int64_t)BitMask::INT5)                      packInt5(value);
-                else if ((int64_t)value >= (int64_t)std::numeric_limits<int8_t>::min())  packInt8(value);
-                else if ((int64_t)value >= (int64_t)std::numeric_limits<int16_t>::min()) packInt16(value);
-                else if ((int64_t)value >= (int64_t)std::numeric_limits<int32_t>::min()) packInt32(value);
-                else                                                                     packInt64(value);
-            }
+            packInteger(value);
         }
 
 
@@ -174,9 +153,7 @@ namespace msgpack {
             std::is_floating_point<T>::value
         >::type
         {
-            size_t size = sizeof(T);
-            if (size == sizeof(float)) packFloat32(value);
-            else                       packFloat64(value);
+            packFloat(value);
         }
 
 
@@ -204,6 +181,7 @@ namespace msgpack {
         }
 #endif
 
+
         // ---------- BIN format family ----------
         // - unsigned char*
         // - unsigned char[]
@@ -214,22 +192,17 @@ namespace msgpack {
 
         void pack(const uint8_t* bin, const size_t size)
         {
-            if (size <= std::numeric_limits<uint8_t>::max())
-                packBinary8(bin, (uint8_t)size);
-            else if (size <= std::numeric_limits<uint16_t>::max())
-                packBinary16(bin, (uint16_t)size);
-            else if (size <= std::numeric_limits<uint32_t>::max())
-                packBinary32(bin, (uint32_t)size);
+            packBinary(bin, size);
         }
 
         void pack(const bin_t<char>& bin)
         {
-            pack((const uint8_t*)bin.data(), bin.size());
+            packBinary((const uint8_t*)bin.data(), bin.size());
         }
 
         void pack(const bin_t<uint8_t>& bin)
         {
-            pack(bin.data(), bin.size());
+            packBinary(bin.data(), bin.size());
         }
 
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
@@ -237,16 +210,17 @@ namespace msgpack {
         template <size_t N>
         void pack(const std::array<char, N>& bin)
         {
-            pack((const uint8_t*)bin.data(), bin.size());
+            packBinary((const uint8_t*)bin.data(), bin.size());
         }
 
         template <size_t N>
         void pack(const std::array<uint8_t, N>& bin)
         {
-            pack(bin.data(), bin.size());
+            packBinary(bin.data(), bin.size());
         }
 
 #endif // have libstdc++11
+
 
         // ---------- ARRAY format family ----------
         // - T[]
@@ -444,6 +418,208 @@ namespace msgpack {
         }
 
 
+        /////////////////////////////////////////////////////
+        // ---------- msgpack types abstraction ---------- //
+        /////////////////////////////////////////............
+
+        // ---------- INT format family ----------
+
+        template <typename T>
+        auto packInteger(const T& value)
+        -> typename std::enable_if <
+            std::is_arithmetic<T>::value &&
+            std::is_integral<T>::value &&
+            !std::is_same<T, bool>::value &&
+            !std::is_same<typename std::remove_cv<T>::type, char*>::value
+        >::type
+        {
+            if (value >= 0) {
+                if ((uint64_t)value < (uint64_t)BitMask::UINT7)
+                    packUInt7(value);
+                else if ((uint64_t)value <= (uint64_t)std::numeric_limits<uint8_t>::max())
+                    packUInt8(value);
+                else if ((uint64_t)value <= (uint64_t)std::numeric_limits<uint16_t>::max())
+                    packUInt16(value);
+                else if ((uint64_t)value <= (uint64_t)std::numeric_limits<uint32_t>::max())
+                    packUInt32(value);
+                else
+                    packUInt64(value);
+            } else {
+                if ((int64_t)value > -(int64_t)BitMask::INT5)
+                    packInt5(value);
+                else if ((int64_t)value >= (int64_t)std::numeric_limits<int8_t>::min())
+                    packInt8(value);
+                else if ((int64_t)value >= (int64_t)std::numeric_limits<int16_t>::min())
+                    packInt16(value);
+                else if ((int64_t)value >= (int64_t)std::numeric_limits<int32_t>::min())
+                    packInt32(value);
+                else
+                    packInt64(value);
+            }
+        }
+
+
+        // ---------- FLOAT format family ----------
+
+        template <typename T>
+        auto packFloat(const T& value)
+        -> typename std::enable_if <
+            std::is_arithmetic<T>::value &&
+            std::is_floating_point<T>::value
+        >::type
+        {
+            if (sizeof(T) == sizeof(float))
+                packFloat32(value);
+            else
+                packFloat64(value);
+        }
+
+
+        // ---------- STR format family ----------
+
+        template <typename T>
+        void packString(const T& str)
+        {
+            packString(str, getStringSize(str));
+        }
+
+        template <typename T>
+        void packString(const T& str, const size_t len)
+        {
+            if (len <= (size_t)BitMask::STR5)
+                packString5(str, len);
+            else if (len <= std::numeric_limits<uint8_t>::max())
+                packString8(str, len);
+            else if (len <= std::numeric_limits<uint16_t>::max())
+                packString16(str, len);
+            else if (len <= std::numeric_limits<uint32_t>::max())
+                packString32(str, len);
+        }
+
+
+        // ---------- BIN format family ----------
+
+        void packBinary(const uint8_t* bin, const size_t size)
+        {
+            if (size <= std::numeric_limits<uint8_t>::max())
+                packBinary8(bin, (uint8_t)size);
+            else if (size <= std::numeric_limits<uint16_t>::max())
+                packBinary16(bin, (uint16_t)size);
+            else if (size <= std::numeric_limits<uint32_t>::max())
+                packBinary32(bin, (uint32_t)size);
+        }
+
+
+        // ---------- ARRAY format family ----------
+
+        void packArraySize(const size_t size)
+        {
+            if (size < (1 << 4))
+                packArraySize4((uint8_t)size);
+            else if (size <= std::numeric_limits<uint16_t>::max())
+                packArraySize16((uint16_t)size);
+            else if (size <= std::numeric_limits<uint32_t>::max())
+                packArraySize32((uint32_t)size);
+        }
+
+
+        // ---------- MAP format family ----------
+
+        void packMapSize(const size_t size)
+        {
+            if (size < (1 << 4))
+                packMapSize4((uint8_t)size);
+            else if (size <= std::numeric_limits<uint16_t>::max())
+                packMapSize16((uint16_t)size);
+            else if (size <= std::numeric_limits<uint32_t>::max())
+                packMapSize32((uint32_t)size);
+        }
+
+
+        // ---------- EXT format family ----------
+
+        template <typename T>
+        auto packFixExt(const int8_t type, const T value)
+        -> typename std::enable_if<std::is_integral<T>::value>::type
+        {
+            size_t size = sizeof(T);
+            if      (size == sizeof(uint8_t))  packFixExt1(type, value);
+            else if (size == sizeof(uint16_t)) packFixExt2(type, value);
+            else if (size == sizeof(uint32_t)) packFixExt4(type, value);
+            else if (size == sizeof(uint64_t)) packFixExt8(type, value);
+        }
+
+        void packFixExt(const int8_t type, const uint64_t value_h, const uint64_t value_l)
+        {
+            packFixExt16(type, value_h, value_l);
+        }
+
+        void packFixExt(const int8_t type, const uint8_t* ptr, const uint8_t size)
+        {
+            if      (size == 0) return;
+            if      (size == sizeof(uint8_t))      packFixExt1(type, (uint8_t)*(ptr));
+            else if (size == sizeof(uint16_t))     packFixExt2(type, ptr);
+            else if (size <= sizeof(uint32_t))     packFixExt4(type, ptr);
+            else if (size <= sizeof(uint64_t))     packFixExt8(type, ptr);
+            else if (size <= sizeof(uint64_t) * 2) packFixExt16(type, ptr);
+        }
+
+        void packFixExt(const int8_t type, const uint16_t* ptr, const uint8_t size)
+        {
+            packFixExt(type, (const uint8_t*)ptr, size);
+        }
+
+        void packFixExt(const int8_t type, const uint32_t* ptr, const uint8_t size)
+        {
+            packFixExt(type, (const uint8_t*)ptr, size);
+        }
+
+        void packFixExt(const int8_t type, const uint64_t* ptr, const uint8_t size)
+        {
+            packFixExt(type, (const uint8_t*)ptr, size);
+        }
+
+        template <typename T, typename U>
+        auto packExt(const int8_t type, const T* ptr, const U size)
+        -> typename std::enable_if<std::is_integral<T>::value && std::is_integral<U>::value>::type
+        {
+            if (size <= sizeof(uint64_t) * 2)
+                packFixExt(type, ptr, size);
+            else
+            {
+                if (size <= std::numeric_limits<uint8_t>::max())
+                    packExtSize8(type, size);
+                else if (size <= std::numeric_limits<uint16_t>::max())
+                    packExtSize16(type, size);
+                else if (size <= std::numeric_limits<uint32_t>::max())
+                    packExtSize32(type, size);
+                packRawBytes((const uint8_t*)ptr, size);
+            }
+        }
+
+        void packExt(const object::ext& e)
+        {
+            packExt(e.type(), e.data(), e.size());
+        }
+
+
+        // ---------- TIMESTAMP format family ----------
+
+        void packTimestamp(const object::timespec& time)
+        {
+            if ((time.tv_sec >> 34) == 0)
+            {
+                uint64_t data64 = ((uint64_t)time.tv_nsec << 34) | time.tv_sec;
+                if ((data64 & 0xffffffff00000000L) == 0)
+                    packTimestamp32((uint32_t)data64);
+                else
+                    packTimestamp64(data64);
+            }
+            else
+                packTimestamp96(time.tv_sec, time.tv_nsec);
+        }
+
+
         /////////////////////////////////////////
         // ---------- msgpack types ---------- //
         /////////////////////////////////////////
@@ -569,25 +745,6 @@ namespace msgpack {
 
 
         // ---------- STR format family ----------
-
-        template <typename T>
-        void packString(const T& str)
-        {
-            packString(str, getStringSize(str));
-        }
-
-        template <typename T>
-        void packString(const T& str, const size_t len)
-        {
-            if (len <= (size_t)BitMask::STR5)
-                packString5(str, len);
-            else if (len <= std::numeric_limits<uint8_t>::max())
-                packString8(str, len);
-            else if (len <= std::numeric_limits<uint16_t>::max())
-                packString16(str, len);
-            else if (len <= std::numeric_limits<uint32_t>::max())
-                packString32(str, len);
-        }
 
         void packString5(const str_t& str)
         {
@@ -719,6 +876,7 @@ namespace msgpack {
 
 #endif
 
+
         // ---------- BIN format family ----------
 
         void packBinary8(const uint8_t* value, const uint8_t size)
@@ -745,17 +903,8 @@ namespace msgpack {
             ++n_indices;
         }
 
-        // ---------- ARRAY format family ----------
 
-        void packArraySize(const size_t size)
-        {
-            if (size < (1 << 4))
-                packArraySize4((uint8_t)size);
-            else if (size <= std::numeric_limits<uint16_t>::max())
-                packArraySize16((uint16_t)size);
-            else if (size <= std::numeric_limits<uint32_t>::max())
-                packArraySize32((uint32_t)size);
-        }
+        // ---------- ARRAY format family ----------
 
         void packArraySize4(const uint8_t value)
         {
@@ -779,16 +928,6 @@ namespace msgpack {
 
 
         // ---------- MAP format family ----------
-
-        void packMapSize(const size_t size)
-        {
-            if (size < (1 << 4))
-                packMapSize4((uint8_t)size);
-            else if (size <= std::numeric_limits<uint16_t>::max())
-                packMapSize16((uint16_t)size);
-            else if (size <= std::numeric_limits<uint32_t>::max())
-                packMapSize32((uint32_t)size);
-        }
 
         void packMapSize4(const uint8_t value)
         {
@@ -906,47 +1045,6 @@ namespace msgpack {
             packFixExt16(type, (const uint8_t*)ptr);
         }
 
-        template <typename T>
-        auto packFixExt(const int8_t type, const T value)
-        -> typename std::enable_if<std::is_integral<T>::value>::type
-        {
-            size_t size = sizeof(T);
-            if      (size == sizeof(uint8_t))  packFixExt1(type, value);
-            else if (size == sizeof(uint16_t)) packFixExt2(type, value);
-            else if (size == sizeof(uint32_t)) packFixExt4(type, value);
-            else if (size == sizeof(uint64_t)) packFixExt8(type, value);
-        }
-
-        void packFixExt(const int8_t type, const uint64_t value_h, const uint64_t value_l)
-        {
-            packFixExt16(type, value_h, value_l);
-        }
-
-        void packFixExt(const int8_t type, const uint8_t* ptr, const uint8_t size)
-        {
-            if      (size == 0) return;
-            if      (size == sizeof(uint8_t))      packFixExt1(type, (uint8_t)*(ptr));
-            else if (size == sizeof(uint16_t))     packFixExt2(type, ptr);
-            else if (size <= sizeof(uint32_t))     packFixExt4(type, ptr);
-            else if (size <= sizeof(uint64_t))     packFixExt8(type, ptr);
-            else if (size <= sizeof(uint64_t) * 2) packFixExt16(type, ptr);
-        }
-
-        void packFixExt(const int8_t type, const uint16_t* ptr, const uint8_t size)
-        {
-            packFixExt(type, (const uint8_t*)ptr, size);
-        }
-
-        void packFixExt(const int8_t type, const uint32_t* ptr, const uint8_t size)
-        {
-            packFixExt(type, (const uint8_t*)ptr, size);
-        }
-
-        void packFixExt(const int8_t type, const uint64_t* ptr, const uint8_t size)
-        {
-            packFixExt(type, (const uint8_t*)ptr, size);
-        }
-
         void packExtSize8(const int8_t type, const uint8_t size)
         {
             packRawByte(Type::EXT8);
@@ -969,29 +1067,6 @@ namespace msgpack {
             packRawReversed(size);
             packRawByte((uint8_t)type);
             ++n_indices;
-        }
-
-        template <typename T, typename U>
-        auto packExt(const int8_t type, const T* ptr, const U size)
-        -> typename std::enable_if<std::is_integral<T>::value && std::is_integral<U>::value>::type
-        {
-            if (size <= sizeof(uint64_t) * 2)
-                packFixExt(type, ptr, size);
-            else
-            {
-                if (size <= std::numeric_limits<uint8_t>::max())
-                    packExtSize8(type, size);
-                else if (size <= std::numeric_limits<uint16_t>::max())
-                    packExtSize16(type, size);
-                else if (size <= std::numeric_limits<uint32_t>::max())
-                    packExtSize32(type, size);
-                packRawBytes((const uint8_t*)ptr, size);
-            }
-        }
-
-        void packExt(const object::ext& e)
-        {
-            packExt(e.type(), e.data(), e.size());
         }
 
 
@@ -1025,22 +1100,6 @@ namespace msgpack {
             packRawReversed(unix_time_nsec);
             packRawReversed(unix_time_sec);
             ++n_indices;
-        }
-
-        void packTimestamp(const object::timespec& time)
-        {
-            if ((time.tv_sec >> 34) == 0)
-            {
-                uint64_t data64 = ((uint64_t)time.tv_nsec << 34) | time.tv_sec;
-                if ((data64 & 0xffffffff00000000L) == 0)
-                    packTimestamp32((uint32_t)data64);
-                else
-                    packTimestamp64(data64);
-            }
-            else
-            {
-                packTimestamp96(time.tv_sec, time.tv_nsec);
-            }
         }
 
 
