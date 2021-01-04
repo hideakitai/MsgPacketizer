@@ -214,6 +214,8 @@ namespace msgpack {
         // - std::array<char>
         // - std::array<unsigned char>
 
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
+
         template <typename T>
         auto unpack(bin_t<T>& bin)
         -> typename std::enable_if<
@@ -223,6 +225,20 @@ namespace msgpack {
         {
             bin = unpackBinary<T>();
         }
+
+#else
+
+        template <typename T, size_t N>
+        auto unpack(arx::vector<T, N>& bin) // bin_t<T>
+        -> typename std::enable_if<
+            std::is_same<T, char>::value ||
+            std::is_same<T, uint8_t>::value
+        >::type
+        {
+            bin = unpackBinary<T>();
+        }
+
+#endif // Do not have libstdc++11
 
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
 
