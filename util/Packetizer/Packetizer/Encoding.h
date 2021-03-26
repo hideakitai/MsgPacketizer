@@ -86,30 +86,32 @@ namespace encoding
                 {
                     buffer.data.emplace_back(data);
                     Packet packet = decode(buffer.data.data(), buffer.data.size());
-                    if (b_index)
-                    {
-                        packet.index = packet.data.front();
-                        packet.data.erase(packet.data.begin()); // index
-                    }
-                    else
-                    {
-                        packet.index = 0;
-                    }
-                    if (b_crc)
-                    {
-                        if (crcx::crc8(packet.data.data(), packet.data.size() - 1) == packet.data.back())
+                    if (!packet.data.empty()) {
+                        if (b_index)
                         {
-                            packet.data.pop_back(); // crc
-                            packets.emplace_back(std::move(packet));
+                            packet.index = packet.data.front();
+                            packet.data.erase(packet.data.begin()); // index
                         }
                         else
                         {
-                            ++err_count;
+                            packet.index = 0;
                         }
-                    }
-                    else
-                    {
-                        packets.emplace_back(std::move(packet));
+                        if (b_crc)
+                        {
+                            if (crcx::crc8(packet.data.data(), packet.data.size() - 1) == packet.data.back())
+                            {
+                                packet.data.pop_back(); // crc
+                                packets.emplace_back(std::move(packet));
+                            }
+                            else
+                            {
+                                ++err_count;
+                            }
+                        }
+                        else
+                        {
+                            packets.emplace_back(std::move(packet));
+                        }
                     }
                 }
                 reset();
