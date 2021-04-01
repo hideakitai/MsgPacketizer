@@ -5,8 +5,13 @@
 
 #define PACKETIZER_USE_INDEX_AS_DEFAULT
 #define PACKETIZER_USE_CRC_AS_DEFAULT
-#ifdef MSGPACKETIZER_ENABLE_DEBUG_LOG
-#define MSGPACK_ENABLE_DEBUG_LOG
+
+#include "util/MsgPack/MsgPack/util/DebugLog/DebugLog.h"
+#ifdef MSGPACKETIZER_DEBUGLOG_ENABLE
+#include "util/MsgPack/MsgPack/util/DebugLog/DebugLogEnable.h"
+#define MSGPACK_DEBUGLOG_ENABLE
+#else
+#include "util/MsgPack/MsgPack/util/DebugLog/DebugLogDisable.h"
 #endif
 
 #include "util/Packetizer/Packetizer.h"
@@ -493,5 +498,7 @@ namespace serial {
 }  // namespace ht
 
 namespace MsgPacketizer = ht::serial::msgpacketizer;
+
+#include "util/MsgPack/MsgPack/util/DebugLog/DebugLogRestoreState.h"
 
 #endif  // HT_SERIAL_MSGPACKETIZER_H

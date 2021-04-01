@@ -181,7 +181,7 @@ namespace MsgPacketizer {
 ## Other Options
 
 ```C++
-#define MSGPACKETIZER_ENABLE_DEBUG_LOG
+#define MSGPACKETIZER_DEBUGLOG_ENABLE
 ```
 
 
