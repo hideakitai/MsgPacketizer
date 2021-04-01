@@ -1,3 +1,4 @@
+// #define MSGPACKETIZER_DEBUGLOG_ENABLE
 #include <MsgPacketizer.h>
 
 // for STL enabled boards:

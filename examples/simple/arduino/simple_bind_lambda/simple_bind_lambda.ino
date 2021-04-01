@@ -1,3 +1,4 @@
+// #define MSGPACKETIZER_DEBUGLOG_ENABLE
 #include <MsgPacketizer.h>
 
 const uint8_t recv_index = 0x12;
