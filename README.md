@@ -42,8 +42,7 @@ MsgPack::map_t<String, float> m; // std::map or arx::map
 uint8_t recv_index = 0x12;
 uint8_t send_index = 0x34;
 
-void setup()
-{
+void setup() {
     Serial.begin(115200);
 
     // update received data directly
@@ -53,8 +52,7 @@ void setup()
     MsgPacketizer::publish(Serial, send_index, i, f, s, v, m);
 }
 
-void loop()
-{
+void loop() {
     // must be called to trigger callback and publish data
     MsgPacketizer::update();
 }
@@ -70,8 +68,7 @@ void loop()
 uint8_t recv_index = 0x12;
 uint8_t send_index = 0x34;
 
-void setup()
-{
+void setup() {
     Serial.begin(115200);
 
     // handle received data with lambda
@@ -86,8 +83,7 @@ void setup()
     );
 }
 
-void loop()
-{
+void loop() {
     // must be called to trigger callback
     MsgPacketizer::parse();
 }
@@ -100,13 +96,11 @@ void loop()
 To serialize / deserialize nested data, defining custom class is recommended. For example, to make `{"k1": v, "k2":[i, f, s]}`:
 
 ``` C++
-struct ArrayData
-{
+struct ArrayData {
     int i; float f; MsgPack::str_t s;
     MSGPACK_DEFINE(i, f, s); // [i, f, s]
 };
-struct NestedData
-{
+struct NestedData {
     MsgPack::str_t k1, k2; int v;
     ArrayData a;
     MSGPACK_DEFINE_MAP(k1, v, k2, a); // {"k1": v, "k2":[i, f, s]}
@@ -127,8 +121,7 @@ Please see examples and [MsgPack](https://github.com/hideakitai/MsgPack) for mor
 ## APIs
 
 ``` C++
-namespace MsgPacketizer
-{
+namespace MsgPacketizer {
     // bind variables directly to specified index packet
     template <typename... Args>
     inline void subscribe(StreamType& stream, const uint8_t index, Args&... args);
@@ -246,7 +239,7 @@ These macros have no effect for STL enabled boards.
 
 ## Embedded Libraries
 
-- [MsgPack v0.3.1](https://github.com/hideakitai/MsgPack)
+- [MsgPack v0.3.2](https://github.com/hideakitai/MsgPack)
 - [Packetizer v0.5.4](https://github.com/hideakitai/Packetizer)
 
 

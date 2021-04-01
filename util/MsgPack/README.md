@@ -25,8 +25,7 @@ MsgPack::str_t rs;
 MsgPack::arr_t<int> rv;
 MsgPack::map_t<String, float> rm;
 
-void setup()
-{
+void setup() {
     delay(2000);
     Serial.begin(115200);
     Serial.println("msgpack test start");
@@ -49,9 +48,7 @@ void setup()
     Serial.println("msgpack test success");
 }
 
-void loop()
-{
-}
+void loop() {}
 ```
 
 ## Encode / Decode to Collections without Container
@@ -92,8 +89,7 @@ unpacker.deserialize(MsgPack::map_size_t(2), ki, i, karr, MsgPack::arr_size_t(2)
 To serialize / deserialize custom type you defined, please use `MSGPACK_DEFINE()` macro inside of your class. This macro enables you to convert your custom class to `Array` format.
 
 ``` C++
-struct CustomClass
-{
+struct CustomClass {
     int i;
     float f;
     MsgPack::str_t s;
@@ -127,8 +123,7 @@ You can also wrap your custom class to `Map` format by using `MSGPACK_DEFINE_MAP
 Please note that you need "key" string for `Map` format.
 
 ``` C++
-struct CustomClass
-{
+struct CustomClass {
     MsgPack::str_t key_i {"i"}; int i;
     MsgPack::str_t key_f {"f"}; float f;
     MSGPACK_DEFINE_MAP(key_i, i, key_f, f); // -> {"i":i, "f":f}
@@ -151,15 +146,13 @@ unpacker.deserialize(cc);
 Also you can use `MSGPACK_BASE()` macro to pack values of base class.
 
 ``` C++
-struct Base
-{
+struct Base {
     int i;
     float f;
     MSGPACK_DEFINE(i, f);
 };
 
-struct Derived : public Base
-{
+struct Derived : public Base {
     MsgPack::str_t s;
     MSGPACK_DEFINE(s, MSGPACK_BASE(Base));
     // -> packer.serialize(arr_size_t(2), s, arr_size_t(2), Base::i, Base::f)
@@ -169,8 +162,7 @@ struct Derived : public Base
 If you wamt to use `Map` format in derived class, add "key" for your `MSGPACK_BASE`.
 
 ```C++
-struct Derived : public Base
-{
+struct Derived : public Base {
     MsgPack::str_t key_s; MsgPack::str_t s;
     MsgPack::str_t key_b; // key for base class
     MSGPACK_DEFINE_MAP(key_s, s, key_b, MSGPACK_BASE(Base));
@@ -188,24 +180,21 @@ You can nest custom classes to express complex data structure.
 // {"i":i, "f":f, "a":["str", {"first":1, "second":"two"}]}
 
 // {"first":1, "second":"two"}
-struct MyMap
-{
+struct MyMap {
     MsgPack::str_t key_first; int i;
     MsgPack::str_t key_second; MsgPack::str_t s;
     MSGPACK_DEFINE_MAP(key_first, i, key_second, s);
 };
 
 // ["str", {"first":1, "second":"two"}]
-struct MyArr
-{
+struct MyArr {
     MsgPack::str_t s;
     MyMap m;
     MSGPACK_DEFINE(s, m):
 };
 
 // {"i":i, "f":f, "a":["str", {"first":1, "second":"two"}]}
-struct MyNestedClass
-{
+struct MyNestedClass {
     MsgPack::str_t key_i; int i;
     MsgPack::str_t key_f; int f;
     MsgPack::str_t key_a;
@@ -408,7 +397,7 @@ unpacker.deserialize(r); // deserialize timestamp type
 Error information report is disabled by default. You can enable it by defining this macro.
 
 ```C++
-#define MSGPACK_ENABLE_DEBUG_LOG
+#define MSGPACK_DEBUGLOG_ENABLE
 ```
 
 Also you can change debug info stream by calling this macro (default: `Serial`).
@@ -470,7 +459,7 @@ I reccomend to use low cost but much better performance chip like ESP series.
 
 - [ArxTypeTraits v0.2.1](https://github.com/hideakitai/ArxTypeTraits)
 - [ArxContainer v0.3.10](https://github.com/hideakitai/ArxContainer)
-- [DebugLog v0.3.1](https://github.com/hideakitai/DebugLog)
+- [DebugLog v0.4.0](https://github.com/hideakitai/DebugLog)
 - [TeensyDirtySTLErrorSolution v0.1.0](https://github.com/hideakitai/TeensyDirtySTLErrorSolution)
 
 
@@ -791,8 +780,7 @@ MsgPack::Type getType() const
 ### MsgPack::Type
 
 ``` C++
-enum class Type : uint8_t
-{
+enum class Type : uint8_t {
     NA          = 0xC1, // never used
     NIL         = 0xC0,
     BOOL        = 0xC2,

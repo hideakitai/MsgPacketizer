@@ -2,8 +2,11 @@
 #ifndef HT_SERIAL_MSGPACK_H
 #define HT_SERIAL_MSGPACK_H
 
-#ifndef MSGPACK_ENABLE_DEBUG_LOG
-#define NDEBUG // disable conversion warning
+#include "MsgPack/util/DebugLog/DebugLog.h"
+#ifndef MSGPACK_DEBUGLOG_ENABLE
+#include "MsgPack/util/DebugLog/DebugLogEnable.h"
+#else
+#include "MsgPack/util/DebugLog/DebugLogDisable.h"
 #endif
 
 #include "MsgPack/Types.h"
@@ -12,4 +15,6 @@
 
 namespace MsgPack = ht::serial::msgpack;
 
-#endif // ARDUINOMSGPACK_H
+#include "MsgPack/util/DebugLog/DebugLogRestoreState.h"
+
+#endif  // ARDUINOMSGPACK_H
