@@ -1,13 +1,14 @@
 #include <MsgPacketizer.h>
 
 // msgpac input && output
-int i = 1; float f = 2.2; MsgPack::str_t s = "3.3";
+int i = 1;
+float f = 2.2;
+MsgPack::str_t s = "3.3";
 
 const uint8_t recv_index = 0x12;
 const uint8_t send_index = 0x34;
 
-void setup()
-{
+void setup() {
     Serial.begin(115200);
     delay(2000);
 
@@ -16,8 +17,8 @@ void setup()
 
     // register variables to publish repeatedly
     MsgPacketizer::publish_arr(Serial, send_index, i, f, s)
-        ->setFrameRate(120); // and you can change publish cycles
-        // ->setIntervalSec(1.f); // also you can set interval as sec, msec, usec
+        ->setFrameRate(120);  // and you can change publish cycles
+                              // ->setIntervalSec(1.f); // also you can set interval as sec, msec, usec
 
     // you can subscribe values like this for more flexible way
     //
@@ -44,8 +45,7 @@ void setup()
     // );
 }
 
-void loop()
-{
+void loop() {
     // must be called to trigger callback and publish data
     MsgPacketizer::update();
 
