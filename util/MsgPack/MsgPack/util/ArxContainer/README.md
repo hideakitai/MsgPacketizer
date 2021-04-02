@@ -167,6 +167,7 @@ PRs are welcome!
 - [TaskManager](https://github.com/hideakitai/TaskManager)
 - [ArxStringUtils](https://github.com/hideakitai/ArxStringUtils)
 - [Debouncer](https://github.com/hideakitai/Debouncer)
+- [ES920](https://github.com/hideakitai/ES920)
 
 
 ## License
