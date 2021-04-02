@@ -3,7 +3,7 @@
 #define HT_SERIAL_MSGPACK_H
 
 #include "MsgPack/util/DebugLog/DebugLog.h"
-#ifndef MSGPACK_DEBUGLOG_ENABLE
+#ifdef MSGPACK_DEBUGLOG_ENABLE
 #include "MsgPack/util/DebugLog/DebugLogEnable.h"
 #else
 #include "MsgPack/util/DebugLog/DebugLogDisable.h"
