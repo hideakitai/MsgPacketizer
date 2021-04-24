@@ -118,6 +118,51 @@ MsgPacketizer::subscribe(Serial, recv_index, n);
 Please see examples and [MsgPack](https://github.com/hideakitai/MsgPack) for more detail.
 
 
+### Manual Encode / Decode with Any Communication I/F
+
+You can just encode / decode data manually to use it with any communication interface.
+Please note:
+
+- only one unsupoprted interface (serial, udp, tcp, etc.) is available for manual subscription because MsgPacketizer cannot indetify which data is from which device
+- `publish` is not available for unsupported data stream
+
+``` C++
+#include <MsgPacketizer.h>
+
+const uint8_t recv_index = 0x12;
+const uint8_t send_index = 0x34;
+
+void setup() {
+    Serial.begin(115200);
+    delay(2000);
+
+    // subscribe the data for manual operation
+    MsgPacketizer::subscribe(recv_index,
+        [&](const int i, const float f, const String& s) {
+            // just encode your data manually and get binary packet from MsgPacketizer
+            const auto& packet = MsgPacketizer::encode(send_index, i, f, s);
+            // send the packet data with your interface
+            Serial.write(packet.data.data(), packet.data.size());
+        }
+    );
+}
+
+void loop() {
+    // you should feed the received data manually to MsgPacketizer
+    const size_t size = Serial.available();
+    if (size) {
+        uint8_t* data = new uint8_t[size];
+        // you can get binary data from any communication interface
+        Serial.readBytes(data, size);
+        // feed your binary data to MsgPacketizer manually
+        // if data has successfully received and decoded, callback will be called
+        MsgPacketizer::feed(data, size);
+        delete[] data;
+    }
+}
+```
+
+
 ## APIs
 
 ``` C++
@@ -137,8 +182,25 @@ namespace MsgPacketizer {
     // bind callback which is always called regardless of index
     template <typename F>
     inline void subscribe(StreamType& stream, const F& callback);
+    // for manual data passing
+    template <typename... Args>
+    inline void subscribe(const uint8_t index, Args&&... args);
+    template <typename... Args>
+    inline void subscribe_arr(const uint8_t index, Args&&... args);
+    template <typename... Args>
+    inline void subscribe_map(const uint8_t index, Args&&... args);
+    template <typename F>
+    inline auto subscribe(const uint8_t index, F&& callback);
+    template <typename F>
+    inline auto subscribe(F&& callback);
+    // unsubscribe
+    void unsubscribe(const StreamType& stream, const uint8_t index);
+    void unsubscribe(const StreamType& stream);
+    void unsubscribe(const uint8_t index);
     // must be called to receive packets
     inline void parse(bool b_exec_cb = true);
+    // must be called to manual decoding
+    inline void feed(const uint8_t* data, const size_t size);
     // get UnpackerRef = std::shared_ptr<MsgPack::Unpacker> of stream and handle it manually
     inline UnpackerRef getUnpackerRef(const StreamType& stream);
     // get map o unpackers and handle it manually
@@ -153,6 +215,8 @@ namespace MsgPacketizer {
     // publish arguments periodically as map format
     template <typename... Args>
     inline PublishElementRef publish_map(const StreamType& stream, const uint8_t index, Args&&... args);
+    // unpublish
+    inline void unpublish(const StreamType& stream, const uint8_t index);
     // must be called to publish data
     inline void post();
     // send arguments dilectly with variable types
@@ -170,6 +234,19 @@ namespace MsgPacketizer {
     // send args as map format
     template <typename... Args>
     inline void send_map(StreamType& stream, const uint8_t index, Args&&... args);
+    // encode arguments directly with variable types
+    template <typename... Args>
+    inline const Packetizer::Packet& encode(const uint8_t index, Args&&... args);
+    // encode binary data
+    inline const Packetizer::Packet& encode(const uint8_t index, const uint8_t* data, const uint8_t size);
+    // encode manually packed data
+    inline const Packetizer::Packet& encode(const uint8_t index);
+    // encode args as array format
+    template <typename... Args>
+    inline const Packetizer::Packet& encode_arr(const uint8_t index, Args&&... args);
+    // encode args as map format
+    template <typename... Args>
+    inline const Packetizer::Packet& encode_map(const uint8_t index, Args&&... args);
     // get MsgPack::Packer and handle it manually
     inline const MsgPack::Packer& getPacker();
 
