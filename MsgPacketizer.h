@@ -293,6 +293,11 @@ namespace serial {
                 }
             }
 
+            void unpublish(const StreamType& stream, const uint8_t index) {
+                Destination dest {stream, index};
+                addr_map.erase(dest);
+            }
+
             PublishElementRef getPublishElementRef(const StreamType& stream, const uint8_t index) {
                 Destination dest {stream, index};
                 return addr_map[dest];
@@ -305,6 +310,47 @@ namespace serial {
                 return ref;
             }
         };
+
+        template <typename... Args>
+        inline const Packetizer::Packet& encode(const uint8_t index, Args&&... args) {
+            auto& packer = PackerManager::getInstance().getPacker();
+            packer.clear();
+            packer.serialize(std::forward<Args>(args)...);
+            return Packetizer::encode(index, packer.data(), packer.size());
+        }
+
+        inline const Packetizer::Packet& encode(const uint8_t index, const uint8_t* data, const uint8_t size) {
+            auto& packer = PackerManager::getInstance().getPacker();
+            packer.clear();
+            packer.pack(data, size);
+            return Packetizer::encode(index, packer.data(), packer.size());
+        }
+
+        inline const Packetizer::Packet& encode(const uint8_t index) {
+            auto& packer = PackerManager::getInstance().getPacker();
+            return Packetizer::encode(index, packer.data(), packer.size());
+        }
+
+        template <typename... Args>
+        inline const Packetizer::Packet& encode_arr(const uint8_t index, Args&&... args) {
+            auto& packer = PackerManager::getInstance().getPacker();
+            packer.clear();
+            packer.serialize(MsgPack::arr_size_t(sizeof...(args)), std::forward<Args>(args)...);
+            return Packetizer::encode(index, packer.data(), packer.size());
+        }
+
+        template <typename... Args>
+        inline const Packetizer::Packet& encode_map(const uint8_t index, Args&&... args) {
+            if ((sizeof...(args) % 2) == 0) {
+                auto& packer = PackerManager::getInstance().getPacker();
+                packer.clear();
+                packer.serialize(MsgPack::arr_size_t(sizeof...(args) / 2), std::forward<Args>(args)...);
+                return Packetizer::encode(index, packer.data(), packer.size());
+            } else {
+                LOG_WARNING("serialize arg size must be even for map :", sizeof...(args));
+                return Packetizer::encode(index, nullptr, 0);
+            }
+        }
 
         template <typename... Args>
         inline void send(StreamType& stream, const uint8_t index, Args&&... args) {
@@ -361,6 +407,10 @@ namespace serial {
             return PackerManager::getInstance().publish_map(stream, index, std::forward<Args>(args)...);
         }
 
+        inline void unpublish(const StreamType& stream, const uint8_t index) {
+            PackerManager::getInstance().unpublish(stream, index);
+        };
+
         inline void post() {
             PackerManager::getInstance().post();
         }
@@ -378,12 +428,19 @@ namespace serial {
             UnpackerManager(const UnpackerManager&) = delete;
             UnpackerManager& operator=(const UnpackerManager&) = delete;
 
+            UnpackerRef decoder; // for non-stream usage
             UnpackerMap decoders;
 
         public:
             static UnpackerManager& getInstance() {
                 static UnpackerManager m;
                 return m;
+            }
+
+            UnpackerRef getUnpackerRef() {
+                if (!decoder)
+                    decoder = std::make_shared<MsgPack::Unpacker>();
+                return decoder;
             }
 
             UnpackerRef getUnpackerRef(const StreamType& stream) {
@@ -401,6 +458,8 @@ namespace serial {
                 return decoders;
             }
         };
+
+        // for supported communication interface (Arduino, oF)
 
         template <typename... Args>
         inline void subscribe(StreamType& stream, const uint8_t index, Args&&... args) {
@@ -476,6 +535,14 @@ namespace serial {
             detail::subscribe(stream, arx::function_traits<F>::cast(std::move(callback)));
         }
 
+        void unsubscribe(const StreamType& stream, const uint8_t index) {
+            Packetizer::unsubscribe(stream, index);
+        }
+
+        void unsubscribe(const StreamType& stream) {
+            Packetizer::unsubscribe(stream);
+        }
+
         inline void parse(bool b_exec_cb = true) {
             Packetizer::parse(b_exec_cb);
         }
@@ -493,6 +560,89 @@ namespace serial {
             PackerManager::getInstance().post();
         }
 
+        // for unsupported communication interface with manual operation
+
+        template <typename... Args>
+        inline void subscribe(const uint8_t index, Args&&... args) {
+            Packetizer::subscribe(index, [&](const uint8_t* data, const uint8_t size) {
+                auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
+                unpacker->clear();
+                unpacker->feed(data, size);
+                unpacker->deserialize(std::forward<Args>(args)...);
+            });
+        }
+
+        template <typename... Args>
+        inline void subscribe_arr(const uint8_t index, Args&&... args) {
+            static MsgPack::arr_size_t sz;
+            Packetizer::subscribe(index, [&](const uint8_t* data, const uint8_t size) {
+                auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
+                unpacker->clear();
+                unpacker->feed(data, size);
+                unpacker->deserialize(sz, std::forward<Args>(args)...);
+            });
+        }
+
+        template <typename... Args>
+        inline void subscribe_map(const uint8_t index, Args&&... args) {
+            if ((sizeof...(args) % 2) == 0) {
+                static MsgPack::map_size_t sz;
+                Packetizer::subscribe(index, [&](const uint8_t* data, const uint8_t size) {
+                    auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
+                    unpacker->clear();
+                    unpacker->feed(data, size);
+                    unpacker->deserialize(sz, std::forward<Args>(args)...);
+                });
+            } else {
+                LOG_WARNING("deserialize arg size must be even for map :", sizeof...(args));
+            }
+        }
+
+        namespace detail {
+            template <typename R, typename... Args>
+            inline void subscribe(const uint8_t index, std::function<R(Args...)>&& callback) {
+                Packetizer::subscribe(index,
+                    [&, cb {std::move(callback)}](const uint8_t* data, const uint8_t size) {
+                        auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
+                        unpacker->clear();
+                        unpacker->feed(data, size);
+                        std::tuple<std::remove_cvref_t<Args>...> t;
+                        unpacker->to_tuple(t);
+                        std::apply(cb, t);
+                    });
+            }
+
+            template <typename R, typename... Args>
+            inline void subscribe(std::function<R(Args...)>&& callback) {
+                Packetizer::subscribe(
+                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const uint8_t size) {
+                        auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
+                        unpacker->clear();
+                        unpacker->feed(data, size);
+                        cb(index, *unpacker);
+                    });
+            }
+        }  // namespace detail
+
+        template <typename F>
+        inline auto subscribe(const uint8_t index, F&& callback)
+            -> std::enable_if_t<arx::is_callable<F>::value> {
+            detail::subscribe(index, arx::function_traits<F>::cast(std::move(callback)));
+        }
+
+        template <typename F>
+        inline auto subscribe(F&& callback)
+            -> std::enable_if_t<arx::is_callable<F>::value> {
+            detail::subscribe(arx::function_traits<F>::cast(std::move(callback)));
+        }
+
+        void unsubscribe(const uint8_t index) {
+            Packetizer::unsubscribe(index);
+        }
+
+        inline void feed(const uint8_t* data, const size_t size) {
+            Packetizer::feed(data, size);
+        }
     }  // namespace msgpacketizer
 }  // namespace serial
 }  // namespace ht
