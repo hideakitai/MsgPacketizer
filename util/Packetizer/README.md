@@ -6,7 +6,7 @@ binary data packetization encoder / decoder based on COBS / SLIP encoding
 ## Feature
 
 - encode / decode binary arrays to COBS / SLIP packet protocol
-- one-line packetizing and sending with Serial (or other Stream class)
+- one-line packetizing and sending with Serial, UDP and TCP
 - callback registration with lambda and automatic execution
 - optionally following features are available
   - packet verification using crc8
@@ -51,25 +51,21 @@ After that, these byte arrays will be coverted to COBS / SLIP encoding.
 ``` C++
 #include <Packetizer.h>
 
-void setup()
-{
+void setup() {
     Serial.begin(115200);
 
     // register callback called if packet has come
     Packetizer::subscribe(Serial,
-        [](const uint8_t* data, const size_t size)
-        {
+        [](const uint8_t* data, const size_t size) {
             // one-line send data array
             Packetizer::send(Serial, data, size);
         }
     );
 }
 
-void loop()
-{
-    Packetizer::parse(); // should be called to trigger callback
+void loop() {
+    Packetizer::parse(); // decode incoming packets and invoke callbacks automatically
 }
-
 ```
 
 ### Use SLIP Encoding
@@ -94,31 +90,104 @@ To enable indexing and verifying packet by crc8, define following macros each.
 uint8_t recv_index = 0x12;
 uint8_t send_index = 0x34;
 
-void setup()
-{
+void setup() {
     Serial.begin(115200);
 
     // you can add callback depending on index value
     Packetizer::subscribe(Serial, recv_index,
-        [&](const uint8_t* data, const size_t size)
-        {
+        [&](const uint8_t* data, const size_t size) {
             Packetizer::send(Serial, send_index, data, size); // send back packet
         }
     );
 
     // you can also add callback called every time packet comes
     Packetizer::subscribe(Serial,
-        [&](const uint8_t index, const uint8_t* data, const size_t size)
-        {
+        [&](const uint8_t index, const uint8_t* data, const size_t size) {
             // send back to same index
             Packetizer::send(Serial, index, data, size);
         }
     );
 }
 
-void loop()
-{
+void loop() {
     Packetizer::parse(); // automatically incoming packets are verified by crc
+}
+```
+
+### Use with TCP and UDP
+
+To use with TCP, connect to host first. Everything else can be used in the same way.
+
+```C++
+#include <Packetizer.h>
+#include <WiFi.h>
+
+WiFiClient client;
+uint8_t index = 0x12;
+const char* host = "192.168.0.10";
+const uint16_t port = 3000;
+
+void setup() {
+    Serial.begin(115200);
+
+    WiFi.begin("your-ssid", "your-password");
+
+    // start client
+    if (!client.connect(host, port)) {
+        Serial.println("client connection failed");
+    } else {
+        Serial.println("client connection success");
+    }
+
+    // you can add callback depending on index value
+    Packetizer::subscribe(client, recv_index,
+        [&](const uint8_t* data, const size_t size) {
+            for (size_t i = 0; i < size; ++i)
+                Serial.println(data[i]);
+        }
+    );
+}
+
+void loop() {
+    Packetizer::send(client, index, data, size); // send packet
+    delay(1000);
+    Packetizer::parse(); // decode incoming packets and invoke callbacks automatically
+}
+```
+
+To use with UDP, start client first. And also you should set the host and port when sending packet. Everything else can be used in the same way.
+
+```C++
+#include <Packetizer.h>
+#include <WiFi.h>
+
+WiFiUDP client;
+uint8_t index = 0x12;
+const char* host = "192.168.0.10";
+const uint16_t port = 3000;
+
+void setup() {
+    Serial.begin(115200);
+
+    WiFi.begin("your-ssid", "your-password");
+
+    // start client
+    client.begin(3000);
+
+    // you can add callback depending on index value
+    Packetizer::subscribe(client, recv_index,
+        [&](const uint8_t* data, const size_t size) {
+            for (size_t i = 0; i < size; ++i)
+                Serial.println(data[i]);
+        }
+    );
+}
+
+void loop() {
+    // you should set host and port when sending packet
+    Packetizer::send(client, host, port, index, data, size);
+    delay(1000);
+    Packetizer::parse(); // decode incoming packets and invoke callbacks automatically
 }
 ```
 
@@ -184,6 +253,113 @@ Default value is 0 and not limited.
 
 None
 
+
+## APIs
+
+### Encoder
+
+```C++
+template <typename Encoding = DefaultEncoding>
+inline const Packet& encode(const uint8_t index, const uint8_t* data, const size_t size, const bool b_crc);
+template <typename Encoding = DefaultEncoding>
+inline const Packet& encode(const uint8_t index, const uint8_t* data, const size_t size);
+template <typename Encoding = DefaultEncoding>
+inline const Packet& encode(const uint8_t* data, const size_t size, const bool b_crc);
+template <typename Encoding = DefaultEncoding>
+inline const Packet& encode(const uint8_t* data, const size_t size);
+
+template <typename Encoding = DefaultEncoding>
+inline void encode_option(const bool b_crc);
+
+template <typename Encoding = DefaultEncoding>
+inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const size_t size, const bool b_crc);
+template <typename Encoding = DefaultEncoding>
+inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const size_t size);
+template <typename Encoding = DefaultEncoding>
+inline void send(StreamType& stream, const uint8_t* data, const size_t size, const bool b_crc);
+template <typename Encoding = DefaultEncoding>
+inline void send(StreamType& stream, const uint8_t* data, const size_t size);
+
+template <typename Encoding = DefaultEncoding>
+inline void send(UDP& stream, const String& ip, const uint16_t port, const uint8_t index, const uint8_t* data, const size_t size, const bool b_crc);
+template <typename Encoding = DefaultEncoding>
+inline void send(UDP& stream, const String& ip, const uint16_t port, const uint8_t index, const uint8_t* data, const size_t size);
+template <typename Encoding = DefaultEncoding>
+inline void send(UDP& stream, const String& ip, const uint16_t port, const uint8_t* data, const size_t size, const bool b_crc);
+template <typename Encoding = DefaultEncoding>
+inline void send(UDP& stream, const String& ip, const uint16_t port, const uint8_t* data, const size_t size);
+
+template <typename Encoding = DefaultEncoding>
+inline void send(UDP& stream, const IPAddress& ip, const uint16_t port, const uint8_t index, const uint8_t* data, const size_t size, const bool b_crc);
+template <typename Encoding = DefaultEncoding>
+inline void send(UDP& stream, const IPAddress& ip, const uint16_t port, const uint8_t index, const uint8_t* data, const size_t size);
+template <typename Encoding = DefaultEncoding>
+inline void send(UDP& stream, const IPAddress& ip, const uint16_t port, const uint8_t* data, const size_t size, const bool b_crc);
+template <typename Encoding = DefaultEncoding>
+inline void send(UDP& stream, const IPAddress& ip, const uint16_t port, const uint8_t* data, const size_t size);
+
+template <typename Encoding = DefaultEncoding>
+inline void send(Client& stream, const uint8_t index, const uint8_t* data, const size_t size, const bool b_crc);
+template <typename Encoding = DefaultEncoding>
+inline void send(Client& stream, const uint8_t index, const uint8_t* data, const size_t size);
+template <typename Encoding = DefaultEncoding>
+inline void send(Client& stream, const uint8_t* data, const size_t size, const bool b_crc);
+template <typename Encoding = DefaultEncoding>
+inline void send(Client& stream, const uint8_t* data, const size_t size);
+```
+
+### Decoder
+
+```C++
+template <typename Encoding = DefaultEncoding>
+inline const Packet& decode(const uint8_t* data, const size_t size);
+template <typename Encoding = DefaultEncoding>
+inline const Packet& decode(const uint8_t* data, const size_t size, const bool b_crc);
+template <typename Encoding = DefaultEncoding>
+inline const Packet& decode(const uint8_t* data, const size_t size, const bool b_index, const bool b_crc);
+
+template <typename Encoding = DefaultEncoding>
+inline DecoderRef<Encoding> decode_option(const bool b_index, const bool b_crc);
+
+template <typename Encoding = DefaultEncoding>
+inline DecoderRef<Encoding> subscribe(const CallbackType& func);
+template <typename Encoding = DefaultEncoding>
+inline DecoderRef<Encoding> subscribe(const CallbackAlwaysType& func);
+template <typename Encoding = DefaultEncoding>
+inline DecoderRef<Encoding> subscribe(const uint8_t index, const CallbackType& func);
+template <typename Encoding = DefaultEncoding>
+
+inline DecoderRef<Encoding> unsubscribe();
+template <typename Encoding = DefaultEncoding>
+inline DecoderRef<Encoding> unsubscribe(const uint8_t index);
+
+template <typename Encoding = DefaultEncoding>
+inline DecoderRef<Encoding> feed(const uint8_t* data, const size_t size, bool b_exec_cb = true);
+template <typename Encoding = DefaultEncoding>
+inline DecoderRef<Encoding> reset();
+template <typename Encoding = DefaultEncoding>
+inline DecoderRef<Encoding> getDecoderRef();
+
+template <typename S, typename Encoding = DefaultEncoding>
+inline auto options(const S& stream, const bool b_index, const bool b_crc);
+template <typename S, typename Encoding = DefaultEncoding>
+inline auto subscribe(const S& stream, const CallbackType& func);
+template <typename S, typename Encoding = DefaultEncoding>
+inline auto subscribe(const S& stream, const CallbackAlwaysType& func);
+template <typename S, typename Encoding = DefaultEncoding>
+inline auto subscribe(const S& stream, const uint8_t index, const CallbackType& func);
+
+template <typename S, typename Encoding = DefaultEncoding>
+inline auto unsubscribe(const S& stream);
+template <typename S, typename Encoding = DefaultEncoding>
+inline auto unsubscribe(const S& stream, const uint8_t index);
+
+template <typename S, typename Encoding = DefaultEncoding>
+inline auto getDecoderRef(const S& stream);
+
+template <typename Encoding = DefaultEncoding>
+inline void parse(bool b_exec_cb = true);
+```
 
 ## Embedded Libraries
 
