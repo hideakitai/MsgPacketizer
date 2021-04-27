@@ -138,7 +138,7 @@ namespace serial {
 
         template <typename... Args>
         inline void subscribe(const uint8_t index, Args&&... args) {
-            Packetizer::subscribe(index, [&](const uint8_t* data, const uint8_t size) {
+            Packetizer::subscribe(index, [&](const uint8_t* data, const size_t size) {
                 auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
                 unpacker->clear();
                 unpacker->feed(data, size);
@@ -149,7 +149,7 @@ namespace serial {
         template <typename... Args>
         inline void subscribe_arr(const uint8_t index, Args&&... args) {
             static MsgPack::arr_size_t sz;
-            Packetizer::subscribe(index, [&](const uint8_t* data, const uint8_t size) {
+            Packetizer::subscribe(index, [&](const uint8_t* data, const size_t size) {
                 auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
                 unpacker->clear();
                 unpacker->feed(data, size);
@@ -161,7 +161,7 @@ namespace serial {
         inline void subscribe_map(const uint8_t index, Args&&... args) {
             if ((sizeof...(args) % 2) == 0) {
                 static MsgPack::map_size_t sz;
-                Packetizer::subscribe(index, [&](const uint8_t* data, const uint8_t size) {
+                Packetizer::subscribe(index, [&](const uint8_t* data, const size_t size) {
                     auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
                     unpacker->clear();
                     unpacker->feed(data, size);
@@ -176,7 +176,7 @@ namespace serial {
             template <typename R, typename... Args>
             inline void subscribe(const uint8_t index, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(index,
-                    [&, cb {std::move(callback)}](const uint8_t* data, const uint8_t size) {
+                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
                         unpacker->clear();
                         unpacker->feed(data, size);
@@ -189,7 +189,7 @@ namespace serial {
             template <typename R, typename... Args>
             inline void subscribe(std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(
-                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const uint8_t size) {
+                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
                         unpacker->clear();
                         unpacker->feed(data, size);
@@ -224,7 +224,7 @@ namespace serial {
 
         template <typename... Args>
         inline void subscribe(StreamType& stream, const uint8_t index, Args&&... args) {
-            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size) {
+            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
                 auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                 unpacker->clear();
                 unpacker->feed(data, size);
@@ -235,7 +235,7 @@ namespace serial {
         template <typename... Args>
         inline void subscribe_arr(StreamType& stream, const uint8_t index, Args&&... args) {
             static MsgPack::arr_size_t sz;
-            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size) {
+            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
                 auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                 unpacker->clear();
                 unpacker->feed(data, size);
@@ -247,7 +247,7 @@ namespace serial {
         inline void subscribe_map(StreamType& stream, const uint8_t index, Args&&... args) {
             if ((sizeof...(args) % 2) == 0) {
                 static MsgPack::map_size_t sz;
-                Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size) {
+                Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
                     auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                     unpacker->clear();
                     unpacker->feed(data, size);
@@ -262,7 +262,7 @@ namespace serial {
             template <typename R, typename... Args>
             inline void subscribe(StreamType& stream, const uint8_t index, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(stream, index,
-                    [&, cb {std::move(callback)}](const uint8_t* data, const uint8_t size) {
+                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                         unpacker->clear();
                         unpacker->feed(data, size);
@@ -275,7 +275,7 @@ namespace serial {
             template <typename R, typename... Args>
             inline void subscribe(StreamType& stream, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(stream,
-                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const uint8_t size) {
+                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                         unpacker->clear();
                         unpacker->feed(data, size);
@@ -312,7 +312,7 @@ namespace serial {
 
         template <typename... Args>
         inline void subscribe(UDP& stream, const uint8_t index, Args&&... args) {
-            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size) {
+            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
                 auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                 unpacker->clear();
                 unpacker->feed(data, size);
@@ -321,7 +321,7 @@ namespace serial {
         }
         template <typename... Args>
         inline void subscribe(Client& stream, const uint8_t index, Args&&... args) {
-            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size) {
+            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
                 auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                 unpacker->clear();
                 unpacker->feed(data, size);
@@ -332,7 +332,7 @@ namespace serial {
         template <typename... Args>
         inline void subscribe_arr(UDP& stream, const uint8_t index, Args&&... args) {
             static MsgPack::arr_size_t sz;
-            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size) {
+            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
                 auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                 unpacker->clear();
                 unpacker->feed(data, size);
@@ -342,7 +342,7 @@ namespace serial {
         template <typename... Args>
         inline void subscribe_arr(Client& stream, const uint8_t index, Args&&... args) {
             static MsgPack::arr_size_t sz;
-            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size) {
+            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
                 auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                 unpacker->clear();
                 unpacker->feed(data, size);
@@ -354,7 +354,7 @@ namespace serial {
         inline void subscribe_map(UDP& stream, const uint8_t index, Args&&... args) {
             if ((sizeof...(args) % 2) == 0) {
                 static MsgPack::map_size_t sz;
-                Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size) {
+                Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
                     auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                     unpacker->clear();
                     unpacker->feed(data, size);
@@ -368,7 +368,7 @@ namespace serial {
         inline void subscribe_map(Client& stream, const uint8_t index, Args&&... args) {
             if ((sizeof...(args) % 2) == 0) {
                 static MsgPack::map_size_t sz;
-                Packetizer::subscribe(stream, index, [&](const uint8_t* data, const uint8_t size) {
+                Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
                     auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                     unpacker->clear();
                     unpacker->feed(data, size);
@@ -383,7 +383,7 @@ namespace serial {
             template <typename R, typename... Args>
             inline void subscribe(UDP& stream, const uint8_t index, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(stream, index,
-                    [&, cb {std::move(callback)}](const uint8_t* data, const uint8_t size) {
+                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                         unpacker->clear();
                         unpacker->feed(data, size);
@@ -395,7 +395,7 @@ namespace serial {
             template <typename R, typename... Args>
             inline void subscribe(Client& stream, const uint8_t index, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(stream, index,
-                    [&, cb {std::move(callback)}](const uint8_t* data, const uint8_t size) {
+                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                         unpacker->clear();
                         unpacker->feed(data, size);
@@ -408,7 +408,7 @@ namespace serial {
             template <typename R, typename... Args>
             inline void subscribe(UDP& stream, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(stream,
-                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const uint8_t size) {
+                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                         unpacker->clear();
                         unpacker->feed(data, size);
@@ -418,7 +418,7 @@ namespace serial {
             template <typename R, typename... Args>
             inline void subscribe(Client& stream, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(stream,
-                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const uint8_t size) {
+                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                         unpacker->clear();
                         unpacker->feed(data, size);
