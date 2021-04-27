@@ -163,6 +163,90 @@ void loop() {
 ```
 
 
+### UDP and TCP Support
+
+#### TCP Support
+
+- start client first
+- everything else can be used in the same way
+
+```C++
+#include <MsgPacketizer.h>
+#include <WiFi.h>
+
+const uint8_t index = 0x12;
+int i; float f; String s;
+
+// WiFi stuff
+WiFiClient client;
+const char* host = "192.168.0.10";
+const int port = 54321;
+
+void setup() {
+    WiFi.begin("your-ssid", "your-password");
+
+    // start client
+    client.connect(host, port);
+
+    // everything else can be used in the same way
+    MsgPacketizer::publish(client, index, i, f, s)->setFrameRate(1);
+    MsgPacketizer::subscribe(client, index,
+        [&](const int i, const float f, const String& s) {
+            // do something with received data
+        }
+    );
+}
+
+void loop() {
+    // do something with your variables i, f, s
+
+    // must be called to trigger callback and publish data
+    MsgPacketizer::update();
+}
+```
+
+
+#### UDP Support
+
+- start client first
+- set ip and port when you publish or send messages
+- everything else can be used in the same way
+
+```C++
+#include <MsgPacketizer.h>
+#include <WiFi.h>
+
+const uint8_t index = 0x12;
+int i; float f; String s;
+
+// WiFi stuff
+WiFiUDP client;
+const char* host = "192.168.0.10";
+const int port = 54321;
+
+void setup() {
+    WiFi.begin("your-ssid", "your-password");
+
+    // start client first
+    client.begin(port);
+
+    // set host and port when publishing or sending messages
+    MsgPacketizer::publish(client, host, port, index, i, f, s)->setFrameRate(1);
+    MsgPacketizer::subscribe(client, index,
+        [&](const int i, const float f, const String& s) {
+            // do something with received data
+        }
+    );
+}
+
+void loop() {
+    // do something with your variables i, f, s
+
+    // must be called to trigger callback and publish data
+    MsgPacketizer::update();
+}
+```
+
 ## APIs
 
 ``` C++
