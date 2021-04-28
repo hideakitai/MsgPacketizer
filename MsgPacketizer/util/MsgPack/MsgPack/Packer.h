@@ -25,6 +25,7 @@
 #endif  // TEENSYDUINO
 
 #include "Types.h"
+#include "Unpacker.h"
 #include "util/DebugLog/DebugLog.h"
 
 namespace ht {
@@ -61,6 +62,31 @@ namespace serial {
                 packMapSize(map_size.size());
                 serialize(std::forward<Args>(args)...);
             }
+
+#ifdef ARDUINOJSON_VERSION
+
+        private:
+            void serialize_arduinojson(const JsonDocument& doc) {
+                const size_t size = measureMsgPack(doc);
+                uint8_t* data = new uint8_t[size];
+                serializeMsgPack(doc, data, size);
+                packRawBytes(data, size);
+                // TODO:
+                Unpacker unpacker;
+                unpacker.feed(data, size);
+                n_indices += unpacker.size();
+            }
+
+        public:
+            template <size_t N>
+            void serialize(const StaticJsonDocument<N>& doc) {
+                serialize_arduinojson(doc);
+            }
+            void serialize(const DynamicJsonDocument& doc) {
+                serialize_arduinojson(doc);
+            }
+
+#endif  // ARDUINOJSON_VERSION
 
             template <typename... Args>
             void to_array(Args&&... args) {

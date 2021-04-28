@@ -3,6 +3,12 @@
 MessagePack implementation for Arduino (compatible with other C++ apps)
 
 
+## Feature
+
+- one-line [serialize / deserialize] for almost all standard type of C++ same as [msgpack-c](https://github.com/msgpack/msgpack-c)
+- support custom class [serialization / deserialization]
+- support working with [ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
+
 ## Typical Usage
 
 This library is only for serialize / deserialize.
@@ -53,7 +59,7 @@ void loop() {}
 
 ## Encode / Decode to Collections without Container
 
-In msgpack, there two collection types: `Array` and `Map`.
+In msgpack, there are two collection types: `Array` and `Map`.
 C++ containers will be converted to one of them but you can do that from individual parameters.
 To `pack` / `unpack` values as such collections in a simple way, please use these functions.
 
@@ -237,13 +243,28 @@ To achieve that, there are several ways.
 - use `serialize()` or `deserialize()` with `arr_size_t` / `map_size_t` for complex structure
 - use custom class as JSON array / object which is wrapped into `Array` / `Map`
 - use custom class nest recursively for more complex structure
-- use `ArduinoJson` for more flexible handling of JSON (__TBD__)
+- use `ArduinoJson` for more flexible handling of JSON
 
 
 ### Use MsgPack with ArduinoJson
 
-__TBD__
+- you can [serialize / deserialize] `StaticJsonDocument<N>` and `DynamicJsonDocument` directly
 
+```C++
+#include <ArduinoJson.h>  // include before MsgPack.h
+#include <MsgPack.h>
+
+void setup() {
+    StaticJsonDocument<200> doc_in;
+    MsgPack::Packer packer;
+    packer.serialize(doc_in); // serialize directly
+
+    StaticJsonDocument<200> doc;
+    MsgPack::Unpacker unpacker;
+    unpacker.feed(packer.data(), packer.size());
+    unpacker.deserialize(doc); // deserialize directly
+}
+```
 
 ## Supported Type Adaptors
 
@@ -480,6 +501,9 @@ template <typename T>
 void serialize(const arr_size_t& arr_size, Args&&... args);
 template <typename ...Args>
 void serialize(const map_size_t& map_size, Args&&... args);
+template <size_t N>
+void serialize(const StaticJsonDocument<N>& doc);
+void serialize(const DynamicJsonDocument& doc);
 
 // variable sized serializer to array or map for any type
 template <typename ...Args>
@@ -600,6 +624,9 @@ bool feed(const uint8_t* data, size_t size);
 // variable sized deserializer
 template <typename First, typename ...Rest>
 void deserialize(First& first, Rest&&... rest);
+template <size_t N>
+void deserialize(StaticJsonDocument<N>& doc);
+void deserialize(DynamicJsonDocument& doc);
 
 // varibale sized desrializer for array and map
 template <typename ...Args>

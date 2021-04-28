@@ -84,7 +84,8 @@ namespace serial {
                 size_t sz;
 
             public:
-                explicit ArraySize(const size_t size = 0) : sz(size) {}
+                explicit ArraySize(const size_t size = 0)
+                : sz(size) {}
                 size_t size() const { return sz; }
                 void size(const size_t s) { sz = s; }
             };
@@ -92,7 +93,8 @@ namespace serial {
                 size_t sz;
 
             public:
-                explicit MapSize(const size_t size = 0) : sz(size) {}
+                explicit MapSize(const size_t size = 0)
+                : sz(size) {}
                 size_t size() const { return sz; }
                 void size(const size_t s) { sz = s; }
             };
@@ -121,7 +123,8 @@ namespace serial {
                 bin_t<uint8_t> m_data;
 
             public:
-                ext() : m_data() {}
+                ext()
+                : m_data() {}
                 ext(int8_t t, const uint8_t* p, uint32_t s) {
                     m_data.reserve(static_cast<size_t>(s) + 1);
                     m_data.push_back(static_cast<uint8_t>(t));

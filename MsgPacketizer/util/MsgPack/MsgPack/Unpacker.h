@@ -76,6 +76,27 @@ namespace serial {
                 }
             }
 
+#ifdef ARDUINOJSON_VERSION
+
+        private:
+            void deserialize_arduinojson(JsonDocument& doc) {
+                auto err = deserializeMsgPack(doc, raw_data);
+                if (err) {
+                    LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                }
+            }
+
+        public:
+            template <size_t N>
+            void deserialize(StaticJsonDocument<N>& doc) {
+                deserialize_arduinojson(doc);
+            }
+            void deserialize(DynamicJsonDocument& doc) {
+                deserialize_arduinojson(doc);
+            }
+
+#endif  // ARDUINOJSON_VERSION
+
             template <typename... Args>
             void from_array(Args&&... args) {
                 static arr_size_t sz;
@@ -424,6 +445,7 @@ namespace serial {
                     case Type::UINT64:
                         return (T)unpackUInt64();
                     default:
+                        LOG_ERROR("type error");
                         return type_error<T>();
                 }
             }
@@ -460,6 +482,7 @@ namespace serial {
                     case Type::UINT64:
                         return uint_to_int<T, uint64_t, int64_t>(unpackUInt64());
                     default:
+                        LOG_ERROR("type error");
                         return type_error<T>();
                 }
             }
@@ -499,6 +522,7 @@ namespace serial {
                     case Type::FLOAT64:
                         return (T)unpackFloat64();
                     default:
+                        LOG_ERROR("type error");
                         return type_error<T>();
                 }
             }
@@ -517,6 +541,7 @@ namespace serial {
                     case Type::STR32:
                         return unpackStringUnchecked32();
                     default:
+                        LOG_ERROR("type error");
                         return type_error<str_t>();
                 }
             }
@@ -538,6 +563,7 @@ namespace serial {
                     case Type::BIN32:
                         return unpackBinaryUnchecked32<T>();
                     default:
+                        LOG_ERROR("type error");
                         return type_error<bin_t<T>>();
                 }
             }
@@ -560,6 +586,7 @@ namespace serial {
                     case Type::BIN32:
                         return unpackBinaryUnchecked32<T, N>();
                     default:
+                        LOG_ERROR("type error");
                         return type_error<std::array<T, N>>();
                 }
             }
@@ -578,6 +605,7 @@ namespace serial {
                     case Type::ARRAY32:
                         return unpackArraySizeUnchecked32();
                     default:
+                        LOG_ERROR("type error");
                         return type_error<size_t>();
                 }
             }
@@ -594,6 +622,7 @@ namespace serial {
                     case Type::MAP32:
                         return unpackMapSizeUnchecked32();
                     default:
+                        LOG_ERROR("type error");
                         return type_error<size_t>();
                 }
             }
@@ -620,6 +649,7 @@ namespace serial {
                     case Type::EXT32:
                         return unpackExtUnchecked32();
                     default:
+                        LOG_ERROR("type error");
                         return type_error<object::ext>();
                 }
             }
@@ -636,8 +666,10 @@ namespace serial {
                     return unpackTimestampUnchecked64();
                 else if (isTimestamp96())
                     return unpackTimestampUnchecked96();
-                else
+                else {
+                    LOG_ERROR("type error");
                     return type_error<object::timespec>();
+                }
             }
 
             //////////////////////////////////////////////////////
@@ -1813,9 +1845,9 @@ namespace serial {
             template <typename T>
             T type_error(const Type type = Type::NA) {
                 if (type == Type::NA)
-                    LOG_ERROR(F("unpack type mimatch:"), (int)getType());
+                    LOG_ERROR(F("unknown type in index"), curr_index, F(": type byte"), (int)getType());
                 else
-                    LOG_ERROR(F("unpack type mimatch:"), (int)getType(), F("must be"), (int)type);
+                    LOG_ERROR(F("unpack type mimatch in index"), curr_index, F(": type byte"), (int)getType(), F("must be"), (int)type);
                 ++curr_index;
                 return T();
             }
