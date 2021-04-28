@@ -18,6 +18,12 @@ namespace serial {
 #endif
 #endif  // MSGPACKETIZER_ENABLE_STREAM
 
+#ifdef ARDUINOJSON_VERSION
+#ifndef MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE
+#define MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE 3
+#endif
+#endif
+
 #ifdef MSGPACKETIZER_ENABLE_STREAM
 
         struct DecodeTargetStream {
@@ -196,6 +202,63 @@ namespace serial {
                         cb(index, *unpacker);
                     });
             }
+
+#ifdef ARDUINOJSON_VERSION
+
+            template <size_t N>
+            inline void subscribe(const uint8_t index, std::function<void(const StaticJsonDocument<N>&)>&& callback) {
+                Packetizer::subscribe(index,
+                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
+                        StaticJsonDocument<N> doc;
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(doc);
+                        }
+                    });
+            }
+            inline void subscribe(const uint8_t index, std::function<void(const DynamicJsonDocument&)>&& callback) {
+                Packetizer::subscribe(index,
+                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
+                        DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(doc);
+                        }
+                    });
+            }
+
+            template <size_t N>
+            inline void subscribe(std::function<void(const uint8_t, const StaticJsonDocument<N>&)>&& callback) {
+                Packetizer::subscribe(
+                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
+                        StaticJsonDocument<N> doc;
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(index, doc);
+                        }
+                    });
+            }
+            inline void subscribe(std::function<void(const uint8_t, const DynamicJsonDocument&)>&& callback) {
+                Packetizer::subscribe(
+                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
+                        DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(index, doc);
+                        }
+                    });
+            }
+
+#endif  // ARDUINOJSON_VERSION
+
         }  // namespace detail
 
         template <typename F>
@@ -282,6 +345,63 @@ namespace serial {
                         cb(index, *unpacker);
                     });
             }
+
+#ifdef ARDUINOJSON_VERSION
+
+            template <size_t N>
+            inline void subscribe(StreamType& stream, const uint8_t index, std::function<void(StaticJsonDocument<N>&)>&& callback) {
+                Packetizer::subscribe(stream, index,
+                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
+                        StaticJsonDocument<N> doc;
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(doc);
+                        }
+                    });
+            }
+            inline void subscribe(StreamType& stream, const uint8_t index, std::function<void(DynamicJsonDocument&)>&& callback) {
+                Packetizer::subscribe(stream, index,
+                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
+                        DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(doc);
+                        }
+                    });
+            }
+
+            template <size_t N>
+            inline void subscribe(StreamType& stream, std::function<void(const uint8_t, StaticJsonDocument<N>&)>&& callback) {
+                Packetizer::subscribe(stream,
+                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
+                        StaticJsonDocument<N> doc;
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(index, doc);
+                        }
+                    });
+            }
+            inline void subscribe(StreamType& stream, std::function<void(const uint8_t, DynamicJsonDocument&)>&& callback) {
+                Packetizer::subscribe(stream,
+                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
+                        DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(index, doc);
+                        }
+                    });
+            }
+
+#endif  // ARDUINOJSON_VERSION
+
         }  // namespace detail
 
         template <typename F>
@@ -425,6 +545,112 @@ namespace serial {
                         cb(index, *unpacker);
                     });
             }
+
+#ifdef ARDUINOJSON_VERSION
+
+            template <size_t N>
+            inline void subscribe(UDP& stream, const uint8_t index, std::function<void(const StaticJsonDocument<N>&)>&& callback) {
+                Packetizer::subscribe(stream, index,
+                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
+                        StaticJsonDocument<N> doc;
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(doc);
+                        }
+                    });
+            }
+            inline void subscribe(UDP& stream, const uint8_t index, std::function<void(const DynamicJsonDocument&)>&& callback) {
+                Packetizer::subscribe(stream, index,
+                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
+                        DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(doc);
+                        }
+                    });
+            }
+            template <size_t N>
+            inline void subscribe(Client& stream, const uint8_t index, std::function<void(const StaticJsonDocument<N>&)>&& callback) {
+                Packetizer::subscribe(stream, index,
+                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
+                        StaticJsonDocument<N> doc;
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(doc);
+                        }
+                    });
+            }
+            inline void subscribe(Client& stream, const uint8_t index, std::function<void(const DynamicJsonDocument&)>&& callback) {
+                Packetizer::subscribe(stream, index,
+                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
+                        DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(doc);
+                        }
+                    });
+            }
+
+            template <size_t N>
+            inline void subscribe(UDP& stream, std::function<void(const uint8_t, const StaticJsonDocument<N>&)>&& callback) {
+                Packetizer::subscribe(stream,
+                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
+                        StaticJsonDocument<N> doc;
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(index, doc);
+                        }
+                    });
+            }
+            inline void subscribe(UDP& stream, std::function<void(const uint8_t, const DynamicJsonDocument&)>&& callback) {
+                Packetizer::subscribe(stream,
+                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
+                        DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(index, doc);
+                        }
+                    });
+            }
+            template <size_t N>
+            inline void subscribe(Client& stream, std::function<void(const uint8_t, const StaticJsonDocument<N>&)>&& callback) {
+                Packetizer::subscribe(stream,
+                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
+                        StaticJsonDocument<N> doc;
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(index, doc);
+                        }
+                    });
+            }
+            inline void subscribe(Client& stream, std::function<void(const uint8_t, const DynamicJsonDocument&)>&& callback) {
+                Packetizer::subscribe(stream,
+                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
+                        DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
+                        auto err = deserializeMsgPack(doc, data);
+                        if (err) {
+                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                        } else {
+                            cb(index, doc);
+                        }
+                    });
+            }
+
+#endif
         }  // namespace detail
 
         template <typename F>
