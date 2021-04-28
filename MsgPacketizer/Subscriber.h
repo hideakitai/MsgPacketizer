@@ -227,24 +227,24 @@ namespace serial {
             template <typename R, typename... Args>
             inline void subscribe(const uint8_t index, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(index,
-                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
+                    [&, callback](const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
                         unpacker->clear();
                         unpacker->feed(data, size);
                         std::tuple<std::remove_cvref_t<Args>...> t;
                         unpacker->to_tuple(t);
-                        std::apply(cb, t);
+                        std::apply(callback, t);
                     });
             }
 
             template <typename R, typename... Args>
             inline void subscribe(std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(
-                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
+                    [&, callback](const uint8_t index, const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
                         unpacker->clear();
                         unpacker->feed(data, size);
-                        cb(index, *unpacker);
+                        callback(index, *unpacker);
                     });
             }
 
@@ -346,24 +346,24 @@ namespace serial {
             template <typename R, typename... Args>
             inline void subscribe(StreamType& stream, const uint8_t index, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(stream, index,
-                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
+                    [&, callback](const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                         unpacker->clear();
                         unpacker->feed(data, size);
                         std::tuple<std::remove_cvref_t<Args>...> t;
                         unpacker->to_tuple(t);
-                        std::apply(cb, t);
+                        std::apply(callback, t);
                     });
             }
 
             template <typename R, typename... Args>
             inline void subscribe(StreamType& stream, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(stream,
-                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
+                    [&, callback](const uint8_t index, const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                         unpacker->clear();
                         unpacker->feed(data, size);
-                        cb(index, *unpacker);
+                        callback(index, *unpacker);
                     });
             }
 
@@ -500,46 +500,46 @@ namespace serial {
             template <typename R, typename... Args>
             inline void subscribe(UDP& stream, const uint8_t index, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(stream, index,
-                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
+                    [&, callback](const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                         unpacker->clear();
                         unpacker->feed(data, size);
                         std::tuple<std::remove_cvref_t<Args>...> t;
                         unpacker->to_tuple(t);
-                        std::apply(cb, t);
+                        std::apply(callback, t);
                     });
             }
             template <typename R, typename... Args>
             inline void subscribe(Client& stream, const uint8_t index, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(stream, index,
-                    [&, cb {std::move(callback)}](const uint8_t* data, const size_t size) {
+                    [&, callback](const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                         unpacker->clear();
                         unpacker->feed(data, size);
                         std::tuple<std::remove_cvref_t<Args>...> t;
                         unpacker->to_tuple(t);
-                        std::apply(cb, t);
+                        std::apply(callback, t);
                     });
             }
 
             template <typename R, typename... Args>
             inline void subscribe(UDP& stream, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(stream,
-                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
+                    [&, callback](const uint8_t index, const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                         unpacker->clear();
                         unpacker->feed(data, size);
-                        cb(index, *unpacker);
+                        callback(index, *unpacker);
                     });
             }
             template <typename R, typename... Args>
             inline void subscribe(Client& stream, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(stream,
-                    [&, cb {std::move(callback)}](const uint8_t index, const uint8_t* data, const size_t size) {
+                    [&, callback](const uint8_t index, const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                         unpacker->clear();
                         unpacker->feed(data, size);
-                        cb(index, *unpacker);
+                        callback(index, *unpacker);
                     });
             }
 
