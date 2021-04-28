@@ -174,7 +174,7 @@ namespace serial {
                     unpacker->deserialize(sz, std::forward<Args>(args)...);
                 });
             } else {
-                LOG_WARNING("deserialize arg size must be even for map :", sizeof...(args));
+                LOG_WARNING(F("deserialize arg size must be even for map :"), sizeof...(args));
             }
         }
 
@@ -212,7 +212,7 @@ namespace serial {
                         StaticJsonDocument<N> doc;
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(doc);
                         }
@@ -224,7 +224,7 @@ namespace serial {
                         DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(doc);
                         }
@@ -238,7 +238,7 @@ namespace serial {
                         StaticJsonDocument<N> doc;
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(index, doc);
                         }
@@ -250,7 +250,7 @@ namespace serial {
                         DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(index, doc);
                         }
@@ -317,7 +317,7 @@ namespace serial {
                     unpacker->deserialize(sz, std::forward<Args>(args)...);
                 });
             } else {
-                LOG_WARNING("deserialize arg size must be even for map :", sizeof...(args));
+                LOG_WARNING(F("deserialize arg size must be even for map :"), sizeof...(args));
             }
         }
 
@@ -355,7 +355,7 @@ namespace serial {
                         StaticJsonDocument<N> doc;
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(doc);
                         }
@@ -367,7 +367,7 @@ namespace serial {
                         DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(doc);
                         }
@@ -381,7 +381,7 @@ namespace serial {
                         StaticJsonDocument<N> doc;
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(index, doc);
                         }
@@ -393,7 +393,7 @@ namespace serial {
                         DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(index, doc);
                         }
@@ -481,7 +481,7 @@ namespace serial {
                     unpacker->deserialize(sz, std::forward<Args>(args)...);
                 });
             } else {
-                LOG_WARNING("deserialize arg size must be even for map :", sizeof...(args));
+                LOG_WARNING(F("deserialize arg size must be even for map :"), sizeof...(args));
             }
         }
         template <typename... Args>
@@ -495,7 +495,7 @@ namespace serial {
                     unpacker->deserialize(sz, std::forward<Args>(args)...);
                 });
             } else {
-                LOG_WARNING("deserialize arg size must be even for map :", sizeof...(args));
+                LOG_WARNING(F("deserialize arg size must be even for map :"), sizeof...(args));
             }
         }
 
@@ -555,7 +555,7 @@ namespace serial {
                         StaticJsonDocument<N> doc;
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(doc);
                         }
@@ -567,7 +567,7 @@ namespace serial {
                         DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(doc);
                         }
@@ -580,7 +580,7 @@ namespace serial {
                         StaticJsonDocument<N> doc;
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(doc);
                         }
@@ -592,7 +592,7 @@ namespace serial {
                         DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(doc);
                         }
@@ -606,7 +606,7 @@ namespace serial {
                         StaticJsonDocument<N> doc;
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(index, doc);
                         }
@@ -618,7 +618,7 @@ namespace serial {
                         DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(index, doc);
                         }
@@ -631,7 +631,7 @@ namespace serial {
                         StaticJsonDocument<N> doc;
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(index, doc);
                         }
@@ -643,7 +643,7 @@ namespace serial {
                         DynamicJsonDocument doc(size * MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE);
                         auto err = deserializeMsgPack(doc, data);
                         if (err) {
-                            LOG_ERROR("deserializeJson() faled: ", err.c_str());
+                            LOG_ERROR(F("deserializeJson() faled: "), err.c_str());
                         } else {
                             cb(index, doc);
                         }
