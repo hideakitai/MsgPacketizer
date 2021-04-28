@@ -5,10 +5,12 @@
 
 ## Feature
 
-- one-line serialize / deserialize or publish / subscribe + packetize + robust send / receive
-- serializer / deserializer supports almost all standard type of C++ same as [msgpack-c](https://github.com/msgpack/msgpack-c)
-- supports custom class serialization / deserialization
-- serializer / deserializer based on [MsgPack](https://github.com/hideakitai/MsgPack)
+- one-line [serialize/deserialize] or [publish/subscribe] + packetize + robust [send/receive]
+- [serializer/deserializer] supports almost all standard type of C++ same as [msgpack-c](https://github.com/msgpack/msgpack-c)
+- support custom class [serialization/deserialization]
+- support one-line manual [serialization/deserialization] to work with any communication interface
+- support working with [ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
+- [serializer/deserializer] based on [MsgPack](https://github.com/hideakitai/MsgPack)
 - packetize based on [Packetizer](https://github.com/hideakitai/Packetizer)
 
 
@@ -246,6 +248,58 @@ void loop() {
     MsgPacketizer::update();
 }
 ```
+
+### ArduinoJson Support
+
+- supports only version > 6.x
+- supports `StaticJsonDocument<N>` and `DynamicJsonDocument`
+- supports only `send`, `decode`, and `subscribe` with callbacks
+  - you can use `publish` and `subscribe` directly by reference, but not reccomended
+  - please see [this official document](https://arduinojson.org/v6/how-to/reuse-a-json-document/) for the detail
+
+```C++
+#include <ArduinoJson.h>  // include before MsgPacketizer.h
+#include <MsgPacketizer.h>
+#include <WiFi.h>
+
+const uint8_t msg_index = 0x12;
+const char* host = "192.168.0.10";
+const int port = 54321;
+WiFiUDP client;
+
+void setup() {
+    WiFi.begin("your-ssid", "your-password");
+    client.begin(port);
+
+    MsgPacketizer::subscribe(client, msg_index,
+        [&](const StaticJsonDocument<200>& doc) {
+            // do something with your json
+        }
+    );
+}
+
+void loop() {
+    StaticJsonDocument<200> doc;
+    // make your json here
+    MsgPacketizer::send(client, host, port, msg_index, doc);
+
+    delay(1000);
+
+    // must be called to trigger callback and publish data
+    MsgPacketizer::update();
+}
+```
+
+#### Buffer Size Adjustment when Subscribing `DynamicJsonDocument`
+
+Currently we cannot calculate the json size from msgpack format before deserialization. Please adjust buffer size by defining following macro before including `MsgPacketizer.h`. Default is `size_of_msgpack_bytes * 3`.
+
+
+```C++
+#define MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE 3  // default
+#include <MsgPacketizer.h>
+```
+
 
 ## APIs
 
