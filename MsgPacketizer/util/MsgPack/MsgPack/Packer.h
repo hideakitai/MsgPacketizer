@@ -268,7 +268,7 @@ namespace serial {
 
             template <typename T, typename U>
             void pack(const std::pair<T, U>& arr) {
-                packArraySize(1);
+                packArraySize(2);
                 pack(arr.first);
                 pack(arr.second);
             }

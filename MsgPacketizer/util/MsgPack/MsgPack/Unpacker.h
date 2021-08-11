@@ -295,11 +295,11 @@ namespace serial {
             template <typename T, typename U>
             void unpack(std::pair<T, U>& arr) {
                 const size_t size = unpackArraySize();
-                if (size == 1) {
+                if (size == 2) {
                     unpack(arr.first);
                     unpack(arr.second);
                 } else
-                    LOG_ERROR(F("array size mismatch:"), size, F("must be"), 1);
+                    LOG_ERROR(F("array size mismatch:"), size, F("must be"), 2);
             }
 
             template <typename... Args>
