@@ -602,7 +602,7 @@ namespace arx { // others
                 return static_cast<function_type>(f);
             }
         };
-    };
+    }
     template <typename T>
     struct function_traits : public function_traits<decltype(&T::operator())> {};
     template <typename class_type, typename ret, typename ... arguments>
