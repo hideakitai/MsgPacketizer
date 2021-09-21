@@ -114,7 +114,7 @@ namespace serial {
             StreamType* stream;
             TargetStreamType type;
             uint8_t index;
-            String ip;
+            str_t ip;
             uint16_t port;
 
             Destination() {}
@@ -124,10 +124,10 @@ namespace serial {
             : stream(std::move(dest.stream)), type(std::move(dest.type)), index(std::move(dest.index)), ip(std::move(dest.ip)), port(std::move(dest.port)) {}
             Destination(const StreamType& stream, const TargetStreamType type, const uint8_t index)
             : stream((StreamType*)&stream), type(type), index(index), ip(), port() {}
-            Destination(const StreamType& stream, const TargetStreamType type, const uint8_t index, const String& ip, const uint16_t port)
+            Destination(const StreamType& stream, const TargetStreamType type, const uint8_t index, const str_t& ip, const uint16_t port)
             : stream((StreamType*)&stream), type(type), index(index), ip(ip), port(port) {}
             Destination(const StreamType& stream, const TargetStreamType type, const uint8_t index, const IPAddress& ip, const uint16_t port)
-            : stream((StreamType*)&stream), type(type), index(index), ip(String(ip[0]) + "." + String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3])), port(port) {}
+            : stream((StreamType*)&stream), type(type), index(index), ip(str_t(ip[0]) + "." + str_t(ip[1]) + "." + str_t(ip[2]) + "." + str_t(ip[3])), port(port) {}
 
             Destination& operator=(const Destination& dest) {
                 stream = dest.stream;
@@ -289,7 +289,7 @@ namespace serial {
 
 #ifdef MSGPACKETIZER_ENABLE_NETWORK
 
-            PublishElementRef publish(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index, const char* const value) {
+            PublishElementRef publish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, const char* const value) {
                 return publish_impl(stream, ip, port, index, make_element_ref(value));
             }
             PublishElementRef publish(const Client& stream, const uint8_t index, const char* const value) {
@@ -297,7 +297,7 @@ namespace serial {
             }
 
             template <typename T>
-            auto publish(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index, T& value)
+            auto publish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, T& value)
                 -> std::enable_if_t<!arx::is_callable<T>::value, PublishElementRef> {
                 return publish_impl(stream, ip, port, index, make_element_ref(value));
             }
@@ -308,7 +308,7 @@ namespace serial {
             }
 
             template <typename T>
-            auto publish(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index, const T& value)
+            auto publish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, const T& value)
                 -> std::enable_if_t<!arx::is_callable<T>::value, PublishElementRef> {
                 return publish_impl(stream, ip, port, index, make_element_ref(value));
             }
@@ -319,7 +319,7 @@ namespace serial {
             }
 
             template <typename Func>
-            auto publish(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index, Func&& func)
+            auto publish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Func&& func)
                 -> std::enable_if_t<arx::is_callable<Func>::value, PublishElementRef> {
                 return publish(stream, ip, port, index, arx::function_traits<Func>::cast(func));
             }
@@ -330,7 +330,7 @@ namespace serial {
             }
 
             template <typename T>
-            PublishElementRef publish(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index, std::function<T()>&& getter) {
+            PublishElementRef publish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, std::function<T()>&& getter) {
                 return publish_impl(stream, ip, port, index, make_element_ref(getter));
             }
             template <typename T>
@@ -339,7 +339,7 @@ namespace serial {
             }
 
             template <typename... Args>
-            PublishElementRef publish(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+            PublishElementRef publish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
                 ElementTupleRef v {make_element_ref(std::forward<Args>(args))...};
                 return publish_impl(stream, ip, port, index, make_element_ref(v));
             }
@@ -350,7 +350,7 @@ namespace serial {
             }
 
             template <typename... Args>
-            PublishElementRef publish_arr(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+            PublishElementRef publish_arr(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
                 static MsgPack::arr_size_t s(sizeof...(args));
                 return publish(stream, ip, port, index, s, std::forward<Args>(args)...);
             }
@@ -361,7 +361,7 @@ namespace serial {
             }
 
             template <typename... Args>
-            PublishElementRef publish_map(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+            PublishElementRef publish_map(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
                 if ((sizeof...(args) % 2) == 0) {
                     static MsgPack::map_size_t s(sizeof...(args) / 2);
                     return publish(stream, ip, port, index, s, std::forward<Args>(args)...);
@@ -381,7 +381,7 @@ namespace serial {
                 }
             }
 
-            void unpublish(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index) {
+            void unpublish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index) {
                 Destination dest = getDestination(stream, ip, port, index);
                 addr_map.erase(dest);
             }
@@ -390,7 +390,7 @@ namespace serial {
                 addr_map.erase(dest);
             }
 
-            PublishElementRef getPublishElementRef(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index) {
+            PublishElementRef getPublishElementRef(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index) {
                 Destination dest = getDestination(stream, ip, port, index);
                 return addr_map[dest];
             }
@@ -419,7 +419,7 @@ namespace serial {
 
 #ifdef MSGPACKETIZER_ENABLE_NETWORK
 
-            Destination getDestination(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index) {
+            Destination getDestination(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index) {
                 Destination s;
                 s.stream = (StreamType*)&stream;
                 s.type = TargetStreamType::STREAM_UDP;
@@ -436,7 +436,7 @@ namespace serial {
                 return s;
             }
 
-            PublishElementRef publish_impl(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index, PublishElementRef ref) {
+            PublishElementRef publish_impl(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, PublishElementRef ref) {
                 Destination dest = getDestination(stream, ip, port, index);
                 addr_map.insert(make_pair(dest, ref));
                 return ref;
@@ -537,7 +537,7 @@ namespace serial {
 #ifdef MSGPACKETIZER_ENABLE_NETWORK
 
         template <typename... Args>
-        inline void send(UDP& stream, const String& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+        inline void send(UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
             auto& packer = PackerManager::getInstance().getPacker();
             packer.clear();
             packer.serialize(std::forward<Args>(args)...);
@@ -551,7 +551,7 @@ namespace serial {
             Packetizer::send(stream, index, packer.data(), packer.size());
         }
 
-        inline void send(UDP& stream, const String& ip, const uint16_t port, const uint8_t index, const uint8_t* data, const uint8_t size) {
+        inline void send(UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, const uint8_t* data, const uint8_t size) {
             auto& packer = PackerManager::getInstance().getPacker();
             packer.clear();
             packer.pack(data, size);
@@ -564,7 +564,7 @@ namespace serial {
             Packetizer::send(stream, index, packer.data(), packer.size());
         }
 
-        inline void send(UDP& stream, const String& ip, const uint16_t port, const uint8_t index) {
+        inline void send(UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index) {
             auto& packer = PackerManager::getInstance().getPacker();
             Packetizer::send(stream, ip, port, index, packer.data(), packer.size());
         }
@@ -574,7 +574,7 @@ namespace serial {
         }
 
         template <typename... Args>
-        inline void send_arr(UDP& stream, const String& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+        inline void send_arr(UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
             auto& packer = PackerManager::getInstance().getPacker();
             packer.clear();
             packer.serialize(MsgPack::arr_size_t(sizeof...(args)), std::forward<Args>(args)...);
@@ -589,7 +589,7 @@ namespace serial {
         }
 
         template <typename... Args>
-        inline void send_map(UDP& stream, const String& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+        inline void send_map(UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
             if ((sizeof...(args) % 2) == 0) {
                 auto& packer = PackerManager::getInstance().getPacker();
                 packer.clear();
@@ -639,7 +639,7 @@ namespace serial {
 #ifdef MSGPACKETIZER_ENABLE_NETWORK
 
         template <typename... Args>
-        inline PublishElementRef publish(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+        inline PublishElementRef publish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
             return PackerManager::getInstance().publish(stream, ip, port, index, std::forward<Args>(args)...);
         }
         template <typename... Args>
@@ -648,7 +648,7 @@ namespace serial {
         }
 
         template <typename... Args>
-        inline PublishElementRef publish_arr(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+        inline PublishElementRef publish_arr(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
             return PackerManager::getInstance().publish_arr(stream, ip, port, index, std::forward<Args>(args)...);
         }
         template <typename... Args>
@@ -657,7 +657,7 @@ namespace serial {
         }
 
         template <typename... Args>
-        inline PublishElementRef publish_map(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+        inline PublishElementRef publish_map(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
             return PackerManager::getInstance().publish_map(stream, ip, port, index, std::forward<Args>(args)...);
         }
         template <typename... Args>
@@ -665,7 +665,7 @@ namespace serial {
             return PackerManager::getInstance().publish_map(stream, index, std::forward<Args>(args)...);
         }
 
-        inline void unpublish(const UDP& stream, const String& ip, const uint16_t port, const uint8_t index) {
+        inline void unpublish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index) {
             PackerManager::getInstance().unpublish(stream, ip, port, index);
         };
         inline void unpublish(const Client& stream, const uint8_t index) {
