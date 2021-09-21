@@ -86,6 +86,15 @@ namespace serial {
 #define MSGPACKETIZER_ELAPSED_MICROS ofGetElapsedTimeMicros
 #endif
 
+#ifdef ARDUINO
+        using str_t = String;
+#else
+        using str_t = std::string;
+#ifndef F
+        inline const char* F(const char* c) { return c; }
+#endif
+#endif
+
         enum class TargetStreamType : uint8_t {
             STREAM_SERIAL,
             STREAM_UDP,
