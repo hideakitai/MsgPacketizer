@@ -57,7 +57,7 @@ namespace serial {
             template <typename First, typename... Rest>
             void deserialize(First& first, Rest&&... rest) {
                 if (!b_decoded || indices.empty()) {
-                    LOG_WARNING(F("correct binary data was not supplied yet"));
+                    LOG_WARN(F("correct binary data was not supplied yet"));
                     return;
                 }
                 if (curr_index >= indices.size()) {
