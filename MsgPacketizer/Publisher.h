@@ -272,7 +272,7 @@ namespace serial {
                     static MsgPack::map_size_t s(sizeof...(args) / 2);
                     return publish(stream, index, s, std::forward<Args>(args)...);
                 } else {
-                    LOG_WARNING("serialize arg size must be even for map :", sizeof...(args));
+                    LOG_WARN("serialize arg size must be even for map :", sizeof...(args));
                     return nullptr;
                 }
             }
@@ -366,7 +366,7 @@ namespace serial {
                     static MsgPack::map_size_t s(sizeof...(args) / 2);
                     return publish(stream, ip, port, index, s, std::forward<Args>(args)...);
                 } else {
-                    LOG_WARNING("serialize arg size must be even for map :", sizeof...(args));
+                    LOG_WARN("serialize arg size must be even for map :", sizeof...(args));
                     return nullptr;
                 }
             }
@@ -376,7 +376,7 @@ namespace serial {
                     static MsgPack::map_size_t s(sizeof...(args) / 2);
                     return publish(stream, index, s, std::forward<Args>(args)...);
                 } else {
-                    LOG_WARNING("serialize arg size must be even for map :", sizeof...(args));
+                    LOG_WARN("serialize arg size must be even for map :", sizeof...(args));
                     return nullptr;
                 }
             }
@@ -487,7 +487,7 @@ namespace serial {
                 packer.serialize(MsgPack::arr_size_t(sizeof...(args) / 2), std::forward<Args>(args)...);
                 return Packetizer::encode(index, packer.data(), packer.size());
             } else {
-                LOG_WARNING("serialize arg size must be even for map :", sizeof...(args));
+                LOG_WARN("serialize arg size must be even for map :", sizeof...(args));
                 return Packetizer::encode(index, nullptr, 0);
             }
         }
@@ -530,7 +530,7 @@ namespace serial {
                 packer.serialize(MsgPack::arr_size_t(sizeof...(args) / 2), std::forward<Args>(args)...);
                 Packetizer::send(stream, index, packer.data(), packer.size());
             } else {
-                LOG_WARNING("serialize arg size must be even for map :", sizeof...(args));
+                LOG_WARN("serialize arg size must be even for map :", sizeof...(args));
             }
         }
 
@@ -596,7 +596,7 @@ namespace serial {
                 packer.serialize(MsgPack::arr_size_t(sizeof...(args) / 2), std::forward<Args>(args)...);
                 Packetizer::send(stream, ip, port, index, packer.data(), packer.size());
             } else {
-                LOG_WARNING("serialize arg size must be even for map :", sizeof...(args));
+                LOG_WARN("serialize arg size must be even for map :", sizeof...(args));
             }
         }
         template <typename... Args>
@@ -607,7 +607,7 @@ namespace serial {
                 packer.serialize(MsgPack::arr_size_t(sizeof...(args) / 2), std::forward<Args>(args)...);
                 Packetizer::send(stream, index, packer.data(), packer.size());
             } else {
-                LOG_WARNING("serialize arg size must be even for map :", sizeof...(args));
+                LOG_WARN("serialize arg size must be even for map :", sizeof...(args));
             }
         }
 

@@ -219,7 +219,7 @@ namespace serial {
                     unpacker->deserialize(sz, std::forward<Args>(args)...);
                 });
             } else {
-                LOG_WARNING(F("deserialize arg size must be even for map :"), sizeof...(args));
+                LOG_WARN(F("deserialize arg size must be even for map :"), sizeof...(args));
             }
         }
 
@@ -338,7 +338,7 @@ namespace serial {
                     unpacker->deserialize(sz, std::forward<Args>(args)...);
                 });
             } else {
-                LOG_WARNING(F("deserialize arg size must be even for map :"), sizeof...(args));
+                LOG_WARN(F("deserialize arg size must be even for map :"), sizeof...(args));
             }
         }
 
@@ -478,7 +478,7 @@ namespace serial {
                     unpacker->deserialize(sz, std::forward<Args>(args)...);
                 });
             } else {
-                LOG_WARNING(F("deserialize arg size must be even for map :"), sizeof...(args));
+                LOG_WARN(F("deserialize arg size must be even for map :"), sizeof...(args));
             }
         }
         template <typename... Args>
@@ -492,7 +492,7 @@ namespace serial {
                     unpacker->deserialize(sz, std::forward<Args>(args)...);
                 });
             } else {
-                LOG_WARNING(F("deserialize arg size must be even for map :"), sizeof...(args));
+                LOG_WARN(F("deserialize arg size must be even for map :"), sizeof...(args));
             }
         }
 
