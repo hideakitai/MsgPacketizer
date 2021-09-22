@@ -3,12 +3,12 @@
 #ifndef ARX_RINGBUFFER_H
 #define ARX_RINGBUFFER_H
 
-#if __cplusplus < 201103L
-#error "C++11 must be enabled in the compiler for this library to work, please check your compiler flags"
-#endif
-
 #include "ArxContainer/has_include.h"
 #include "ArxContainer/has_libstdcplusplus.h"
+
+#if ARX_HAVE_LIBSTDCPLUSPLUS < 201103L
+#error "C++11 must be enabled in the compiler for this library to work, please check your compiler flags"
+#endif
 
 #ifdef ARDUINO
 #include <Arduino.h>
