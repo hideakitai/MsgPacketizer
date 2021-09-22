@@ -10,6 +10,16 @@
             // For gcc's libstdc++ and clang's libc++, assume that
             // __cplusplus tells us what the standard includes support
             #define ARX_HAVE_LIBSTDCPLUSPLUS __cplusplus
+        #elif defined(_CPPLIB_VER)
+            #if _CPPLIB_VER > 650
+                #define ARX_HAVE_LIBSTDCPLUSPLUS 201703L  // C++17
+            #elif _CPPLIB_VER == 650
+                #define ARX_HAVE_LIBSTDCPLUSPLUS 201402L  // C++14
+            #elif _CPPLIB_VER >= 610
+                #define ARX_HAVE_LIBSTDCPLUSPLUS 201103L  // C++11
+            #else
+                #define ARX_HAVE_LIBSTDCPLUSPLUS 199711L  // C++98
+            #endif
         #elif defined(__UCLIBCXX_MAJOR__)
             // For uclibc++, assume C++98 support only.
             #define ARX_HAVE_LIBSTDCPLUSPLUS 199711L

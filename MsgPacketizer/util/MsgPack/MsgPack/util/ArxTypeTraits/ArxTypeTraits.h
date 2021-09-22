@@ -3,12 +3,12 @@
 #ifndef ARX_TYPE_TRAITS_H
 #define ARX_TYPE_TRAITS_H
 
-#if __cplusplus < 201103L
-    #error "C++11 must be enabled in the compiler for this library to work, please check your compiler flags"
-#endif
-
 #include "ArxTypeTraits/has_include.h"
 #include "ArxTypeTraits/has_libstdcplusplus.h"
+
+#if ARX_HAVE_LIBSTDCPLUSPLUS < 201103L
+    #error "C++11 must be enabled in the compiler for this library to work, please check your compiler flags"
+#endif
 
 // Make sure std namespace exists
 namespace std { }
