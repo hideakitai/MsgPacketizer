@@ -94,18 +94,18 @@ namespace serial {
                 return decoders;
             }
 
-            DecodeTargetStream getDecodeTargetStream(const StreamType& stream) {
-                DecodeTargetStream s;
-                s.stream = (StreamType*)&stream;
-                s.type = TargetStreamType::STREAM_SERIAL;
-                return s;
-            }
-
             UnpackerRef getUnpackerRef(const StreamType& stream) {
                 auto s = getDecodeTargetStream(stream);
                 if (decoders.find(s) == decoders.end())
                     decoders.insert(make_pair(s, std::make_shared<MsgPack::Unpacker>()));
                 return decoders[s];
+            }
+
+            DecodeTargetStream getDecodeTargetStream(const StreamType& stream) {
+                DecodeTargetStream s;
+                s.stream = (StreamType*)&stream;
+                s.type = TargetStreamType::STREAM_SERIAL;
+                return s;
             }
 
 #ifdef MSGPACKETIZER_ENABLE_NETWORK
@@ -121,19 +121,6 @@ namespace serial {
                 s.stream = (StreamType*)&stream;
                 s.type = TargetStreamType::STREAM_TCP;
                 return s;
-            }
-
-            UnpackerRef getUnpackerRef(const UDP& stream) {
-                auto s = getDecodeTargetStream(stream);
-                if (decoders.find(s) == decoders.end())
-                    decoders.insert(make_pair(s, std::make_shared<MsgPack::Unpacker>()));
-                return decoders[s];
-            }
-            UnpackerRef getUnpackerRef(const Client& stream) {
-                auto s = getDecodeTargetStream(stream);
-                if (decoders.find(s) == decoders.end())
-                    decoders.insert(make_pair(s, std::make_shared<MsgPack::Unpacker>()));
-                return decoders[s];
             }
 
 #endif  // MSGPACKETIZER_ENABLE_NETWORK
@@ -294,7 +281,7 @@ namespace serial {
             detail::subscribe(arx::function_traits<F>::cast(std::move(callback)));
         }
 
-        void unsubscribe(const uint8_t index) {
+        inline void unsubscribe(const uint8_t index) {
             Packetizer::unsubscribe(index);
         }
 
@@ -306,8 +293,8 @@ namespace serial {
 
         // for supported communication interface (Arduino, oF)
 
-        template <typename... Args>
-        inline void subscribe(StreamType& stream, const uint8_t index, Args&&... args) {
+        template <typename S, typename... Args>
+        inline void subscribe(S& stream, const uint8_t index, Args&&... args) {
             Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
                 auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
                 unpacker->clear();
@@ -316,8 +303,8 @@ namespace serial {
             });
         }
 
-        template <typename... Args>
-        inline void subscribe_arr(StreamType& stream, const uint8_t index, Args&&... args) {
+        template <typename S, typename... Args>
+        inline void subscribe_arr(S& stream, const uint8_t index, Args&&... args) {
             static MsgPack::arr_size_t sz;
             Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
                 auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
@@ -327,8 +314,8 @@ namespace serial {
             });
         }
 
-        template <typename... Args>
-        inline void subscribe_map(StreamType& stream, const uint8_t index, Args&&... args) {
+        template <typename S, typename... Args>
+        inline void subscribe_map(S& stream, const uint8_t index, Args&&... args) {
             if ((sizeof...(args) % 2) == 0) {
                 static MsgPack::map_size_t sz;
                 Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
@@ -343,8 +330,8 @@ namespace serial {
         }
 
         namespace detail {
-            template <typename R, typename... Args>
-            inline void subscribe(StreamType& stream, const uint8_t index, std::function<R(Args...)>&& callback) {
+            template <typename S, typename R, typename... Args>
+            inline void subscribe(S& stream, const uint8_t index, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(stream, index,
                     [&, callback](const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
@@ -356,8 +343,8 @@ namespace serial {
                     });
             }
 
-            template <typename R, typename... Args>
-            inline void subscribe(StreamType& stream, std::function<R(Args...)>&& callback) {
+            template <typename S, typename R, typename... Args>
+            inline void subscribe(S& stream, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(stream,
                     [&, callback](const uint8_t index, const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
@@ -369,28 +356,30 @@ namespace serial {
 
 #ifdef ARDUINOJSON_VERSION
 
-            template <size_t N>
-            inline void subscribe(StreamType& stream, const uint8_t index, std::function<void(const StaticJsonDocument<N>&)>&& callback) {
+            template <typename S, size_t N>
+            inline void subscribe(S& stream, const uint8_t index, std::function<void(const StaticJsonDocument<N>&)>&& callback) {
                 Packetizer::subscribe(stream, index,
                     [&, callback](const uint8_t* data, const size_t) {
                         subscribe_staticjson(data, callback);
                     });
             }
-            inline void subscribe(StreamType& stream, const uint8_t index, std::function<void(const DynamicJsonDocument&)>&& callback) {
+            template <typename S>
+            inline void subscribe(S& stream, const uint8_t index, std::function<void(const DynamicJsonDocument&)>&& callback) {
                 Packetizer::subscribe(stream, index,
                     [&, callback](const uint8_t* data, const size_t size) {
                         deserialize_dynamicjson(data, size, callback);
                     });
             }
 
-            template <size_t N>
-            inline void subscribe(StreamType& stream, std::function<void(const uint8_t, const StaticJsonDocument<N>&)>&& callback) {
+            template <typename S, size_t N>
+            inline void subscribe(S& stream, std::function<void(const uint8_t, const StaticJsonDocument<N>&)>&& callback) {
                 Packetizer::subscribe(stream,
                     [&, callback](const uint8_t index, const uint8_t* data, const size_t) {
                         subscribe_staticjson_index(index, data, callback);
                     });
             }
-            inline void subscribe(StreamType& stream, std::function<void(const uint8_t, const DynamicJsonDocument&)>&& callback) {
+            template <typename S>
+            inline void subscribe(S& stream, std::function<void(const uint8_t, const DynamicJsonDocument&)>&& callback) {
                 Packetizer::subscribe(stream,
                     [&, callback](const uint8_t index, const uint8_t* data, const size_t size) {
                         deserialize_dynamicjson_index(index, data, size, callback);
@@ -401,262 +390,39 @@ namespace serial {
 
         }  // namespace detail
 
-        template <typename F>
-        inline auto subscribe(StreamType& stream, const uint8_t index, F&& callback)
+        template <typename S, typename F>
+        inline auto subscribe(S& stream, const uint8_t index, F&& callback)
             -> std::enable_if_t<arx::is_callable<F>::value> {
             detail::subscribe(stream, index, arx::function_traits<F>::cast(std::move(callback)));
         }
 
-        template <typename F>
-        inline auto subscribe(StreamType& stream, F&& callback)
+        template <typename S, typename F>
+        inline auto subscribe(S& stream, F&& callback)
             -> std::enable_if_t<arx::is_callable<F>::value> {
             detail::subscribe(stream, arx::function_traits<F>::cast(std::move(callback)));
         }
 
-        void unsubscribe(const StreamType& stream, const uint8_t index) {
+        template <typename S>
+        inline void unsubscribe(const S& stream, const uint8_t index) {
             Packetizer::unsubscribe(stream, index);
         }
 
-        void unsubscribe(const StreamType& stream) {
+        template <typename S>
+        inline void unsubscribe(const S& stream) {
             Packetizer::unsubscribe(stream);
         }
 
-        inline UnpackerRef getUnpackerRef(const StreamType& stream) {
+        template <typename S>
+        inline UnpackerRef getUnpackerRef(const S& stream) {
             return UnpackerManager::getInstance().getUnpackerRef(stream);
-        }
-
-#ifdef MSGPACKETIZER_ENABLE_NETWORK
-
-        template <typename... Args>
-        inline void subscribe(UDP& stream, const uint8_t index, Args&&... args) {
-            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
-                auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
-                unpacker->clear();
-                unpacker->feed(data, size);
-                unpacker->deserialize(std::forward<Args>(args)...);
-            });
-        }
-        template <typename... Args>
-        inline void subscribe(Client& stream, const uint8_t index, Args&&... args) {
-            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
-                auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
-                unpacker->clear();
-                unpacker->feed(data, size);
-                unpacker->deserialize(std::forward<Args>(args)...);
-            });
-        }
-
-        template <typename... Args>
-        inline void subscribe_arr(UDP& stream, const uint8_t index, Args&&... args) {
-            static MsgPack::arr_size_t sz;
-            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
-                auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
-                unpacker->clear();
-                unpacker->feed(data, size);
-                unpacker->deserialize(sz, std::forward<Args>(args)...);
-            });
-        }
-        template <typename... Args>
-        inline void subscribe_arr(Client& stream, const uint8_t index, Args&&... args) {
-            static MsgPack::arr_size_t sz;
-            Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
-                auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
-                unpacker->clear();
-                unpacker->feed(data, size);
-                unpacker->deserialize(sz, std::forward<Args>(args)...);
-            });
-        }
-
-        template <typename... Args>
-        inline void subscribe_map(UDP& stream, const uint8_t index, Args&&... args) {
-            if ((sizeof...(args) % 2) == 0) {
-                static MsgPack::map_size_t sz;
-                Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
-                    auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
-                    unpacker->clear();
-                    unpacker->feed(data, size);
-                    unpacker->deserialize(sz, std::forward<Args>(args)...);
-                });
-            } else {
-                LOG_WARN(F("deserialize arg size must be even for map :"), sizeof...(args));
-            }
-        }
-        template <typename... Args>
-        inline void subscribe_map(Client& stream, const uint8_t index, Args&&... args) {
-            if ((sizeof...(args) % 2) == 0) {
-                static MsgPack::map_size_t sz;
-                Packetizer::subscribe(stream, index, [&](const uint8_t* data, const size_t size) {
-                    auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
-                    unpacker->clear();
-                    unpacker->feed(data, size);
-                    unpacker->deserialize(sz, std::forward<Args>(args)...);
-                });
-            } else {
-                LOG_WARN(F("deserialize arg size must be even for map :"), sizeof...(args));
-            }
-        }
-
-        namespace detail {
-            template <typename R, typename... Args>
-            inline void subscribe(UDP& stream, const uint8_t index, std::function<R(Args...)>&& callback) {
-                Packetizer::subscribe(stream, index,
-                    [&, callback](const uint8_t* data, const size_t size) {
-                        auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
-                        unpacker->clear();
-                        unpacker->feed(data, size);
-                        std::tuple<std::remove_cvref_t<Args>...> t;
-                        unpacker->to_tuple(t);
-                        std::apply(callback, t);
-                    });
-            }
-            template <typename R, typename... Args>
-            inline void subscribe(Client& stream, const uint8_t index, std::function<R(Args...)>&& callback) {
-                Packetizer::subscribe(stream, index,
-                    [&, callback](const uint8_t* data, const size_t size) {
-                        auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
-                        unpacker->clear();
-                        unpacker->feed(data, size);
-                        std::tuple<std::remove_cvref_t<Args>...> t;
-                        unpacker->to_tuple(t);
-                        std::apply(callback, t);
-                    });
-            }
-
-            template <typename R, typename... Args>
-            inline void subscribe(UDP& stream, std::function<R(Args...)>&& callback) {
-                Packetizer::subscribe(stream,
-                    [&, callback](const uint8_t index, const uint8_t* data, const size_t size) {
-                        auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
-                        unpacker->clear();
-                        unpacker->feed(data, size);
-                        callback(index, *unpacker);
-                    });
-            }
-            template <typename R, typename... Args>
-            inline void subscribe(Client& stream, std::function<R(Args...)>&& callback) {
-                Packetizer::subscribe(stream,
-                    [&, callback](const uint8_t index, const uint8_t* data, const size_t size) {
-                        auto unpacker = UnpackerManager::getInstance().getUnpackerRef(stream);
-                        unpacker->clear();
-                        unpacker->feed(data, size);
-                        callback(index, *unpacker);
-                    });
-            }
-
-#ifdef ARDUINOJSON_VERSION
-
-            template <size_t N>
-            inline void subscribe(UDP& stream, const uint8_t index, std::function<void(const StaticJsonDocument<N>&)>&& callback) {
-                Packetizer::subscribe(stream, index,
-                    [&, callback](const uint8_t* data, const size_t) {
-                        subscribe_staticjson(data, callback);
-                    });
-            }
-            inline void subscribe(UDP& stream, const uint8_t index, std::function<void(const DynamicJsonDocument&)>&& callback) {
-                Packetizer::subscribe(stream, index,
-                    [&, callback](const uint8_t* data, const size_t size) {
-                        deserialize_dynamicjson(data, size, callback);
-                    });
-            }
-            template <size_t N>
-            inline void subscribe(Client& stream, const uint8_t index, std::function<void(const StaticJsonDocument<N>&)>&& callback) {
-                Packetizer::subscribe(stream, index,
-                    [&, callback](const uint8_t* data, const size_t) {
-                        subscribe_staticjson(data, callback);
-                    });
-            }
-            inline void subscribe(Client& stream, const uint8_t index, std::function<void(const DynamicJsonDocument&)>&& callback) {
-                Packetizer::subscribe(stream, index,
-                    [&, callback](const uint8_t* data, const size_t size) {
-                        deserialize_dynamicjson(data, size, callback);
-                    });
-            }
-
-            template <size_t N>
-            inline void subscribe(UDP& stream, std::function<void(const uint8_t, const StaticJsonDocument<N>&)>&& callback) {
-                Packetizer::subscribe(stream,
-                    [&, callback](const uint8_t index, const uint8_t* data, const size_t) {
-                        subscribe_staticjson_index(index, data, callback);
-                    });
-            }
-            inline void subscribe(UDP& stream, std::function<void(const uint8_t, const DynamicJsonDocument&)>&& callback) {
-                Packetizer::subscribe(stream,
-                    [&, callback](const uint8_t index, const uint8_t* data, const size_t size) {
-                        deserialize_dynamicjson_index(index, data, size, callback);
-                    });
-            }
-            template <size_t N>
-            inline void subscribe(Client& stream, std::function<void(const uint8_t, const StaticJsonDocument<N>&)>&& callback) {
-                Packetizer::subscribe(stream,
-                    [&, callback](const uint8_t index, const uint8_t* data, const size_t) {
-                        subscribe_staticjson_index(index, data, callback);
-                    });
-            }
-            inline void subscribe(Client& stream, std::function<void(const uint8_t, const DynamicJsonDocument&)>&& callback) {
-                Packetizer::subscribe(stream,
-                    [&, callback](const uint8_t index, const uint8_t* data, const size_t size) {
-                        deserialize_dynamicjson_index(index, data, size, callback);
-                    });
-            }
-
-#endif
-        }  // namespace detail
-
-        template <typename F>
-        inline auto subscribe(UDP& stream, const uint8_t index, F&& callback)
-            -> std::enable_if_t<arx::is_callable<F>::value> {
-            detail::subscribe(stream, index, arx::function_traits<F>::cast(std::move(callback)));
-        }
-        template <typename F>
-        inline auto subscribe(Client& stream, const uint8_t index, F&& callback)
-            -> std::enable_if_t<arx::is_callable<F>::value> {
-            detail::subscribe(stream, index, arx::function_traits<F>::cast(std::move(callback)));
-        }
-
-        template <typename F>
-        inline auto subscribe(UDP& stream, F&& callback)
-            -> std::enable_if_t<arx::is_callable<F>::value> {
-            detail::subscribe(stream, arx::function_traits<F>::cast(std::move(callback)));
-        }
-        template <typename F>
-        inline auto subscribe(Client& stream, F&& callback)
-            -> std::enable_if_t<arx::is_callable<F>::value> {
-            detail::subscribe(stream, arx::function_traits<F>::cast(std::move(callback)));
-        }
-
-        template <typename F>
-        void unsubscribe(const UDP& stream, const uint8_t index) {
-            Packetizer::unsubscribe(stream, index);
-        }
-        template <typename F>
-        void unsubscribe(const Client& stream, const uint8_t index) {
-            Packetizer::unsubscribe(stream, index);
-        }
-
-        template <typename F>
-        void unsubscribe(const UDP& stream) {
-            Packetizer::unsubscribe(stream);
-        }
-        template <typename F>
-        void unsubscribe(const Client& stream) {
-            Packetizer::unsubscribe(stream);
-        }
-
-        inline UnpackerRef getUnpackerRef(const UDP& stream) {
-            return UnpackerManager::getInstance().getUnpackerRef(stream);
-        }
-        inline UnpackerRef getUnpackerRef(const Client& stream) {
-            return UnpackerManager::getInstance().getUnpackerRef(stream);
-        }
-
-#endif  // MSGPACKETIZER_ENABLE_NETWORK
-
-        inline void parse(bool b_exec_cb = true) {
-            Packetizer::parse(b_exec_cb);
         }
 
         inline UnpackerMap& getUnpackerMap() {
             return UnpackerManager::getInstance().getUnpackerMap();
+        }
+
+        inline void parse(bool b_exec_cb = true) {
+            Packetizer::parse(b_exec_cb);
         }
 
         inline void update(bool b_exec_cb = true) {

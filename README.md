@@ -305,73 +305,61 @@ Currently we cannot calculate the json size from msgpack format before deseriali
 
 ``` C++
 namespace MsgPacketizer {
+
+    // ----- for unsupported communication interface with manual operation -----
+
     // bind variables directly to specified index packet
     template <typename... Args>
-    inline void subscribe(StreamType& stream, const uint8_t index, Args&... args);
+    inline void subscribe(const uint8_t index, Args&&... args);
     // bind variables directly to specified index packet with array format
     template <typename... Args>
-    inline void subscribe_arr(StreamType& stream, const uint8_t index, Args&... args);
+    inline void subscribe_arr(const uint8_t index, Args&&... args);
     // bind variables directly to specified index packet with map format
     template <typename... Args>
-    inline void subscribe_map(StreamType& stream, const uint8_t index, Args&... args);
+    inline void subscribe_map(const uint8_t index, Args&&... args);
     // bind callback to specified index packet
     template <typename F>
-    inline void subscribe(StreamType& stream, const uint8_t index, const F& callback);
+    inline void subscribe(const uint8_t index, F&& callback);
     // bind callback which is always called regardless of index
     template <typename F>
-    inline void subscribe(StreamType& stream, const F& callback);
-    // for manual data passing
-    template <typename... Args>
-    inline void subscribe(const uint8_t index, Args&&... args);
-    template <typename... Args>
-    inline void subscribe_arr(const uint8_t index, Args&&... args);
-    template <typename... Args>
-    inline void subscribe_map(const uint8_t index, Args&&... args);
-    template <typename F>
-    inline auto subscribe(const uint8_t index, F&& callback);
-    template <typename F>
-    inline auto subscribe(F&& callback);
+    inline void subscribe(F&& callback);
     // unsubscribe
-    void unsubscribe(const StreamType& stream, const uint8_t index);
-    void unsubscribe(const StreamType& stream);
-    void unsubscribe(const uint8_t index);
-    // must be called to receive packets
-    inline void parse(bool b_exec_cb = true);
+    inline void unsubscribe(const uint8_t index);
+
     // must be called to manual decoding
     inline void feed(const uint8_t* data, const size_t size);
+
+{}
+    // ----- for supported communication interface (Arduino, oF, etc.) -----
+
+    template <typename S, typename... Args>
+    inline void subscribe(S& stream, const uint8_t index, Args&&... args);
+    template <typename S, typename... Args>
+    inline void subscribe_arr(S& stream, const uint8_t index, Args&&... args);
+    template <typename S, typename... Args>
+    inline void subscribe_map(S& stream, const uint8_t index, Args&&... args);
+    template <typename S, typename F>
+    inline void subscribe(S& stream, const uint8_t index, F&& callback);
+    template <typename S, typename F>
+    inline void subscribe(S& stream, F&& callback);
+    template <typename S>
+    inline void unsubscribe(const S& stream, const uint8_t index);
+    template <typename S>
+    inline void unsubscribe(const S& stream);
+    template <typename S>
+
     // get UnpackerRef = std::shared_ptr<MsgPack::Unpacker> of stream and handle it manually
-    inline UnpackerRef getUnpackerRef(const StreamType& stream);
-    // get map o unpackers and handle it manually
+    inline UnpackerRef getUnpackerRef(const S& stream);
+    // get map of unpackers and handle it manually
     inline UnpackerMap& getUnpackerMap();
 
-    // publish arguments periodically
-    template <typename... Args>
-    inline PublishElementRef publish(const StreamType& stream, const uint8_t index, Args&&... args);
-    // publish arguments periodically as array format
-    template <typename... Args>
-    inline PublishElementRef publish_arr(const StreamType& stream, const uint8_t index, Args&&... args);
-    // publish arguments periodically as map format
-    template <typename... Args>
-    inline PublishElementRef publish_map(const StreamType& stream, const uint8_t index, Args&&... args);
-    // unpublish
-    inline void unpublish(const StreamType& stream, const uint8_t index);
-    // must be called to publish data
-    inline void post();
-    // send arguments dilectly with variable types
-    template <typename... Args>
-    inline void send(StreamType& stream, const uint8_t index, Args&&... args);
-    // send binary data
-    inline void send(StreamType& stream, const uint8_t index, const uint8_t* data, const uint8_t size);
-    // send manually packed data
-    inline void send(StreamType& stream, const uint8_t index);
-    // get registerd publish element class
-    inline PublishElementRef getPublishElementRef(const StreamType& stream, const uint8_t index);
-    // send args as array format
-    template <typename... Args>
-    inline void send_arr(StreamType& stream, const uint8_t index, Args&&... args);
-    // send args as map format
-    template <typename... Args>
-    inline void send_map(StreamType& stream, const uint8_t index, Args&&... args);
+    // must be called to receive packets
+    inline void parse(bool b_exec_cb = true);
+    inline void update(bool b_exec_cb = true);
+
+
+    // ----- for unsupported communication interface with manual operation -----
+
     // encode arguments directly with variable types
     template <typename... Args>
     inline const Packetizer::Packet& encode(const uint8_t index, Args&&... args);
@@ -385,11 +373,66 @@ namespace MsgPacketizer {
     // encode args as map format
     template <typename... Args>
     inline const Packetizer::Packet& encode_map(const uint8_t index, Args&&... args);
+
+
+    // ----- for supported communication interface (Arduino, oF, etc.) -----
+
+    // send arguments dilectly with variable types
+    template <typename S, typename... Args>
+    inline void send(S& stream, const uint8_t index, Args&&... args);
+    // send binary data
+    template <typename S>
+    inline void send(S& stream, const uint8_t index, const uint8_t* data, const uint8_t size);
+    // send manually packed data
+    template <typename S>
+    inline void send(S& stream, const uint8_t index);
+    // send args as array format
+    template <typename S, typename... Args>
+    inline void send_arr(S& stream, const uint8_t index, Args&&... args);
+    // send args as map format
+    template <typename S, typename... Args>
+    inline void send_map(S& stream, const uint8_t index, Args&&... args);
+
+    // UDP version of send
+    template <typename... Args>
+    inline void send(UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args);
+    inline void send(UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, const uint8_t* data, const uint8_t size);
+    inline void send(UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index);
+    template <typename... Args>
+    inline void send_arr(UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args);
+    template <typename... Args>
+    inline void send_map(UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args);
+
+    // publish arguments periodically
+    template <typename S, typename... Args>
+    inline PublishElementRef publish(const S& stream, const uint8_t index, Args&&... args);
+    // publish arguments periodically as array format
+    template <typename S, typename... Args>
+    inline PublishElementRef publish_arr(const S& stream, const uint8_t index, Args&&... args);
+    // publish arguments periodically as map format
+    template <typename S, typename... Args>
+    inline PublishElementRef publish_map(const S& stream, const uint8_t index, Args&&... args);
+    // unpublish
+    template <typename S>
+    inline void unpublish(const S& stream, const uint8_t index);
+    // get registerd publish element class
+    template <typename S>
+    inline PublishElementRef getPublishElementRef(const S& stream, const uint8_t index);
+
+    // UDP version of publish
+    template <typename... Args>
+    inline PublishElementRef publish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args);
+    template <typename... Args>
+    inline PublishElementRef publish_arr(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args);
+    template <typename... Args>
+    inline PublishElementRef publish_map(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args);
+    inline void unpublish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index);
+    inline PublishElementRef getPublishElementRef(const UDP& stream, const uint8_t index);
+
+    // must be called to publish data
+    inline void post();
     // get MsgPack::Packer and handle it manually
     inline const MsgPack::Packer& getPacker();
-
-    // call parse() and post()
-    inline void update();
 }
 ```
 
