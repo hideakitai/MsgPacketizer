@@ -6,7 +6,7 @@
 #include <Arduino.h>
 #endif
 
-#if defined(ARDUINO) || defined(OF_VERSION_MAJOR)
+#if defined(ARDUINO) || defined(OF_VERSION_MAJOR) || defined(SERIAL_H)
 #define PACKETIZER_ENABLE_STREAM
 #ifdef ARDUINO  // TODO: support more platforms
 #if defined(ESP_PLATFORM) || defined(ESP8266) || defined(ARDUINO_AVR_UNO_WIFI_REV2) || defined(ARDUINO_SAMD_MKRWIFI1010) || defined(ARDUINO_SAMD_MKRVIDOR4000) || defined(ARDUINO_SAMD_MKR1000) || defined(ARDUINO_SAMD_NANO_33_IOT)

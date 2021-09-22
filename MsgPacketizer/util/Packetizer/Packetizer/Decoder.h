@@ -273,7 +273,11 @@ namespace serial {
                 }
             }
             void stream_read_to(StreamType* stream, uint8_t* data, const size_t size) {
+#ifdef SERIAL_H  // serial for catkin (ROS)
+                stream->read(data, size);
+#else
                 stream->readBytes((char*)data, size);
+#endif
             }
 #ifdef PACKETIZER_ENABLE_NETWORK
             void stream_read_to(UDP* stream, uint8_t* data, const size_t size) {

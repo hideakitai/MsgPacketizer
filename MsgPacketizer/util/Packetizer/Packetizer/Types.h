@@ -21,6 +21,10 @@ namespace serial {
 #elif defined(OF_VERSION_MAJOR)
         using StreamType = ofSerial;
 #define PACKETIZER_STREAM_WRITE(stream, data, size) stream.writeBytes(data, size);
+#elif defined(SERIAL_H)  // serial for catkin (ROS)
+        #include "serial/serial.h"
+        using StreamType = ::serial::Serial;
+#define PACKETIZER_STREAM_WRITE(stream, data, size) stream.write(data, size);
 #endif
 #endif  // PACKETIZER_ENABLE_STREAM
 
