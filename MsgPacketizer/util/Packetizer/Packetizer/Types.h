@@ -61,7 +61,7 @@ namespace serial {
         template <typename Encoding>
         using DecoderRef = std::shared_ptr<Decoder<Encoding>>;
 #ifdef PACKETIZER_ENABLE_STREAM
-        class DecodeTargetStream;
+        struct DecodeTargetStream;
         template <typename Encoding>
         using DecoderMap = std::map<DecodeTargetStream, DecoderRef<Encoding>>;
 #endif
@@ -102,7 +102,7 @@ namespace serial {
         template <typename Encoding>
         using DecoderRef = std::shared_ptr<Decoder<Encoding>>;
 #ifdef PACKETIZER_ENABLE_STREAM
-        class DecodeTargetStream;
+        struct DecodeTargetStream;
         template <typename Encoding>
         using DecoderMap = arx::map<DecodeTargetStream, DecoderRef<Encoding>, PACKETIZER_MAX_STREAM_MAP_SIZE>;
 #endif
