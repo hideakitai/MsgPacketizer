@@ -545,7 +545,7 @@ namespace serial {
         template <typename S>
         inline void unpublish(const S& stream, const uint8_t index) {
             PackerManager::getInstance().unpublish(stream, index);
-        };
+        }
 
         template <typename S>
         inline PublishElementRef getPublishElementRef(const S& stream, const uint8_t index) {
