@@ -7,7 +7,7 @@ namespace ht {
 namespace serial {
     namespace msgpacketizer {
 
-        class DecodeTargetStream;
+        struct DecodeTargetStream;
         using UnpackerRef = std::shared_ptr<MsgPack::Unpacker>;
 
 #ifdef MSGPACKETIZER_ENABLE_STREAM
