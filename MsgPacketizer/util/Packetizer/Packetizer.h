@@ -20,7 +20,7 @@
 
 #if defined(PACKETIZER_ENABLE_ETHER) || defined(PACKETIZER_ENABLE_WIFI)
 #define PACKETIZER_ENABLE_NETWORK
-#include <UDP.h>
+#include <Udp.h>
 #include <Client.h>
 #endif
 

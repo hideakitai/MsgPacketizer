@@ -17,7 +17,7 @@
 
 #if defined(MSGPACKETIZER_ENABLE_ETHER) || defined(MSGPACKETIZER_ENABLE_WIFI)
 #define MSGPACKETIZER_ENABLE_NETWORK
-#include <UDP.h>
+#include <Udp.h>
 #include <Client.h>
 #endif
 
