@@ -329,7 +329,7 @@ namespace MsgPacketizer {
     // must be called to manual decoding
     inline void feed(const uint8_t* data, const size_t size);
 
-{}
+
     // ----- for supported communication interface (Arduino, oF, etc.) -----
 
     template <typename S, typename... Args>
