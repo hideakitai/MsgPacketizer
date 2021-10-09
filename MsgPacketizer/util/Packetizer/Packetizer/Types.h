@@ -10,8 +10,7 @@
 #include "util/ArxContainer/ArxContainer.h"
 #include "util/ArxSmartPtr/ArxSmartPtr.h"
 
-namespace ht {
-namespace serial {
+namespace arduino {
     namespace packetizer {
 
 #ifdef PACKETIZER_ENABLE_STREAM
@@ -165,7 +164,6 @@ namespace serial {
               is_class<Base>::value && is_class<Derived>::value&& decltype(detail::test_pre_is_base_of<Base, Derived>(0))::value> {};
 
     }  // namespace packetizer
-}  // namespace serial
-}  // namespace ht
+}  // namespace arduino
 
 #endif  // HT_SERIAL_PACKETIZER_TYPES_H

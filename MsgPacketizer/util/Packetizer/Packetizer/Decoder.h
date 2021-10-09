@@ -2,8 +2,7 @@
 #ifndef HT_SERIAL_PACKETIZER_DECODER_H
 #define HT_SERIAL_PACKETIZER_DECODER_H
 
-namespace ht {
-namespace serial {
+namespace arduino {
     namespace packetizer {
 
         template <typename Encoding = DefaultEncoding>
@@ -448,7 +447,6 @@ namespace serial {
 #endif  // PACKETIZER_ENABLE_STREAM
 
     }  // namespace packetizer
-}  // namespace serial
-}  // namespace ht
+}  // namespace arduino
 
 #endif  // HT_SERIAL_PACKETIZER_DECODER_H

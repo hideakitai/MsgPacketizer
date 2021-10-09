@@ -10,10 +10,6 @@
 #include "ArxSmartPtr/detail/has_include.h"
 #include "ArxSmartPtr/detail/has_libstdcplusplus.h"
 
-#if ARX_HAVE_LIBSTDCPLUSPLUS < 201103L
-    #error "C++11 must be enabled in the compiler for this library to work, please check your compiler flags"
-#endif
-
 // Make sure std namespace exists
 namespace std { }
 

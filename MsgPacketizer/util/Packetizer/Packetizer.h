@@ -32,6 +32,6 @@
 #include "Packetizer/Encoder.h"
 #include "Packetizer/Decoder.h"
 
-namespace Packetizer = ht::serial::packetizer;
+namespace Packetizer = arduino::packetizer;
 
 #endif  // HT_SERIAL_PACKETIZER
