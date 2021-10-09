@@ -1,6 +1,6 @@
 # MsgPacketizer
 
-[msgpack](https://github.com/msgpack/msgpack-c) based serializer / deserializer + packetize for Arduino and more
+[msgpack](https://github.com/msgpack/msgpack-c) based serializer / deserializer + packetize for Arduino, ROS, and more
 
 
 ## Feature
