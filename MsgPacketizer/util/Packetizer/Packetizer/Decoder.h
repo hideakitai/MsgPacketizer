@@ -2,8 +2,7 @@
 #ifndef HT_SERIAL_PACKETIZER_DECODER_H
 #define HT_SERIAL_PACKETIZER_DECODER_H
 
-namespace ht {
-namespace serial {
+namespace arduino {
     namespace packetizer {
 
         template <typename Encoding = DefaultEncoding>
@@ -273,7 +272,11 @@ namespace serial {
                 }
             }
             void stream_read_to(StreamType* stream, uint8_t* data, const size_t size) {
+#ifdef SERIAL_H  // serial for catkin (ROS)
+                stream->read(data, size);
+#else
                 stream->readBytes((char*)data, size);
+#endif
             }
 #ifdef PACKETIZER_ENABLE_NETWORK
             void stream_read_to(UDP* stream, uint8_t* data, const size_t size) {
@@ -444,7 +447,6 @@ namespace serial {
 #endif  // PACKETIZER_ENABLE_STREAM
 
     }  // namespace packetizer
-}  // namespace serial
-}  // namespace ht
+}  // namespace arduino
 
 #endif  // HT_SERIAL_PACKETIZER_DECODER_H

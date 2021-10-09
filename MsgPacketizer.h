@@ -3,7 +3,7 @@
 #ifndef HT_SERIAL_MSGPACKETIZER_H
 #define HT_SERIAL_MSGPACKETIZER_H
 
-#if defined(ARDUINO) || defined(OF_VERSION_MAJOR)
+#if defined(ARDUINO) || defined(OF_VERSION_MAJOR) || defined(SERIAL_H)
 #define MSGPACKETIZER_ENABLE_STREAM
 #ifdef ARDUINO  // TODO: support more platforms
 #if defined(ESP_PLATFORM) || defined(ESP8266) || defined(ARDUINO_AVR_UNO_WIFI_REV2) || defined(ARDUINO_SAMD_MKRWIFI1010) || defined(ARDUINO_SAMD_MKRVIDOR4000) || defined(ARDUINO_SAMD_MKR1000) || defined(ARDUINO_SAMD_NANO_33_IOT)
@@ -70,8 +70,8 @@
 #include "MsgPacketizer/util/Packetizer/Packetizer.h"
 #include "MsgPacketizer/util/MsgPack/MsgPack.h"
 
-namespace ht {
-namespace serial {
+namespace arduino {
+namespace msgpack {
     namespace msgpacketizer {
 
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
@@ -86,6 +86,13 @@ namespace serial {
 #elif defined(OF_VERSION_MAJOR)
         using StreamType = ofSerial;
 #define MSGPACKETIZER_ELAPSED_MICROS ofGetElapsedTimeMicros
+#elif defined(SERIAL_H)
+        #include "serial/serial.h"
+        using StreamType = ::serial::Serial;
+        #include <chrono>
+        using namespace std::chrono;
+        steady_clock::time_point time_start {steady_clock::now()};
+#define MSGPACKETIZER_ELAPSED_MICROS() duration_cast<microseconds>(steady_clock::now() - time_start).count()
 #endif
 
 #ifdef ARDUINO
@@ -104,13 +111,13 @@ namespace serial {
         };
 
     }  // namespace msgpacketizer
-}  // namespace serial
-}  // namespace ht
+}  // namespace msgpack
+}  // namespace arduino
 
 #include "MsgPacketizer/Publisher.h"
 #include "MsgPacketizer/Subscriber.h"
 
-namespace MsgPacketizer = ht::serial::msgpacketizer;
+namespace MsgPacketizer = arduino::msgpack::msgpacketizer;
 
 #include "MsgPacketizer/util/MsgPack/MsgPack/util/DebugLog/DebugLogRestoreState.h"
 

@@ -28,8 +28,7 @@
 #include "Unpacker.h"
 #include "util/DebugLog/DebugLog.h"
 
-namespace ht {
-namespace serial {
+namespace arduino {
     namespace msgpack {
 
         class Packer {
@@ -1039,7 +1038,6 @@ namespace serial {
         };
 
     }  // namespace msgpack
-}  // namespace serial
-}  // namespace ht
+}  // namespace arduino
 
 #endif  // HT_SERIAL_MSGPACK_PACKER_H

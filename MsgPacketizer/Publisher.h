@@ -3,8 +3,8 @@
 #ifndef HT_SERIAL_MSGPACKETIZER_PUBLISHER_H
 #define HT_SERIAL_MSGPACKETIZER_PUBLISHER_H
 
-namespace ht {
-namespace serial {
+namespace arduino {
+namespace msgpack {
     namespace msgpacketizer {
 
         namespace element {
@@ -545,7 +545,7 @@ namespace serial {
         template <typename S>
         inline void unpublish(const S& stream, const uint8_t index) {
             PackerManager::getInstance().unpublish(stream, index);
-        };
+        }
 
         template <typename S>
         inline PublishElementRef getPublishElementRef(const S& stream, const uint8_t index) {
@@ -590,6 +590,7 @@ namespace serial {
         }
 
     }  // namespace msgpacketizer
-}  // namespace serial
-}  // namespace ht
+}  // namespace msgpack
+}  // namespace arduino
+
 #endif  // HT_SERIAL_MSGPACKETIZER_PUBLISHER_H

@@ -7,8 +7,7 @@
 #include "util/ArxTypeTraits/ArxTypeTraits.h"
 #include "util/ArxSmartPtr/ArxSmartPtr.h"
 
-namespace ht {
-namespace serial {
+namespace arduino {
     namespace packetizer {
 
         namespace encoding {
@@ -316,7 +315,6 @@ namespace serial {
         }
 
     }  // namespace packetizer
-}  // namespace serial
-}  // namespace ht
+}  // namespace arduino
 
 #endif  // HT_SERIAL_PACKETIZER_ENCODING_H

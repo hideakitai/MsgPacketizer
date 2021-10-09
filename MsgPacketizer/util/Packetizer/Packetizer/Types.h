@@ -10,8 +10,7 @@
 #include "util/ArxContainer/ArxContainer.h"
 #include "util/ArxSmartPtr/ArxSmartPtr.h"
 
-namespace ht {
-namespace serial {
+namespace arduino {
     namespace packetizer {
 
 #ifdef PACKETIZER_ENABLE_STREAM
@@ -21,6 +20,10 @@ namespace serial {
 #elif defined(OF_VERSION_MAJOR)
         using StreamType = ofSerial;
 #define PACKETIZER_STREAM_WRITE(stream, data, size) stream.writeBytes(data, size);
+#elif defined(SERIAL_H)  // serial for catkin (ROS)
+        #include "serial/serial.h"
+        using StreamType = ::serial::Serial;
+#define PACKETIZER_STREAM_WRITE(stream, data, size) stream.write(data, size);
 #endif
 #endif  // PACKETIZER_ENABLE_STREAM
 
@@ -61,7 +64,7 @@ namespace serial {
         template <typename Encoding>
         using DecoderRef = std::shared_ptr<Decoder<Encoding>>;
 #ifdef PACKETIZER_ENABLE_STREAM
-        class DecodeTargetStream;
+        struct DecodeTargetStream;
         template <typename Encoding>
         using DecoderMap = std::map<DecodeTargetStream, DecoderRef<Encoding>>;
 #endif
@@ -102,7 +105,7 @@ namespace serial {
         template <typename Encoding>
         using DecoderRef = std::shared_ptr<Decoder<Encoding>>;
 #ifdef PACKETIZER_ENABLE_STREAM
-        class DecodeTargetStream;
+        struct DecodeTargetStream;
         template <typename Encoding>
         using DecoderMap = arx::map<DecodeTargetStream, DecoderRef<Encoding>, PACKETIZER_MAX_STREAM_MAP_SIZE>;
 #endif
@@ -161,7 +164,6 @@ namespace serial {
               is_class<Base>::value && is_class<Derived>::value&& decltype(detail::test_pre_is_base_of<Base, Derived>(0))::value> {};
 
     }  // namespace packetizer
-}  // namespace serial
-}  // namespace ht
+}  // namespace arduino
 
 #endif  // HT_SERIAL_PACKETIZER_TYPES_H
