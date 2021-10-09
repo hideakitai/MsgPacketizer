@@ -4,7 +4,7 @@
 #define ARX_TYPE_TRAITS_HAS_LIBSTDCPLUSPLUS_H
 
 #if !defined(ARX_HAVE_LIBSTDCPLUSPLUS)
-    #if ARX_SYSTEM_HAS_INCLUDE(<cstdlib>)
+    #if ARX_SYSTEM_HAS_INCLUDE(<cstdlib>) && !defined(ARDUINO_spresense_ast)
         #include <cstdlib>
         #if defined(__GLIBCXX__) || defined(_LIBCPP_VERSION)
             // For gcc's libstdc++ and clang's libc++, assume that
