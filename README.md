@@ -12,6 +12,7 @@
 - support working with [ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
 - [serializer/deserializer] based on [MsgPack](https://github.com/hideakitai/MsgPack)
 - packetize based on [Packetizer](https://github.com/hideakitai/Packetizer)
+- working also in ROS with [serial](https://github.com/wjwwood/serial) and [serial-ros2](https://github.com/RoverRobotics-forks/serial-ros2)
 
 
 ## Packet Protocol
