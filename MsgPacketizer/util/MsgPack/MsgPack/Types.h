@@ -25,8 +25,7 @@ static constexpr uint8_t INT5 = INT5_TEMP_VALUE;
 #include "util/ArxTypeTraits/ArxTypeTraits.h"
 #include "util/ArxContainer/ArxContainer.h"
 
-namespace ht {
-namespace serial {
+namespace arduino {
     namespace msgpack {
 
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
@@ -234,8 +233,7 @@ namespace serial {
         using has_from_msgpack = arx::is_detected<has_from_msgpack_impl, ClassType, ArgType>;
 
     }  // namespace msgpack
-}  // namespace serial
-}  // namespace ht
+}  // namespace arduino
 
 #define MSGPACK_DEFINE(...)                          \
     void to_msgpack(MsgPack::Packer& packer) const { \

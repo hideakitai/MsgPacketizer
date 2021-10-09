@@ -3,8 +3,8 @@
 #ifndef HT_SERIAL_MSGPACKETIZER_SUBSCRIBER_H
 #define HT_SERIAL_MSGPACKETIZER_SUBSCRIBER_H
 
-namespace ht {
-namespace serial {
+namespace arduino {
+namespace msgpack {
     namespace msgpacketizer {
 
         struct DecodeTargetStream;
@@ -433,7 +433,7 @@ namespace serial {
 #endif  // MSGPACKETIZER_ENABLE_STREAM
 
     }  // namespace msgpacketizer
-}  // namespace serial
-}  // namespace ht
+}  // namespace msgpack
+}  // namespace arduino
 
 #endif  // HT_SERIAL_MSGPACKETIZER_SUBSCRIBER_H

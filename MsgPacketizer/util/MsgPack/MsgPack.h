@@ -13,7 +13,7 @@
 #include "MsgPack/Packer.h"
 #include "MsgPack/Unpacker.h"
 
-namespace MsgPack = ht::serial::msgpack;
+namespace MsgPack = arduino::msgpack;
 
 #include "MsgPack/util/DebugLog/DebugLogRestoreState.h"
 

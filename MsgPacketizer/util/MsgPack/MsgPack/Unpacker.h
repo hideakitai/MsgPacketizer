@@ -27,8 +27,7 @@
 #include "Types.h"
 #include "util/DebugLog/DebugLog.h"
 
-namespace ht {
-namespace serial {
+namespace arduino {
     namespace msgpack {
 
         class Unpacker {
@@ -1936,7 +1935,6 @@ namespace serial {
         };
 
     }  // namespace msgpack
-}  // namespace serial
-}  // namespace ht
+}  // namespace arduino
 
 #endif  // HT_SERIAL_MSGPACK_UNPACKER_H

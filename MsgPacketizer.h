@@ -70,8 +70,8 @@
 #include "MsgPacketizer/util/Packetizer/Packetizer.h"
 #include "MsgPacketizer/util/MsgPack/MsgPack.h"
 
-namespace ht {
-namespace serial {
+namespace arduino {
+namespace msgpack {
     namespace msgpacketizer {
 
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
@@ -111,13 +111,13 @@ namespace serial {
         };
 
     }  // namespace msgpacketizer
-}  // namespace serial
-}  // namespace ht
+}  // namespace msgpack
+}  // namespace arduino
 
 #include "MsgPacketizer/Publisher.h"
 #include "MsgPacketizer/Subscriber.h"
 
-namespace MsgPacketizer = ht::serial::msgpacketizer;
+namespace MsgPacketizer = arduino::msgpack::msgpacketizer;
 
 #include "MsgPacketizer/util/MsgPack/MsgPack/util/DebugLog/DebugLogRestoreState.h"
 
