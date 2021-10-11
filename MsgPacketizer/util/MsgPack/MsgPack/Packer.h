@@ -36,6 +36,10 @@ namespace arduino {
             size_t n_indices {0};
 
         public:
+            void reserve_buffer(const size_t size) {
+                buffer.reserve(size);
+            }
+
             template <typename First, typename... Rest>
             auto serialize(const First& first, Rest&&... rest)
                 -> typename std::enable_if<

@@ -494,6 +494,9 @@ I reccomend to use low cost but much better performance chip like ESP series.
 ### MsgPack::Packer
 
 ``` C++
+// reserve internal buffer
+void reserve_buffer(const size_t size);
+
 // variable sized serializer for any type
 template <typename First, typename ...Rest>
 void serialize(const First& first, Rest&&... rest);
@@ -618,6 +621,9 @@ void packTimestamp96(const int64_t unix_time_sec, const uint32_t unix_time_nsec)
 ### MsgPack::Unpacker
 
 ``` C++
+// reserve internal buffer for indices
+void reserve_indices(const size_t size);
+
 // feed data to deserialize
 bool feed(const uint8_t* data, size_t size);
 

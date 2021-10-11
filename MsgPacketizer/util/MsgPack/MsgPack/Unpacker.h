@@ -43,6 +43,10 @@ namespace arduino {
     }
 
         public:
+            void reserve_indices(const size_t size) {
+                indices.reserve(size);
+            }
+
             bool feed(const uint8_t* data, const size_t size) {
                 raw_data = (uint8_t*)data;
                 for (size_t i = 0; i < size; i += getElementSize(indices.size() - 1))
