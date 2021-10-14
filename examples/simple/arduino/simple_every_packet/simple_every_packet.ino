@@ -13,9 +13,9 @@ void setup() {
         [&](const uint8_t index, MsgPack::Unpacker& unpacker) {
             // input to msgpack
             MsgPack::arr_size_t sz;
-            int i;
-            float f;
-            String s;
+            int i = 0;
+            float f = 0.f;
+            String s = "";
 
             // manually deserialize packet and modify
             unpacker.deserialize(sz, i, f, s);

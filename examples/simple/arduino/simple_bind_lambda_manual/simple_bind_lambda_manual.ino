@@ -11,7 +11,7 @@ void setup() {
     // - only one interface (serial, udp, tcp, etc.) is available for manual subscription
     //   because MsgPacketizer cannot indetify which data is from which device
     // - publisher is not available for unsupported data stream (manual operation)
-    MsgPacketizer::subscribe(recv_index,
+    MsgPacketizer::subscribe_manual(recv_index,
         [&](const MsgPack::arr_size_t& sz, const int i, const float f, const String& s) {
             if (sz.size() == 3)  // if array size is correct
             {

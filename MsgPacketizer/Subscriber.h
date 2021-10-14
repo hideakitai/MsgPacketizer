@@ -172,10 +172,11 @@ namespace msgpack {
 
 #endif  // ARDUINOJSON_VERSION
 
-        // for unsupported communication interface with manual operation
+        // ----- for unsupported communication interface with manual operation -----
 
+        // bind variables directly to specified index packet
         template <typename... Args>
-        inline void subscribe(const uint8_t index, Args&&... args) {
+        inline void subscribe_manual(const uint8_t index, Args&&... args) {
             Packetizer::subscribe(index, [&](const uint8_t* data, const size_t size) {
                 auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
                 unpacker->clear();
@@ -184,8 +185,9 @@ namespace msgpack {
             });
         }
 
+        // bind variables directly to specified index packet with array format
         template <typename... Args>
-        inline void subscribe_arr(const uint8_t index, Args&&... args) {
+        inline void subscribe_manual_arr(const uint8_t index, Args&&... args) {
             static MsgPack::arr_size_t sz;
             Packetizer::subscribe(index, [&](const uint8_t* data, const size_t size) {
                 auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
@@ -195,8 +197,9 @@ namespace msgpack {
             });
         }
 
+        // bind variables directly to specified index packet with map format
         template <typename... Args>
-        inline void subscribe_map(const uint8_t index, Args&&... args) {
+        inline void subscribe_manual_map(const uint8_t index, Args&&... args) {
             if ((sizeof...(args) % 2) == 0) {
                 static MsgPack::map_size_t sz;
                 Packetizer::subscribe(index, [&](const uint8_t* data, const size_t size) {
@@ -212,7 +215,7 @@ namespace msgpack {
 
         namespace detail {
             template <typename R, typename... Args>
-            inline void subscribe(const uint8_t index, std::function<R(Args...)>&& callback) {
+            inline void subscribe_manual(const uint8_t index, std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(index,
                     [&, callback](const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
@@ -225,7 +228,7 @@ namespace msgpack {
             }
 
             template <typename R, typename... Args>
-            inline void subscribe(std::function<R(Args...)>&& callback) {
+            inline void subscribe_manual(std::function<R(Args...)>&& callback) {
                 Packetizer::subscribe(
                     [&, callback](const uint8_t index, const uint8_t* data, const size_t size) {
                         auto unpacker = UnpackerManager::getInstance().getUnpackerRef();
@@ -238,13 +241,13 @@ namespace msgpack {
 #ifdef ARDUINOJSON_VERSION
 
             template <size_t N>
-            inline void subscribe(const uint8_t index, std::function<void(const StaticJsonDocument<N>&)>&& callback) {
+            inline void subscribe_manual(const uint8_t index, std::function<void(const StaticJsonDocument<N>&)>&& callback) {
                 Packetizer::subscribe(index,
                     [&, callback](const uint8_t* data, const size_t) {
                         subscribe_staticjson(data, callback);
                     });
             }
-            inline void subscribe(const uint8_t index, std::function<void(const DynamicJsonDocument&)>&& callback) {
+            inline void subscribe_manual(const uint8_t index, std::function<void(const DynamicJsonDocument&)>&& callback) {
                 Packetizer::subscribe(index,
                     [&, callback](const uint8_t* data, const size_t size) {
                         deserialize_dynamicjson(data, size, callback);
@@ -252,13 +255,13 @@ namespace msgpack {
             }
 
             template <size_t N>
-            inline void subscribe(std::function<void(const uint8_t, const StaticJsonDocument<N>&)>&& callback) {
+            inline void subscribe_manual(std::function<void(const uint8_t, const StaticJsonDocument<N>&)>&& callback) {
                 Packetizer::subscribe(
                     [&, callback](const uint8_t index, const uint8_t* data, const size_t) {
                         subscribe_staticjson_index(index, data, callback);
                     });
             }
-            inline void subscribe(std::function<void(const uint8_t, const DynamicJsonDocument&)>&& callback) {
+            inline void subscribe_manual(std::function<void(const uint8_t, const DynamicJsonDocument&)>&& callback) {
                 Packetizer::subscribe(
                     [&, callback](const uint8_t index, const uint8_t* data, const size_t size) {
                         deserialize_dynamicjson_index(index, data, size, callback);
@@ -269,29 +272,33 @@ namespace msgpack {
 
         }  // namespace detail
 
+        // bind callback to specified index packet
         template <typename F>
-        inline auto subscribe(const uint8_t index, F&& callback)
+        inline auto subscribe_manual(const uint8_t index, F&& callback)
             -> std::enable_if_t<arx::is_callable<F>::value> {
-            detail::subscribe(index, arx::function_traits<F>::cast(std::move(callback)));
+            detail::subscribe_manual(index, arx::function_traits<F>::cast(std::move(callback)));
         }
 
+        // bind callback which is always called regardless of index
         template <typename F>
-        inline auto subscribe(F&& callback)
+        inline auto subscribe_manual(F&& callback)
             -> std::enable_if_t<arx::is_callable<F>::value> {
-            detail::subscribe(arx::function_traits<F>::cast(std::move(callback)));
+            detail::subscribe_manual(arx::function_traits<F>::cast(std::move(callback)));
         }
 
-        inline void unsubscribe(const uint8_t index) {
+        // unsubscribe
+        inline void unsubscribe_manual(const uint8_t index) {
             Packetizer::unsubscribe(index);
         }
 
+        // feed packet manually: must be called to manual decoding
         inline void feed(const uint8_t* data, const size_t size) {
             Packetizer::feed(data, size);
         }
 
 #ifdef MSGPACKETIZER_ENABLE_STREAM
 
-        // for supported communication interface (Arduino, oF)
+        // ----- for supported communication interface (Arduino, oF, ROS) -----
 
         template <typename S, typename... Args>
         inline void subscribe(S& stream, const uint8_t index, Args&&... args) {
