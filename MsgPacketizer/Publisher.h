@@ -12,11 +12,21 @@ namespace msgpack {
                 uint32_t last_publish_us {0};
                 uint32_t interval_us {33333};  // 30 fps
 
-                bool next() const { return MSGPACKETIZER_ELAPSED_MICROS() >= (last_publish_us + interval_us); }
-                void setFrameRate(float fps) { interval_us = (uint32_t)(1000000.f / fps); }
-                void setIntervalUsec(const uint32_t us) { interval_us = us; }
-                void setIntervalMsec(const float ms) { interval_us = (uint32_t)(ms * 1000.f); }
-                void setIntervalSec(const float sec) { interval_us = (uint32_t)(sec * 1000.f * 1000.f); }
+                bool next() const {
+                    return MSGPACKETIZER_ELAPSED_MICROS() >= (last_publish_us + interval_us);
+                }
+                void setFrameRate(float fps) {
+                    interval_us = (uint32_t)(1000000.f / fps);
+                }
+                void setIntervalUsec(const uint32_t us) {
+                    interval_us = us;
+                }
+                void setIntervalMsec(const float ms) {
+                    interval_us = (uint32_t)(ms * 1000.f);
+                }
+                void setIntervalSec(const float sec) {
+                    interval_us = (uint32_t)(sec * 1000.f * 1000.f);
+                }
 
                 virtual ~Base() {}
                 virtual void encodeTo(MsgPack::Packer& p) = 0;
@@ -34,10 +44,11 @@ namespace msgpack {
                 T& t;
 
             public:
-                Value(T& t)
-                : t(t) {}
+                Value(T& t) : t(t) {}
                 virtual ~Value() {}
-                virtual void encodeTo(MsgPack::Packer& p) override { p.pack(t); }
+                virtual void encodeTo(MsgPack::Packer& p) override {
+                    p.pack(t);
+                }
             };
 
             template <typename T>
@@ -45,10 +56,11 @@ namespace msgpack {
                 const T t;
 
             public:
-                Const(const T& t)
-                : t(t) {}
+                Const(const T& t) : t(t) {}
                 virtual ~Const() {}
-                virtual void encodeTo(MsgPack::Packer& p) override { p.pack(t); }
+                virtual void encodeTo(MsgPack::Packer& p) override {
+                    p.pack(t);
+                }
             };
 
             template <typename T>
@@ -56,18 +68,18 @@ namespace msgpack {
                 std::function<T()> getter;
 
             public:
-                Function(const std::function<T()>& getter)
-                : getter(getter) {}
+                Function(const std::function<T()>& getter) : getter(getter) {}
                 virtual ~Function() {}
-                virtual void encodeTo(MsgPack::Packer& p) override { p.pack(getter()); }
+                virtual void encodeTo(MsgPack::Packer& p) override {
+                    p.pack(getter());
+                }
             };
 
             class Tuple : public Base {
                 TupleRef ts;
 
             public:
-                Tuple(TupleRef&& ts)
-                : ts(std::move(ts)) {}
+                Tuple(TupleRef&& ts) : ts(std::move(ts)) {}
                 virtual ~Tuple() {}
                 virtual void encodeTo(MsgPack::Packer& p) override {
                     for (auto& t : ts) t->encodeTo(p);
@@ -80,8 +92,7 @@ namespace msgpack {
         using ElementTupleRef = element::TupleRef;
 
         template <typename T>
-        inline auto make_element_ref(T& value)
-            -> std::enable_if_t<!arx::is_callable<T>::value, PublishElementRef> {
+        inline auto make_element_ref(T& value) -> std::enable_if_t<!arx::is_callable<T>::value, PublishElementRef> {
             return PublishElementRef(new element::Value<T>(value));
         }
 
@@ -121,10 +132,19 @@ namespace msgpack {
             Destination(const Destination& dest)
             : stream(dest.stream), type(dest.type), index(dest.index), ip(dest.ip), port(dest.port) {}
             Destination(Destination&& dest)
-            : stream(std::move(dest.stream)), type(std::move(dest.type)), index(std::move(dest.index)), ip(std::move(dest.ip)), port(std::move(dest.port)) {}
+            : stream(std::move(dest.stream))
+            , type(std::move(dest.type))
+            , index(std::move(dest.index))
+            , ip(std::move(dest.ip))
+            , port(std::move(dest.port)) {}
             Destination(const StreamType& stream, const TargetStreamType type, const uint8_t index)
             : stream((StreamType*)&stream), type(type), index(index), ip(), port() {}
-            Destination(const StreamType& stream, const TargetStreamType type, const uint8_t index, const str_t& ip, const uint16_t port)
+            Destination(
+                const StreamType& stream,
+                const TargetStreamType type,
+                const uint8_t index,
+                const str_t& ip,
+                const uint16_t port)
             : stream((StreamType*)&stream), type(type), index(index), ip(ip), port(port) {}
 
             Destination& operator=(const Destination& dest) {
@@ -145,13 +165,14 @@ namespace msgpack {
             }
             inline bool operator<(const Destination& rhs) const {
                 return (stream != rhs.stream) ? (stream < rhs.stream)
-                       : (type != rhs.type)   ? (type < rhs.type)
-                       : (index != rhs.index) ? (index < rhs.index)
-                       : (ip != rhs.ip)       ? (ip < rhs.ip)
+                     : (type != rhs.type)     ? (type < rhs.type)
+                     : (index != rhs.index)   ? (index < rhs.index)
+                     : (ip != rhs.ip)         ? (ip < rhs.ip)
                                               : (port < rhs.port);
             }
             inline bool operator==(const Destination& rhs) const {
-                return (stream == rhs.stream) && (type == rhs.type) && (index == rhs.index) && (ip == rhs.ip) && (port == rhs.port);
+                return (stream == rhs.stream) && (type == rhs.type) && (index == rhs.index) && (ip == rhs.ip)
+                    && (port == rhs.port);
             }
             inline bool operator!=(const Destination& rhs) const {
                 return !(*this == rhs);
@@ -203,10 +224,17 @@ namespace msgpack {
                         break;
 #ifdef MSGPACKETIZER_ENABLE_NETWORK
                     case TargetStreamType::STREAM_UDP:
-                        Packetizer::send(*reinterpret_cast<UDP*>(dest.stream), dest.ip, dest.port, dest.index, encoder.data(), encoder.size());
+                        Packetizer::send(
+                            *reinterpret_cast<UDP*>(dest.stream),
+                            dest.ip,
+                            dest.port,
+                            dest.index,
+                            encoder.data(),
+                            encoder.size());
                         break;
                     case TargetStreamType::STREAM_TCP:
-                        Packetizer::send(*reinterpret_cast<Client*>(dest.stream), dest.index, encoder.data(), encoder.size());
+                        Packetizer::send(
+                            *reinterpret_cast<Client*>(dest.stream), dest.index, encoder.data(), encoder.size());
                         break;
 #endif
                     default:
@@ -291,7 +319,12 @@ namespace msgpack {
 
 #ifdef MSGPACKETIZER_ENABLE_NETWORK
 
-            PublishElementRef publish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, const char* const value) {
+            PublishElementRef publish(
+                const UDP& stream,
+                const str_t& ip,
+                const uint16_t port,
+                const uint8_t index,
+                const char* const value) {
                 return publish_impl(stream, ip, port, index, make_element_ref(value));
             }
 
@@ -314,24 +347,32 @@ namespace msgpack {
             }
 
             template <typename T>
-            PublishElementRef publish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, std::function<T()>&& getter) {
+            PublishElementRef publish(
+                const UDP& stream,
+                const str_t& ip,
+                const uint16_t port,
+                const uint8_t index,
+                std::function<T()>&& getter) {
                 return publish_impl(stream, ip, port, index, make_element_ref(getter));
             }
 
             template <typename... Args>
-            PublishElementRef publish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+            PublishElementRef publish(
+                const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
                 ElementTupleRef v {make_element_ref(std::forward<Args>(args))...};
                 return publish_impl(stream, ip, port, index, make_element_ref(v));
             }
 
             template <typename... Args>
-            PublishElementRef publish_arr(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+            PublishElementRef publish_arr(
+                const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
                 static MsgPack::arr_size_t s(sizeof...(args));
                 return publish(stream, ip, port, index, s, std::forward<Args>(args)...);
             }
 
             template <typename... Args>
-            PublishElementRef publish_map(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+            PublishElementRef publish_map(
+                const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
                 if ((sizeof...(args) % 2) == 0) {
                     static MsgPack::map_size_t s(sizeof...(args) / 2);
                     return publish(stream, ip, port, index, s, std::forward<Args>(args)...);
@@ -346,7 +387,8 @@ namespace msgpack {
                 addr_map.erase(dest);
             }
 
-            PublishElementRef getPublishElementRef(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index) {
+            PublishElementRef getPublishElementRef(
+                const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index) {
                 Destination dest = getDestination(stream, ip, port, index);
                 return addr_map[dest];
             }
@@ -388,7 +430,8 @@ namespace msgpack {
                 return s;
             }
 
-            PublishElementRef publish_impl(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, PublishElementRef ref) {
+            PublishElementRef publish_impl(
+                const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, PublishElementRef ref) {
                 Destination dest = getDestination(stream, ip, port, index);
                 addr_map.insert(make_pair(dest, ref));
                 return ref;
@@ -493,7 +536,13 @@ namespace msgpack {
             Packetizer::send(stream, ip, port, index, packer.data(), packer.size());
         }
 
-        inline void send(UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, const uint8_t* data, const uint8_t size) {
+        inline void send(
+            UDP& stream,
+            const str_t& ip,
+            const uint16_t port,
+            const uint8_t index,
+            const uint8_t* data,
+            const uint8_t size) {
             auto& packer = PackerManager::getInstance().getPacker();
             packer.clear();
             packer.pack(data, size);
@@ -555,17 +604,20 @@ namespace msgpack {
 #ifdef MSGPACKETIZER_ENABLE_NETWORK
 
         template <typename... Args>
-        inline PublishElementRef publish(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+        inline PublishElementRef publish(
+            const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
             return PackerManager::getInstance().publish(stream, ip, port, index, std::forward<Args>(args)...);
         }
 
         template <typename... Args>
-        inline PublishElementRef publish_arr(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+        inline PublishElementRef publish_arr(
+            const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
             return PackerManager::getInstance().publish_arr(stream, ip, port, index, std::forward<Args>(args)...);
         }
 
         template <typename... Args>
-        inline PublishElementRef publish_map(const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
+        inline PublishElementRef publish_map(
+            const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, Args&&... args) {
             return PackerManager::getInstance().publish_map(stream, ip, port, index, std::forward<Args>(args)...);
         }
 
