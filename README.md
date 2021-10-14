@@ -304,6 +304,8 @@ Currently we cannot calculate the json size from msgpack format before deseriali
 
 ## APIs
 
+### Subscriber
+
 ``` C++
 namespace MsgPacketizer {
 
@@ -311,27 +313,27 @@ namespace MsgPacketizer {
 
     // bind variables directly to specified index packet
     template <typename... Args>
-    inline void subscribe(const uint8_t index, Args&&... args);
+    inline void subscribe_manual(const uint8_t index, Args&&... args);
     // bind variables directly to specified index packet with array format
     template <typename... Args>
-    inline void subscribe_arr(const uint8_t index, Args&&... args);
+    inline void subscribe_manual_arr(const uint8_t index, Args&&... args);
     // bind variables directly to specified index packet with map format
     template <typename... Args>
-    inline void subscribe_map(const uint8_t index, Args&&... args);
+    inline void subscribe_manual_map(const uint8_t index, Args&&... args);
     // bind callback to specified index packet
     template <typename F>
-    inline void subscribe(const uint8_t index, F&& callback);
+    inline void subscribe_manual(const uint8_t index, F&& callback);
     // bind callback which is always called regardless of index
     template <typename F>
-    inline void subscribe(F&& callback);
+    inline void subscribe_manual(F&& callback);
     // unsubscribe
-    inline void unsubscribe(const uint8_t index);
+    inline void unsubscribe_manual(const uint8_t index);
 
-    // must be called to manual decoding
+    // feed packet manually: must be called to manual decoding
     inline void feed(const uint8_t* data, const size_t size);
 
 
-    // ----- for supported communication interface (Arduino, oF, etc.) -----
+    // ----- for supported communication interface (Arduino, oF, ROS) -----
 
     template <typename S, typename... Args>
     inline void subscribe(S& stream, const uint8_t index, Args&&... args);
@@ -357,7 +359,13 @@ namespace MsgPacketizer {
     // must be called to receive packets
     inline void parse(bool b_exec_cb = true);
     inline void update(bool b_exec_cb = true);
+}
+```
 
+### Publisher
+
+```C++
+namespace MsgPacketizer {
 
     // ----- for unsupported communication interface with manual operation -----
 
@@ -376,7 +384,7 @@ namespace MsgPacketizer {
     inline const Packetizer::Packet& encode_map(const uint8_t index, Args&&... args);
 
 
-    // ----- for supported communication interface (Arduino, oF, etc.) -----
+    // ----- for supported communication interface (Arduino, oF, ROS) -----
 
     // send arguments dilectly with variable types
     template <typename S, typename... Args>
