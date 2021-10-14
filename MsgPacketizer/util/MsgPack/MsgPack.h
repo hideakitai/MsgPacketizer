@@ -12,6 +12,7 @@
 #include "MsgPack/Types.h"
 #include "MsgPack/Packer.h"
 #include "MsgPack/Unpacker.h"
+#include "MsgPack/Utility.h"
 
 namespace MsgPack = arduino::msgpack;
 

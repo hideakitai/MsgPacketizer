@@ -2,7 +2,6 @@
 
 MessagePack implementation for Arduino (compatible with other C++ apps)
 
-
 ## Feature
 
 - one-line [serialize / deserialize] for almost all standard type of C++ same as [msgpack-c](https://github.com/msgpack/msgpack-c)
@@ -14,7 +13,7 @@ MessagePack implementation for Arduino (compatible with other C++ apps)
 This library is only for serialize / deserialize.
 To send / receive serialized data with `Stream` class, please use [MsgPacketizer](https://github.com/hideakitai/MsgPacketizer).
 
-``` C++
+```C++
 #include <MsgPack.h>
 
 // input to msgpack
@@ -94,7 +93,7 @@ unpacker.deserialize(MsgPack::map_size_t(2), ki, i, karr, MsgPack::arr_size_t(2)
 
 To serialize / deserialize custom type you defined, please use `MSGPACK_DEFINE()` macro inside of your class. This macro enables you to convert your custom class to `Array` format.
 
-``` C++
+```C++
 struct CustomClass {
     int i;
     float f;
@@ -105,7 +104,7 @@ struct CustomClass {
 
 After that, you can `serialize` your class completely same as other types.
 
-``` C++
+```C++
 int i;
 float f;
 MsgPack::str_t s;
@@ -128,7 +127,7 @@ unpacker.deserialize(ii, ff, ss, cc);
 You can also wrap your custom class to `Map` format by using `MSGPACK_DEFINE_MAP` macro.
 Please note that you need "key" string for `Map` format.
 
-``` C++
+```C++
 struct CustomClass {
     MsgPack::str_t key_i {"i"}; int i;
     MsgPack::str_t key_f {"f"}; float f;
@@ -146,12 +145,11 @@ unpacker.feed(packer.data(), packer.size());
 unpacker.deserialize(cc);
 ```
 
-
 ### Custom Class with Inheritance
 
 Also you can use `MSGPACK_BASE()` macro to pack values of base class.
 
-``` C++
+```C++
 struct Base {
     int i;
     float f;
@@ -175,7 +173,6 @@ struct Derived : public Base {
     // -> packer.serialize(map_size_t(2), key_s, s, key_b, arr_size_t(2), Base::i, Base::f)
 };
 ```
-
 
 ### Nested Custom Class
 
@@ -222,7 +219,6 @@ unpacker.feed(packer.data(), packer.size());
 unpacker.deserialize(cc);
 ```
 
-
 ## JSON and Other language's msgpack compatibility
 
 In other languages like JavaScript, Python and etc. has also library for msgpack.
@@ -245,7 +241,6 @@ To achieve that, there are several ways.
 - use custom class nest recursively for more complex structure
 - use `ArduinoJson` for more flexible handling of JSON
 
-
 ### Use MsgPack with ArduinoJson
 
 - you can [serialize / deserialize] `StaticJsonDocument<N>` and `DynamicJsonDocument` directly
@@ -266,10 +261,40 @@ void setup() {
 }
 ```
 
+## Utilities
+
+### Save/Load to/from EEPROM with MsgPack
+
+In Arduino, you can use the MsgPack utility to save/load to/from EEPROM. Following code shows how to use them. Please see `save_load_eeprom` example for more details.
+
+```C++
+struct MyConfig {
+    Meta meta;
+    Data data;
+    MSGPACK_DEFINE(meta, data);
+};
+
+MyConfig config;
+
+void setup() {
+    EEPROM.begin();
+
+    // load current config
+    MsgPack::eeprom::load(config);
+
+    // change your configuration...
+
+    // save
+    MsgPack::eeprom::save(config);
+
+    EEPROM.end();
+}
+```
+
 ## Supported Type Adaptors
 
 These are the lists of types which can be `serialize` and `deserialize`.
-You can also `pack()`  or `unpack()` variable one by one.
+You can also `pack()` or `unpack()` variable one by one.
 
 ### NIL
 
@@ -341,7 +366,6 @@ You can also `pack()`  or `unpack()` variable one by one.
 - `std::bitset`
 - `std::stack`
 
-
 ### Note
 
 - `unordered_xxx` cannot be used in all Arduino
@@ -351,7 +375,6 @@ You can also `pack()`  or `unpack()` variable one by one.
   - for Array, only `T[]` and `MsgPack::arr_t<T>` (= `arx::vector<T>`) can be used
   - for Map, only `MsgPack::map_t<T, U>` (= `arx::map<T, U>`) can be used
   - for the detail of `arx::xxx`, see [ArxContainer](https://github.com/hideakitai/ArxContainer)
-
 
 ### Additional Types for MsgPack
 
@@ -370,7 +393,6 @@ For general C++ apps (not Arduino), `str_t` is defined as:
 
 - `MsgPack::str_t` = `std::string`
 
-
 #### MsgPack::obeject::nil_t
 
 `MsgPack::object::nil_t` is used to `pack` and `unpack` Nil type.
@@ -380,7 +402,7 @@ This object is just a dummy and do nothing.
 
 `MsgPack::object::ext` holds binary data of Ext type.
 
-``` C++
+```C++
 // create ext type with args: int8_t, const uint8_t*, uint32_t
 MsgPack::object::ext e(type, bin_ptr, size);
 MsgPack::Packer packer;
@@ -392,12 +414,11 @@ unpacker.feed(packer.data(), packer.size());
 unpacker.deserialize(r); // deserialize ext type
 ```
 
-
 #### MsgPack::obeject::timespec
 
 `MsgPack::object::timespec` is used to `pack` and `unpack` Timestamp type.
 
-``` C++
+```C++
 MsgPack::object::timespec t = {
     .tv_sec  = 123456789, /* int64_t  */
     .tv_usec = 123456789  /* uint32_t */
@@ -429,7 +450,6 @@ DEBUG_LOG_ATTACH_STREAM(Serial1);
 
 See [DebugLog](https://github.com/hideakitai/DebugLog) for details.
 
-
 ### Packet Data Storage Class Inside
 
 STL is used to handle packet data by default, but for following boards/architectures, [ArxContainer](https://github.com/hideakitai/ArxContainer) is used to store the packet data because STL can not be used for such boards.
@@ -439,14 +459,13 @@ The storage size of such boards for max packet binary size and number of msgpack
 - megaAVR
 - SAMD
 
-
 ### Memory Management (for NO-STL Boards)
 
 As mentioned above, for such boards like Arduino Uno, the storage sizes are limited.
 And of course you can manage them by defining following macros.
 But these default values are optimized for such boards, please be careful not to excess your boards storage/memory.
 
-``` C++
+```C++
 // msgpack serialized binary size
 #define MSGPACK_MAX_PACKET_BYTE_SIZE  128
 // max size of MsgPack::arr_t
@@ -456,6 +475,7 @@ But these default values are optimized for such boards, please be careful not to
 // msgpack objects size in one packet
 #define MSGPACK_MAX_OBJECT_SIZE        24
 ```
+
 These macros have no effect for STL enabled boards.
 
 In addtion for such boards, type aliases for following types are different from others.
@@ -467,14 +487,12 @@ In addtion for such boards, type aliases for following types are different from 
 
 Please see "Memory Management" section and [ArxContainer](https://github.com/hideakitai/ArxContainer) for detail.
 
-
 ### STL library for Arduino Support
 
 For such boards, there are several STL libraries, like [ArduinoSTL](https://github.com/mike-matera/ArduinoSTL), [StandardCPlusPlus](https://github.com/maniacbug/StandardCplusplus), and so on.
 But such libraries are mainly based on [uClibc++](https://cxx.uclibc.org/) and it has many lack of function.
 I considered to support them but I won't support them unless uClibc++ becomes much better compatibility to standard C++ library.
 I reccomend to use low cost but much better performance chip like ESP series.
-
 
 ## Embedded Libraries
 
@@ -483,17 +501,15 @@ I reccomend to use low cost but much better performance chip like ESP series.
 - [DebugLog v0.6.2](https://github.com/hideakitai/DebugLog)
 - [TeensyDirtySTLErrorSolution v0.1.0](https://github.com/hideakitai/TeensyDirtySTLErrorSolution)
 
-
 ## Used Inside of
 
 - [MsgPacketizer](https://github.com/hideakitai/MsgPacketizer)
-
 
 ## APIs
 
 ### MsgPack::Packer
 
-``` C++
+```C++
 // reserve internal buffer
 void reserve_buffer(const size_t size);
 
@@ -620,7 +636,7 @@ void packTimestamp96(const int64_t unix_time_sec, const uint32_t unix_time_nsec)
 
 ### MsgPack::Unpacker
 
-``` C++
+```C++
 // reserve internal buffer for indices
 void reserve_indices(const size_t size);
 
@@ -629,27 +645,28 @@ bool feed(const uint8_t* data, size_t size);
 
 // variable sized deserializer
 template <typename First, typename ...Rest>
-void deserialize(First& first, Rest&&... rest);
+bool deserialize(First& first, Rest&&... rest);
 template <size_t N>
-void deserialize(StaticJsonDocument<N>& doc);
-void deserialize(DynamicJsonDocument& doc);
+bool deserialize(StaticJsonDocument<N>& doc);
+bool deserialize(DynamicJsonDocument& doc);
 
 // varibale sized desrializer for array and map
 template <typename ...Args>
-void from_array(Args&&... args);
+bool from_array(Args&&... args);
 template <typename ...Args>
-void from_map(Args&&... args);
+bool from_map(Args&&... args);
 
 // single arg deserializer
 template <typename T>
-void unpack(T& value);
+bool unpack(T& value);
 
 // check if next arg can be deserialized to value
 template <typename T>
 bool unpackable(const T& value) const;
 
 // accesor and utility for deserialized msgpack data
-bool available() const;
+bool decode_ready() const;
+bool decoded() const;
 size_t size() const;
 void index(const size_t i);
 size_t index() const;
@@ -809,10 +826,26 @@ bool isTimestamp() const;
 MsgPack::Type getType() const
 ```
 
+### MsgPack Utilities
+
+```C++
+template <typename T>
+inline size_t estimate_size(const T& msg);
+
+namespace eeprom {
+    template <typename T>
+    inline void save(const T& value, const size_t index_offset = 0);
+    template <typename T>
+    inline bool load(T& value, const size_t index_offset = 0);
+    template <typename T>
+    inline void clear(const T& value, const size_t index_offset = 0);
+    inline void clear_size(const size_t size, const size_t index_offset = 0);
+}
+```
 
 ### MsgPack::Type
 
-``` C++
+```C++
 enum class Type : uint8_t {
     NA          = 0xC1, // never used
     NIL         = 0xC0,
@@ -868,7 +901,6 @@ enum class Type : uint8_t {
 - [msgpack adaptor](https://github.com/msgpack/msgpack-c/wiki/v2_0_cpp_adaptor)
 - [msgpack object](https://github.com/msgpack/msgpack-c/wiki/v2_0_cpp_object)
 - [msgpack-c wiki](https://github.com/msgpack/msgpack-c/wiki)
-
 
 ## License
 
