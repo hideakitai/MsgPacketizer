@@ -2,7 +2,6 @@
 
 [msgpack](https://github.com/msgpack/msgpack-c) based serializer / deserializer + packetize for Arduino, ROS, and more
 
-
 ## Feature
 
 - one-line [serialize/deserialize] or [publish/subscribe] + packetize + robust [send/receive]
@@ -14,25 +13,22 @@
 - packetize based on [Packetizer](https://github.com/hideakitai/Packetizer)
 - working also in ROS with [serial](https://github.com/wjwwood/serial) and [serial-ros2](https://github.com/RoverRobotics-forks/serial-ros2)
 
-
 ## Packet Protocol
 
 | index  | msgpack | crc8   |
 | ------ | ------- | ------ |
 | 1 byte | N bytes | 1 byte |
 
-
 - 1 byte index (packet index can be used to identify packet)
-- __N byte serialized msgpack data__
+- **N byte serialized msgpack data**
 - 1 byte crc8 (for received data check)
 - these bytes are encoded to COBS encoding based on [Packetizer](https://github.com/hideakitai/Packetizer)
-
 
 ## Usage
 
 ### Direct Data Receive + Data Publishing
 
-``` C++
+```C++
 #include <MsgPacketizer.h>
 
 // input to msgpack
@@ -62,10 +58,9 @@ void loop() {
 
 ```
 
-
 ### Callback with Received Objects + One-Line Send
 
-``` C++
+```C++
 #include <MsgPacketizer.h>
 
 uint8_t recv_index = 0x12;
@@ -93,12 +88,11 @@ void loop() {
 
 ```
 
-
 ### Nested Data with Custom Class
 
 To serialize / deserialize nested data, defining custom class is recommended. For example, to make `{"k1": v, "k2":[i, f, s]}`:
 
-``` C++
+```C++
 struct ArrayData {
     int i; float f; MsgPack::str_t s;
     MSGPACK_DEFINE(i, f, s); // [i, f, s]
@@ -112,14 +106,13 @@ struct NestedData {
 
 and you can serialize / deserialize your class completely same as other types.
 
-``` C++
+```C++
 NestedData n;
 MsgPacketizer::publish(Serial, send_index, n);
 MsgPacketizer::subscribe(Serial, recv_index, n);
 ```
 
 Please see examples and [MsgPack](https://github.com/hideakitai/MsgPack) for more detail.
-
 
 ### Manual Encode / Decode with Any Communication I/F
 
@@ -129,7 +122,7 @@ Please note:
 - only one unsupoprted interface (serial, udp, tcp, etc.) is available for manual subscription because MsgPacketizer cannot indetify which data is from which device
 - `publish` is not available for unsupported data stream
 
-``` C++
+```C++
 #include <MsgPacketizer.h>
 
 const uint8_t recv_index = 0x12;
@@ -164,7 +157,6 @@ void loop() {
     }
 }
 ```
-
 
 ### UDP and TCP Support
 
@@ -207,7 +199,6 @@ void loop() {
     MsgPacketizer::update();
 }
 ```
-
 
 #### UDP Support
 
@@ -295,18 +286,16 @@ void loop() {
 
 Currently we cannot calculate the json size from msgpack format before deserialization. Please adjust buffer size by defining following macro before including `MsgPacketizer.h`. Default is `size_of_msgpack_bytes * 3`.
 
-
 ```C++
 #define MSGPACKETIZER_ARDUINOJSON_DESERIALIZE_BUFFER_SCALE 3  // default
 #include <MsgPacketizer.h>
 ```
 
-
 ## APIs
 
 ### Subscriber
 
-``` C++
+```C++
 namespace MsgPacketizer {
 
     // ----- for unsupported communication interface with manual operation -----
@@ -451,15 +440,12 @@ namespace MsgPacketizer {
 #define MSGPACKETIZER_DEBUGLOG_ENABLE
 ```
 
-
-
 ## For NO-STL Boards
 
 For following archtectures, several storage size for packets are limited.
 
 - AVR
 - megaAVR
-
 
 ### Memory Management (only for NO-STL Boards)
 
@@ -479,7 +465,7 @@ These macros have no effect for STL enabled boards.
 
 #### MsgPack
 
-``` C++
+```C++
 // msgpack serialized binary size
 #define MSGPACK_MAX_PACKET_BYTE_SIZE 96
 // max size of MsgPack::arr_t
@@ -492,7 +478,7 @@ These macros have no effect for STL enabled boards.
 
 #### Packetizer
 
-``` C++
+```C++
 // max number of decoded packet queues
 #define PACKETIZER_MAX_PACKET_QUEUE_SIZE 1
 // max data bytes in packet
@@ -503,12 +489,10 @@ These macros have no effect for STL enabled boards.
 #define PACKETIZER_MAX_STREAM_MAP_SIZE 1
 ```
 
-
 ## Embedded Libraries
 
 - [MsgPack v0.3.16](https://github.com/hideakitai/MsgPack)
 - [Packetizer v0.7.0](https://github.com/hideakitai/Packetizer)
-
 
 ## License
 
