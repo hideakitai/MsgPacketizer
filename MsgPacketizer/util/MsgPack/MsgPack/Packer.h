@@ -67,25 +67,26 @@ namespace msgpack {
 
 #ifdef ARDUINOJSON_VERSION
 
-    private:
-        void serialize_arduinojson(const JsonDocument& doc) {
+        //! Note: ArduinoJson cannot handle Arduino's String class correctly.
+        //! So the external buffer size is required.
+        void serialize_arduinojson(const JsonDocument& doc, const size_t num_max_string_type = 32) {
             const size_t size = measureMsgPack(doc);
-            uint8_t* data = new uint8_t[size];
-            serializeMsgPack(doc, data, size);
+            uint8_t* data = new uint8_t[size + num_max_string_type];
+            serializeMsgPack(doc, data, size + num_max_string_type);
             packRawBytes(data, size);
-            // TODO:
+            // TODO: smarter way to calcurate size of indices?
             Unpacker unpacker;
             unpacker.feed(data, size);
             n_indices += unpacker.size();
+            delete[] data;
         }
 
-    public:
         template <size_t N>
-        void serialize(const StaticJsonDocument<N>& doc) {
-            serialize_arduinojson(doc);
+        void serialize(const StaticJsonDocument<N>& doc, const size_t num_max_string_type = 32) {
+            serialize_arduinojson(doc, num_max_string_type);
         }
-        void serialize(const DynamicJsonDocument& doc) {
-            serialize_arduinojson(doc);
+        void serialize(const DynamicJsonDocument& doc, const size_t num_max_string_type = 32) {
+            serialize_arduinojson(doc, num_max_string_type);
         }
 
 #endif  // ARDUINOJSON_VERSION

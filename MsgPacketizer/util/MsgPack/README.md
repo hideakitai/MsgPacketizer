@@ -263,6 +263,35 @@ void setup() {
 
 ## Utilities
 
+### Save/Load to/from JSON file directly from/to MsgPack
+
+You can directly save/load to/from JSON file with this library. `SD`, `SdFat`, `SD_MMC`, `SPIFFS`, etc. are available for the target file system. Please see `save_load_as_json_file` example for more details.
+
+```C++
+#include <SD.h>
+#include <MsgPack.h>
+
+struct MyConfig {
+    Meta meta;
+    Data data;
+    MSGPACK_DEFINE(meta, data);
+};
+
+MyConfig config;
+
+void setup() {
+    SD.begin();
+
+    // load json data from /config.txt to config struct directly
+    MsgPack::file::load_from_json_static<256>(SD, "/config.txt", config);
+
+    // change your configuration...
+
+    // save config data from config struct to /config.txt as json directly
+    MsgPack::file::save_as_json_static<256>(SD, "/config.txt", config);
+}
+```
+
 ### Save/Load to/from EEPROM with MsgPack
 
 In Arduino, you can use the MsgPack utility to save/load to/from EEPROM. Following code shows how to use them. Please see `save_load_eeprom` example for more details.
@@ -521,8 +550,9 @@ void serialize(const arr_size_t& arr_size, Args&&... args);
 template <typename ...Args>
 void serialize(const map_size_t& map_size, Args&&... args);
 template <size_t N>
-void serialize(const StaticJsonDocument<N>& doc);
-void serialize(const DynamicJsonDocument& doc);
+void serialize(const StaticJsonDocument<N>& doc, const size_t num_max_string_type = 32);
+void serialize(const DynamicJsonDocument& doc, const size_t num_max_string_type = 32);
+void serialize_arduinojson(const JsonDocument& doc, const size_t num_max_string_type = 32);
 
 // variable sized serializer to array or map for any type
 template <typename ...Args>
@@ -832,9 +862,25 @@ MsgPack::Type getType() const
 template <typename T>
 inline size_t estimate_size(const T& msg);
 
+namespace file {
+    template <typename FsType, typename T>
+    inline bool save_as_json(FsType& fs, const String& path, const T& value, JsonDocument& doc);
+    template <size_t N, typename FsType, typename T>
+    inline bool save_as_json_static(FsType& fs, const String& path, const T& value);
+    template <typename FsType, typename T>
+    inline bool save_as_json_dynamic(FsType& fs, const String& path, const T& value, const size_t json_size = 512);
+
+    template <typename FsType, typename T>
+    inline bool load_from_json(FsType& fs, const String& path, T& value, JsonDocument& doc, const size_t num_max_string_type = 32);
+    template <size_t N, typename FsType, typename T>
+    inline bool load_from_json_static(FsType& fs, const String& path, T& value);
+    template <typename FsType, typename T>
+    inline bool load_from_json_dynamic(FsType& fs, const String& path, T& value, const size_t json_size = 512);
+}
+
 namespace eeprom {
     template <typename T>
-    inline void save(const T& value, const size_t index_offset = 0);
+    inline bool save(const T& value, const size_t index_offset = 0);
     template <typename T>
     inline bool load(T& value, const size_t index_offset = 0);
     template <typename T>
