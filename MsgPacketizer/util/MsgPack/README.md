@@ -7,6 +7,8 @@ MessagePack implementation for Arduino (compatible with other C++ apps)
 - one-line [serialize / deserialize] for almost all standard type of C++ same as [msgpack-c](https://github.com/msgpack/msgpack-c)
 - support custom class [serialization / deserialization]
 - support working with [ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
+- one-line [save / load] between custom serializable MsgPack class and JSON file
+- one-line [save / load] custom serializable MsgPack class [to / from] EEPROM
 
 ## Typical Usage
 
@@ -362,7 +364,7 @@ You can also `pack()` or `unpack()` variable one by one.
 
 - `T[]` (need to `serialize(ptr, size)` or `pack(ptr, size)`)
 - `std::vector` (`MsgPack::arr_t<T>`)
-- `std::array`
+- `std::array` (`MsgPack::fix_arr_t<T, N>`)
 - `std::deque`
 - `std::pair`
 - `std::tuple`
@@ -401,8 +403,8 @@ You can also `pack()` or `unpack()` variable one by one.
 - C-style array and pointers are supported only packing.
 - for NO-STL Arduino, following types can be used
   - all types of NIL, Bool, Integer, Float, Str, Bin
-  - for Array, only `T[]` and `MsgPack::arr_t<T>` (= `arx::vector<T>`) can be used
-  - for Map, only `MsgPack::map_t<T, U>` (= `arx::map<T, U>`) can be used
+  - for Array, only `T[]`, `MsgPack::arr_t<T>` (`arx::vector<T>`), and `MsgPack::fix_arr_t<T, N>` (`arx::array<T, N>`) can be used
+  - for Map, only `MsgPack::map_t<T, U>` (`arx::map<T, U>`) can be used
   - for the detail of `arx::xxx`, see [ArxContainer](https://github.com/hideakitai/ArxContainer)
 
 ### Additional Types for MsgPack
@@ -416,6 +418,7 @@ These types have type aliases like this:
 - `MsgPack::str_t` = `String` (Arduino only)
 - `MsgPack::bin_t<T>` = `std::vector<T>`
 - `MsgPack::arr_t<T>` = `std::vector<T>`
+- `MsgPack::fix_arr_t<T, N>` = `std::array<T, N>`
 - `MsgPack::map_t<T, U>` = `std::map<T, U>`
 
 For general C++ apps (not Arduino), `str_t` is defined as:

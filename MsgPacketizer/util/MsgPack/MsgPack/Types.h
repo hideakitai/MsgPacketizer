@@ -33,6 +33,8 @@ namespace msgpack {
     using idx_t = std::vector<size_t>;
     template <typename T>
     using arr_t = std::vector<T>;
+    template <typename T, size_t N>
+    using fix_arr_t = std::array<T, N>;
     template <typename T, typename U>
     using map_t = std::map<T, U>;
     template <typename T>
@@ -58,6 +60,8 @@ namespace msgpack {
     using idx_t = arx::vector<size_t, MSGPACK_MAX_OBJECT_SIZE>;
     template <typename T, size_t N = MSGPACK_MAX_ARRAY_SIZE>
     using arr_t = arx::vector<T, N>;
+    template <typename T, size_t N>
+    using fix_arr_t = arx::array<T, N>;
     template <typename T, typename U, size_t N = MSGPACK_MAX_MAP_SIZE>
     using map_t = arx::map<T, U, N>;
     template <typename T, size_t N = MSGPACK_MAX_PACKET_BYTE_SIZE>
