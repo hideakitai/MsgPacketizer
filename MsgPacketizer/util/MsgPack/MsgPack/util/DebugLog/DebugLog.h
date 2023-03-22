@@ -19,7 +19,10 @@
 namespace DebugLog = arx::debug;
 using DebugLogLevel = arx::debug::LogLevel;
 using DebugLogBase = arx::debug::LogBase;
+
+#ifdef ARDUINO
 using DebugLogPrecision = arx::debug::LogPrecision;
+#endif
 
 // PRINT and PRINTLN are always enabled regardless of log_level
 // PRINT and PRINTLN do NOT print to files
