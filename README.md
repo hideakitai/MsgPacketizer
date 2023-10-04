@@ -489,10 +489,11 @@ These macros have no effect for STL enabled boards.
 #define PACKETIZER_MAX_STREAM_MAP_SIZE 1
 ```
 
-## Embedded Libraries
+## Dependent Libraries
 
-- [MsgPack v0.3.19](https://github.com/hideakitai/MsgPack)
-- [Packetizer v0.7.0](https://github.com/hideakitai/Packetizer)
+- [DebugLog](https://github.com/hideakitai/DebugLog)
+- [MsgPack](https://github.com/hideakitai/MsgPack)
+- [Packetizer](https://github.com/hideakitai/Packetizer)
 
 ## License
 
