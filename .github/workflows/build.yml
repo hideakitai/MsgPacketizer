@@ -101,6 +101,9 @@ jobs:
             - examples/simple/arduino/simple_every_packet
           libraries: |
             - source-path: ./
+            - name: DebugLog
+            - name: MsgPack
+            - name: Packetizer
             - name: ArduinoJson
             - name: Ethernet
           verbose: true

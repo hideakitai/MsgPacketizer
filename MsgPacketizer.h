@@ -61,16 +61,16 @@
 #define PACKETIZER_USE_INDEX_AS_DEFAULT
 #define PACKETIZER_USE_CRC_AS_DEFAULT
 
-#include "MsgPacketizer/util/MsgPack/MsgPack/util/DebugLog/DebugLog.h"
+#include <DebugLog.h>
 #ifdef MSGPACKETIZER_DEBUGLOG_ENABLE
-#include "MsgPacketizer/util/MsgPack/MsgPack/util/DebugLog/DebugLogEnable.h"
+#include <DebugLogEnable.h>
 #define MSGPACK_DEBUGLOG_ENABLE
 #else
-#include "MsgPacketizer/util/MsgPack/MsgPack/util/DebugLog/DebugLogDisable.h"
+#include <DebugLogDisable.h>
 #endif
 
-#include "MsgPacketizer/util/Packetizer/Packetizer.h"
-#include "MsgPacketizer/util/MsgPack/MsgPack.h"
+#include <Packetizer.h>
+#include <MsgPack.h>
 
 namespace arduino {
 namespace msgpack {
@@ -123,6 +123,6 @@ namespace msgpack {
 
 namespace MsgPacketizer = arduino::msgpack::msgpacketizer;
 
-#include "MsgPacketizer/util/MsgPack/MsgPack/util/DebugLog/DebugLogRestoreState.h"
+#include <DebugLogRestoreState.h>
 
 #endif  // HT_SERIAL_MSGPACKETIZER_H

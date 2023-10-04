@@ -14,5 +14,11 @@
     "version": "0.4.7",
     "license": "MIT",
     "frameworks": "arduino",
-    "platforms": "*"
+    "platforms": "*",
+    "dependencies":
+    {
+        "hideakitai/DebugLog": "*",
+        "hideakitai/MsgPack": "*",
+        "hideakitai/Packetizer": "*"
+    }
 }
