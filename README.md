@@ -2,6 +2,14 @@
 
 [msgpack](https://github.com/msgpack/msgpack-c) based serializer / deserializer + packetize for Arduino, ROS, and more
 
+#### NOTE (>= v0.5.0) : DEPENDENT LIBRARIES REMOVED
+
+If you have already installed this library, please follow:
+
+- Cloned from GitHub (manually): Please install dependent libraries manually
+- Installed from library manager: re-install this library from library manager
+  - Dependent libraries will be installed automatically
+
 ## Feature
 
 - one-line [serialize/deserialize] or [publish/subscribe] + packetize + robust [send/receive]
