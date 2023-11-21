@@ -519,7 +519,7 @@ namespace msgpack {
             if ((sizeof...(args) % 2) == 0) {
                 auto& packer = PackerManager::getInstance().getPacker();
                 packer.clear();
-                packer.serialize(MsgPack::arr_size_t(sizeof...(args) / 2), std::forward<Args>(args)...);
+                packer.serialize(MsgPack::map_size_t(sizeof...(args) / 2), std::forward<Args>(args)...);
                 Packetizer::send(stream, index, packer.data(), packer.size());
             } else {
                 LOG_WARN(F("serialize arg size must be even for map :"), sizeof...(args));
@@ -567,7 +567,7 @@ namespace msgpack {
             if ((sizeof...(args) % 2) == 0) {
                 auto& packer = PackerManager::getInstance().getPacker();
                 packer.clear();
-                packer.serialize(MsgPack::arr_size_t(sizeof...(args) / 2), std::forward<Args>(args)...);
+                packer.serialize(MsgPack::map_size_t(sizeof...(args) / 2), std::forward<Args>(args)...);
                 Packetizer::send(stream, ip, port, index, packer.data(), packer.size());
             } else {
                 LOG_WARN(F("serialize arg size must be even for map :"), sizeof...(args));
