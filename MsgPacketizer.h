@@ -76,12 +76,6 @@ namespace arduino {
 namespace msgpack {
     namespace msgpacketizer {
 
-#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
-        using namespace std;
-#else
-        using namespace arx;
-#endif
-
 #ifdef ARDUINO
         using StreamType = Stream;
 #define MSGPACKETIZER_ELAPSED_MICROS micros

@@ -14,7 +14,7 @@ namespace msgpack {
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
         using UnpackerMap = std::map<DecodeTargetStream, UnpackerRef>;
 #else
-        using UnpackerMap = arx::map<DecodeTargetStream, UnpackerRef, PACKETIZER_MAX_STREAM_MAP_SIZE>;
+        using UnpackerMap = arx::stdx::map<DecodeTargetStream, UnpackerRef, PACKETIZER_MAX_STREAM_MAP_SIZE>;
 #endif
 #endif  // MSGPACKETIZER_ENABLE_STREAM
 
@@ -94,7 +94,7 @@ namespace msgpack {
             UnpackerRef getUnpackerRef(const StreamType& stream) {
                 auto s = getDecodeTargetStream(stream);
                 if (decoders.find(s) == decoders.end())
-                    decoders.insert(make_pair(s, std::make_shared<MsgPack::Unpacker>()));
+                    decoders.insert(std::make_pair(s, std::make_shared<MsgPack::Unpacker>()));
                 return decoders[s];
             }
 
