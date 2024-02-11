@@ -36,7 +36,7 @@ namespace msgpack {
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
             using TupleRef = std::vector<Ref>;
 #else
-            using TupleRef = arx::vector<Ref, MSGPACKETIZER_MAX_PUBLISH_ELEMENT_SIZE>;
+            using TupleRef = arx::stdx::vector<Ref, MSGPACKETIZER_MAX_PUBLISH_ELEMENT_SIZE>;
 #endif
 
             template <typename T>
@@ -185,7 +185,7 @@ namespace msgpack {
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
         using PackerMap = std::map<Destination, PublishElementRef>;
 #else
-        using PackerMap = arx::map<Destination, PublishElementRef, MSGPACKETIZER_MAX_PUBLISH_DESTINATION_SIZE>;
+        using PackerMap = arx::stdx::map<Destination, PublishElementRef, MSGPACKETIZER_MAX_PUBLISH_DESTINATION_SIZE>;
 #endif
 #endif  // MSGPACKETIZER_ENABLE_STREAM
 
@@ -407,7 +407,7 @@ namespace msgpack {
             template <typename S>
             PublishElementRef publish_impl(const S& stream, const uint8_t index, PublishElementRef ref) {
                 Destination dest = getDestination(stream, index);
-                addr_map.insert(make_pair(dest, ref));
+                addr_map.insert(std::make_pair(dest, ref));
                 return ref;
             }
 
@@ -433,7 +433,7 @@ namespace msgpack {
             PublishElementRef publish_impl(
                 const UDP& stream, const str_t& ip, const uint16_t port, const uint8_t index, PublishElementRef ref) {
                 Destination dest = getDestination(stream, ip, port, index);
-                addr_map.insert(make_pair(dest, ref));
+                addr_map.insert(std::make_pair(dest, ref));
                 return ref;
             }
 

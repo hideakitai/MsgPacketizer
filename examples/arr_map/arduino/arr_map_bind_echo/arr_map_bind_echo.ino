@@ -7,9 +7,9 @@
 // MsgPack::bin_t<T> = std::vector<T = uint8_t || char>
 
 // for NO-STL boards(AVR, megaAVR, SAMD, SPRESENSE):
-// MsgPack::arr_t<T> = arx::vector<T>
-// MsgPack::map_t<T, U> = arx::map<T, U>
-// MsgPack::bin_t<T> = arx::vector<T = uint8_t || char>
+// MsgPack::arr_t<T> = arx::stdx::vector<T>
+// MsgPack::map_t<T, U> = arx::stdx::map<T, U>
+// MsgPack::bin_t<T> = arx::stdx::vector<T = uint8_t || char>
 
 // msgpac input && output
 MsgPack::arr_t<int> a {1, 2, 3};                     // json: [1, 2, 3]

@@ -43,8 +43,8 @@ If you have already installed this library, please follow:
 int i;
 float f;
 MsgPack::str_t s; // std::string or String
-MsgPack::arr_t<int> v; // std::vector or arx::vector
-MsgPack::map_t<String, float> m; // std::map or arx::map
+MsgPack::arr_t<int> v; // std::vector or arx::stdx::vector
+MsgPack::map_t<String, float> m; // std::map or arx::stdx::map
 
 uint8_t recv_index = 0x12;
 uint8_t send_index = 0x34;
