@@ -86,6 +86,9 @@ jobs:
               vendor: teensy
     steps:
       - uses: actions/checkout@v4
+      - uses: arduino/arduino-lint-action@v1
+        with:
+          library-manager: update
       - name: compile example sketchs
         uses: arduino/compile-sketches@v1
         with:
