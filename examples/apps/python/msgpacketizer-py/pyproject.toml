@@ -1,0 +1,32 @@
+[project]
+name = "msgpacketizer-py"
+version = "0.1.0"
+description = "Add your description here"
+authors = [{ name = "Hideaki Tai", email = "hideaki.tai@gmail.com" }]
+dependencies = [
+    "pyserial>=3.5",
+    "msgpack>=1.0.7",
+    "crc8>=0.2.0",
+    "cobs>=1.2.1",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "pytest>=7.4.3",
+    "mypy>=1.7.1",
+    "msgpack-types>=0.2.0",
+]
+
+[tool.rye.scripts]
+serialport = "python src/serialport.py"
+network = "python src/network.py"
+
+[tool.hatch.metadata]
+allow-direct-references = true
