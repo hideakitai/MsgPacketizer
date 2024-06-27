@@ -1,6 +1,7 @@
 // #define MSGPACKETIZER_DEBUGLOG_ENABLE
 #include <MsgPacketizer.h>
 #include <WiFi.h>
+#include <WiFiUdp.h>
 
 // comment out if you want to use TCP
 // #define USE_TCP

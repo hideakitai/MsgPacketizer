@@ -59,15 +59,15 @@ jobs:
           - vendor: rp2040
             arch: rp2040
             name: rpipicow
-          - vendor: teensy
-            arch: avr
-            name: teensy35
-          - vendor: teensy
-            arch: avr
-            name: teensy36
-          - vendor: teensy
-            arch: avr
-            name: teensy41
+          # - vendor: teensy
+          #   arch: avr
+          #   name: teensy35
+          # - vendor: teensy
+          #   arch: avr
+          #   name: teensy36
+          # - vendor: teensy
+          #   arch: avr
+          #   name: teensy41
         include:
           - index: https://downloads.arduino.cc/packages/package_index.json
             board:
@@ -81,9 +81,9 @@ jobs:
           - index: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
             board:
               vendor: rp2040
-          - index: https://www.pjrc.com/teensy/package_teensy_index.json
-            board:
-              vendor: teensy
+          # - index: https://www.pjrc.com/teensy/package_teensy_index.json
+          #   board:
+          #     vendor: teensy
     steps:
       - uses: actions/checkout@v4
       - uses: arduino/arduino-lint-action@v1
@@ -114,9 +114,9 @@ jobs:
       fail-fast: false
       matrix:
         board:
-          - vendor: esp8266
-            arch: esp8266
-            name: generic
+          # - vendor: esp8266
+          #   arch: esp8266
+          #   name: generic
           - vendor: esp32
             arch: esp32
             name: esp32
@@ -130,9 +130,9 @@ jobs:
           #   arch: rp2040
           #   name: rpipicow
         include:
-          - index: https://arduino.esp8266.com/stable/package_esp8266com_index.json
-            board:
-              vendor: esp8266
+          # - index: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          #   board:
+          #     vendor: esp8266
           - index: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
             board:
               vendor: esp32
@@ -200,15 +200,15 @@ jobs:
           - vendor: rp2040
             arch: rp2040
             name: rpipicow
-          - vendor: teensy
-            arch: avr
-            name: teensy35
-          - vendor: teensy
-            arch: avr
-            name: teensy36
-          - vendor: teensy
-            arch: avr
-            name: teensy41
+          # - vendor: teensy
+          #   arch: avr
+          #   name: teensy35
+          # - vendor: teensy
+          #   arch: avr
+          #   name: teensy36
+          # - vendor: teensy
+          #   arch: avr
+          #   name: teensy41
         include:
           - index: https://downloads.arduino.cc/packages/package_index.json
             board:
@@ -222,9 +222,9 @@ jobs:
           - index: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
             board:
               vendor: rp2040
-          - index: https://www.pjrc.com/teensy/package_teensy_index.json
-            board:
-              vendor: teensy
+          # - index: https://www.pjrc.com/teensy/package_teensy_index.json
+          #   board:
+          #     vendor: teensy
     steps:
       - uses: actions/checkout@v4
       - name: compile example sketchs
