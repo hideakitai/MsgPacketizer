@@ -1,0 +1,10 @@
+github.com/dim13/cobs v1.0.2 h1:3wtWhRimu10NG5i9nBeTOad0lA6T+mXV1s6ls326E1w=
+github.com/dim13/cobs v1.0.2/go.mod h1:qpPMjornFjB3s+c7R7O4On93KAsJbX5EeFoZOCnnx+g=
+github.com/gdbinit/crc v0.0.0-20230706171115-227949f815fc h1:3XF8GCnswxtYYr5iaYbAH3+sdPK0DOJicKzW0qkmKdA=
+github.com/gdbinit/crc v0.0.0-20230706171115-227949f815fc/go.mod h1:TS5QBAwPTo9FLbAoY6JawZvxTcQ8U6pCU2cLTLJuJes=
+github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
+github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
+github.com/vmihailenco/msgpack/v5 v5.4.1 h1:cQriyiUvjTwOHg8QZaPihLWeRAAVoCpE00IUPn0Bjt8=
+github.com/vmihailenco/msgpack/v5 v5.4.1/go.mod h1:GaZTsDaehaPpQVyxrf5mtQlH+pc21PIudVV/E3rRQok=
+github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAhO7/IwNM9g=
+github.com/vmihailenco/tagparser/v2 v2.0.0/go.mod h1:Wri+At7QHww0WTrCBeu4J6bNtoV6mEfg5OIWRZA9qds=

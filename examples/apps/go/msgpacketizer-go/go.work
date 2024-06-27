@@ -1,0 +1,8 @@
+go 1.21.4
+
+use (
+	./cmd
+	./internal/common
+	./pkg/msgpacketizer-go
+	./pkg/packetizer-go
+)
