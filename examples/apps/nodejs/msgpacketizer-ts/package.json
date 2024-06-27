@@ -1,0 +1,38 @@
+{
+	"name": "msgpacketizer-ts",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"check": "tsc --noEmit",
+		"build": "tsc",
+		"watch": "tsc -w",
+		"serial": "tsc && node dist/serial.js",
+		"udp": "tsc && node dist/udp.js",
+		"tcp": "tsc && node dist/tcp.js",
+		"dev-serial": "tsx watch src/serial.ts",
+		"dev-udp": "tsx watch src/udp.ts",
+		"dev-tcp": "tsx watch src/tcp.ts",
+		"prepare": "node -v | sed 's/v//' | tee .nvmrc .node-version",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"volta": {
+		"node": "16.20.2"
+	},
+	"devDependencies": {
+		"@types/node": "^20.9.3",
+		"@types/winston": "^2.4.4",
+		"tsx": "^4.5.0",
+		"typescript": "^5.3.2"
+	},
+	"dependencies": {
+		"commander": "^11.1.0",
+		"msgpacketizer": "file:src/msgpacketizer",
+		"packetizer": "file:src/packetizer",
+		"serialport": "^12.0.0",
+		"winston": "^3.11.0"
+	}
+}
