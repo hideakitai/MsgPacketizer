@@ -1,0 +1,19 @@
+[package]
+name = "msgpacketizer-bevy"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# bevy = { version = "0.13", features = ["wayland"] }
+bevy = "0.13"
+bevy_serial = "0.6"
+msgpacketizer = { path = "../msgpacketizer" }
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+env_logger = "0.11"
+clap = { version = "4.5", features = ["derive"] }
+once_cell = "1.8"
+
+[[bin]]
+name = "serialport"
+path = "src/main.rs"
