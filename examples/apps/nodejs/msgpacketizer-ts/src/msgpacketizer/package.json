@@ -14,7 +14,7 @@
     "typescript": "^5.3.2"
   },
   "dependencies": {
-    "msgpackr": "^1.9.9",
+    "msgpackr": "^1.10.1",
     "packetizer": "file:../packetizer",
     "winston": "^3.11.0"
   },
