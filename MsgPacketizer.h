@@ -17,11 +17,15 @@
 #endif
 #endif
 
+#ifdef MSGPACKETIZER_DISABLE_NETWORK
+#define PACKETIZER_DISABLE_NETWORK
+#else
 #if defined(MSGPACKETIZER_ENABLE_ETHER) || defined(MSGPACKETIZER_ENABLE_WIFI)
 #define MSGPACKETIZER_ENABLE_NETWORK
 #include <Udp.h>
 #include <Client.h>
 #endif
+#endif // MSGPACKETIZER_DISABLE_NETWORK
 
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
 // use standard c++ libraries
